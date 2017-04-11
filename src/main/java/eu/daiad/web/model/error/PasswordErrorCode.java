@@ -1,10 +1,10 @@
 package eu.daiad.web.model.error;
 
 public enum PasswordErrorCode implements ErrorCode {
-    INVALID_LENGTH;
+    WEAK_PASSWORD;
 
     @Override
     public String getMessageKey() {
-        return (this.getClass().getSimpleName() + '.' + this.name());
+        return (this.getClass().getSimpleName() + '.' + name());
     }
 }

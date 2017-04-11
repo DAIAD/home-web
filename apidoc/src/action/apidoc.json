@@ -1,0 +1,91 @@
+{
+  "name": "DAIAD Action API Interface",
+  "title": "DAIAD Action API Interface",
+  "description": "",
+  "url": "https://app.dev.daiad.eu/",
+  "header": {
+    "title": "Introduction",
+    "filename": "./header.md"
+  },
+  "order": [
+    "Authentication",
+    "Login",
+    "Logout",
+
+    "User",
+    "PasswordChange",
+    "ResetPasswordTokenRequest",
+    "ResetPasswordTokenRedeem",
+
+    "Profile",
+    "ProfileLoad",
+    "ProfileSave",
+    "HouseholdSave",
+    "GetComparison",
+    "Deactivate",
+
+    "Data",
+    "DataQuery",
+    "ForecastQuery",
+
+    "Search",
+    "MeterStatus",
+    "MeterMeasurements",
+    "Sessions",
+    "Session",
+
+    "Message",
+    "MessageList",
+    "MessageAcknowledge",
+    "TipList",
+    "TipEnable",
+    "TipSave",
+    "TipDelete",
+    "AnnouncementBroadcast",
+    "AnnouncementDelete",
+    "AnnouncementHistory",
+    "AnnouncementDetails",
+    "AlertReceivers",
+    "RecommendationReceivers",
+
+    "Commons",
+    "CommonsCreate",
+    "CommonsUpdate",
+    "CommonsDelete",
+    "CommonsGet",
+    "CommonsJoin",
+    "CommonsLeave",
+    "CommonsSearch",
+    "CommonsMembers",
+    "CommonsMembership",
+
+    "Billing",
+    "PriceBracketCurrent",
+    "PriceBracketHistory",
+
+    "WaterCalculator",
+
+    "Weather",
+
+    "Reporting",
+    "CurrentUserReport",
+    "UserReport",
+
+    "Spatial",
+    "Groups",
+    "Areas",
+    "UserArea",
+
+    "Savings",
+    "SavingsCreate",
+    "SavingsRefresh",
+    "SavingsFind",
+    "SavingsQuery",
+    "SavingsExplore",
+    "SavingsDelete"
+  ],
+  "template": {
+    "withCompare": false,
+    "withGenerator": false
+  }
+}

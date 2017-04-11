@@ -1,29 +1,18 @@
 package eu.daiad.web.model;
 
 import org.joda.time.DateTime;
+import org.springframework.util.Assert;
 
-public class ComputedNumber
+public class ComputedNumber extends Number
 {
-    private Double value;
+    private final Double value;
     
-    private DateTime timestamp;
+    private final DateTime timestamp;
     
-    public ComputedNumber(Double value, DateTime timestamp)
+    private ComputedNumber(Double value, DateTime timestamp)
     {
         this.value = value;
         this.timestamp = timestamp;
-    }
-    
-    public ComputedNumber(Double value)
-    {
-        this.value = value;
-        this.timestamp = DateTime.now();
-    }
-    
-    public ComputedNumber()
-    {
-        this.value = null;
-        this.timestamp = null;
     }
     
     public Double getValue() 
@@ -36,25 +25,54 @@ public class ComputedNumber
         return timestamp;
     }
 
-    public void setValue(Double value)
+    public static ComputedNumber valueOf(double value, DateTime t)
     {
-        this.value = value;
-        this.timestamp = DateTime.now();
+        return new ComputedNumber(value, t);
     }
     
-    public void reset()
+    public static ComputedNumber valueOf(double value)
     {
-        this.value = null;
-        this.timestamp = null;
+        return new ComputedNumber(value, DateTime.now());
     }
+    
+    public static final ComputedNumber UNDEFINED = new ComputedNumber(null, null);
     
     @Override
     public String toString()
     {
-        if (value != null)
-            return String.format("<ComputedNumber value=%.3f at=\"%s\">", 
-                    value, timestamp);
-        else
-            return "<ComputedNumber value=NULL>";
+        if (this == UNDEFINED)
+            return "undefined";
+        else 
+            return "ComputedNumber [value=" + value + ", timestamp=" + timestamp + "]";
     }
+
+    @Override
+    public int intValue()
+    {
+        Assert.state(value != null);
+        return value.intValue();
+    }
+
+    @Override
+    public long longValue()
+    {
+        Assert.state(value != null);
+        return value.longValue();
+    }
+
+    @Override
+    public float floatValue()
+    {
+        Assert.state(value != null);
+        return value.floatValue();
+    }
+
+    @Override
+    public double doubleValue()
+    {
+        Assert.state(value != null);
+        return value.doubleValue();
+    }
+    
+    private static final long serialVersionUID = 1L;
 }

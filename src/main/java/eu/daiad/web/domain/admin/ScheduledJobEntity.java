@@ -25,122 +25,133 @@ import org.joda.time.DateTime;
 @Table(schema = "public", name = "scheduled_job")
 public class ScheduledJobEntity {
 
-	@Id()
-	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "scheduled_job_id_seq", name = "scheduled_job_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "scheduled_job_id_seq", strategy = GenerationType.SEQUENCE)
-	private long id;
+    @Id()
+    @Column(name = "id")
+    @SequenceGenerator(sequenceName = "scheduled_job_id_seq", name = "scheduled_job_id_seq", allocationSize = 1, initialValue = 1)
+    @GeneratedValue(generator = "scheduled_job_id_seq", strategy = GenerationType.SEQUENCE)
+    private long id;
 
-	@Enumerated(EnumType.STRING)
-	private EnumJobCategory category;
+    @Enumerated(EnumType.STRING)
+    private EnumJobCategory category;
 
-	@Enumerated(EnumType.STRING)
-	private EnumExecutionContainer container;
+    @Enumerated(EnumType.STRING)
+    private EnumExecutionContainer container;
 
-	@Basic
-	private String bean;
+    @Basic
+    private String bean;
 
-	@Basic
-	private String name;
+    @Basic
+    private String name;
 
-	@Basic
-	private String description;
+    @Basic
+    private String description;
 
-	@Column(name = "date_created")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime createdOn;
+    @Column(name = "date_created")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime createdOn;
 
-	@Basic
-	private Long period;
+    @Basic
+    private Long period;
 
-	@Column(name = "cron_expression")
-	private String cronExpression;
+    @Column(name = "cron_expression")
+    private String cronExpression;
 
-	@Basic
-	private boolean enabled;
+    @Basic
+    private boolean enabled;
 
-	@OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
-	@JoinColumn(name = "scheduled_job_id")
-	private Set<ScheduledJobParameterEntity> parameters = new HashSet<ScheduledJobParameterEntity>();
+    @Basic
+    private boolean visible;
 
-	public EnumJobCategory getCategory() {
-		return category;
-	}
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @JoinColumn(name = "scheduled_job_id")
+    private Set<ScheduledJobParameterEntity> parameters = new HashSet<ScheduledJobParameterEntity>();
 
-	public void setCategory(EnumJobCategory category) {
-		this.category = category;
-	}
+    public EnumJobCategory getCategory() {
+        return category;
+    }
 
-	public EnumExecutionContainer getContainer() {
-		return container;
-	}
+    public void setCategory(EnumJobCategory category) {
+        this.category = category;
+    }
 
-	public void setContainer(EnumExecutionContainer container) {
-		this.container = container;
-	}
+    public EnumExecutionContainer getContainer() {
+        return container;
+    }
 
-	public String getBean() {
-		return bean;
-	}
+    public void setContainer(EnumExecutionContainer container) {
+        this.container = container;
+    }
 
-	public void setBean(String bean) {
-		this.bean = bean;
-	}
+    public String getBean() {
+        return bean;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public void setBean(String bean) {
+        this.bean = bean;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public DateTime getCreatedOn() {
-		return createdOn;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public void setCreatedOn(DateTime createdOn) {
-		this.createdOn = createdOn;
-	}
+    public DateTime getCreatedOn() {
+        return createdOn;
+    }
 
-	public Long getPeriod() {
-		return period;
-	}
+    public void setCreatedOn(DateTime createdOn) {
+        this.createdOn = createdOn;
+    }
 
-	public void setPeriod(Long period) {
-		this.period = period;
-	}
+    public Long getPeriod() {
+        return period;
+    }
 
-	public String getCronExpression() {
-		return cronExpression;
-	}
+    public void setPeriod(Long period) {
+        this.period = period;
+    }
 
-	public void setCronExpression(String cronExpression) {
-		this.cronExpression = cronExpression;
-	}
+    public String getCronExpression() {
+        return cronExpression;
+    }
 
-	public boolean isEnabled() {
-		return enabled;
-	}
+    public void setCronExpression(String cronExpression) {
+        this.cronExpression = cronExpression;
+    }
 
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
+    public boolean isEnabled() {
+        return enabled;
+    }
 
-	public long getId() {
-		return id;
-	}
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
-	public Set<ScheduledJobParameterEntity> getParameters() {
-		return parameters;
-	}
+    public long getId() {
+        return id;
+    }
+
+    public Set<ScheduledJobParameterEntity> getParameters() {
+        return parameters;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
 
 }

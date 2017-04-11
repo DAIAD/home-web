@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -35,6 +36,9 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 	protected MessageSource messageSource;
 
 	@Autowired
+	private Jackson2ObjectMapperBuilder objectMapperBuilder;
+
+	@Autowired
 	public CustomAccessDeniedHandler(@Value("${error-page:/error/403}") String errorPage) {
 		this.errorPage = errorPage;
 	}
@@ -43,15 +47,17 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 		return messageSource.getMessage(code, null, code, null);
 	}
 
-	public void handle(HttpServletRequest request, HttpServletResponse response,
-					AccessDeniedException accessDeniedException) throws IOException, ServletException {
+	@Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+	    logger.error(accessDeniedException);
+
 		if (!response.isCommitted()) {
 			if (errorPage != null) {
 				if (AjaxUtils.isAjaxRequest(request)) {
 					response.setContentType("application/json;charset=UTF-8");
 					response.setHeader("Cache-Control", "no-cache");
 
-					ObjectMapper mapper = new ObjectMapper();
+					ObjectMapper mapper = objectMapperBuilder.build();
 
 					if (request.getRequestURI().equals("/logout")) {
 						response.setStatus(HttpStatus.OK.value());
@@ -62,7 +68,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
 						String messageKey = SharedErrorCode.AUTHENTICATION.getMessageKey();
 
-						RestResponse r = new RestResponse(messageKey, this.getMessage(messageKey));
+						RestResponse r = new RestResponse(messageKey, getMessage(messageKey));
 
 						response.getWriter().print(mapper.writeValueAsString(r));
 					}
@@ -91,5 +97,4 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
 		this.errorPage = errorPage;
 	}
-
 }

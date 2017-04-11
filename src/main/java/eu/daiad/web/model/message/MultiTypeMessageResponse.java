@@ -43,7 +43,7 @@ public class MultiTypeMessageResponse extends RestResponse
 	        case RECOMMENDATION:
 	            recommendations.add(message);
 	            break;
-	        case RECOMMENDATION_STATIC:
+	        case TIP:
 	            tips.add(message);
 	            break;
 	        default:

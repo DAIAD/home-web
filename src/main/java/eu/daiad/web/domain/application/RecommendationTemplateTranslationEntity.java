@@ -1,11 +1,8 @@
 package eu.daiad.web.domain.application;
 
 import javax.persistence.Basic;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -26,7 +23,7 @@ import eu.daiad.web.model.message.EnumRecommendationTemplate;
         @Index(columnList = "template, locale", unique = true),
     }
 )
-public class RecommendationTemplateTranslationEntity 
+public class RecommendationTemplateTranslationEntity
 {
 	@Id()
 	@Column(name = "id")
@@ -38,7 +35,7 @@ public class RecommendationTemplateTranslationEntity
 	@GeneratedValue(generator = "recommendation_template_translation_id_seq", strategy = GenerationType.SEQUENCE)
 	private int id;
 
-	@ManyToOne(cascade = { CascadeType.ALL })
+	@ManyToOne()
     @JoinColumn(name = "template", nullable = false)
 	@NotNull
     private RecommendationTemplateEntity template;
@@ -60,11 +57,11 @@ public class RecommendationTemplateTranslationEntity
 	public RecommendationTemplateEntity getTemplate() {
 		return template;
 	}
-	
-	public EnumRecommendationTemplate getEnumeratedTemplate() {
+
+	public EnumRecommendationTemplate getTemplateAsEnum() {
         return template.getTemplate();
     }
-	
+
 	public String getLocale() {
 		return locale;
 	}

@@ -19,7 +19,7 @@ public enum EnumTimeAggregation {
 	}
 
 	public int getValue() {
-		return this.value;
+		return value;
 	}
 
 	private static final Map<Integer, EnumTimeAggregation> intToTypeMap = new HashMap<Integer, EnumTimeAggregation>();
@@ -48,8 +48,7 @@ public enum EnumTimeAggregation {
 	public static class Deserializer extends JsonDeserializer<EnumTimeAggregation> {
 
 		@Override
-		public EnumTimeAggregation deserialize(JsonParser parser, DeserializationContext context) throws IOException,
-						JsonProcessingException {
+		public EnumTimeAggregation deserialize(JsonParser parser, DeserializationContext context) throws IOException, JsonProcessingException {
 			return EnumTimeAggregation.fromString(parser.getValueAsString());
 		}
 	}

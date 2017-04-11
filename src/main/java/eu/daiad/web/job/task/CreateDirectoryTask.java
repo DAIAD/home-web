@@ -64,7 +64,7 @@ public class CreateDirectoryTask extends BaseTask implements StoppableTasklet {
             if (!StringUtils.isBlank(parameters.get(EnumInParameter.HDFS_PATH.getValue()))) {
                 key = chunkContext.getStepContext().getStepName() +
                       Constants.PARAMETER_NAME_DELIMITER +
-                      EnumInParameter.HDFS_PATH.getValue();
+                      EnumOutParameter.HDFS_PATH.getValue();
 
                 chunkContext.getStepContext()
                             .getStepExecution()
@@ -141,7 +141,7 @@ public class CreateDirectoryTask extends BaseTask implements StoppableTasklet {
      */
     public static enum EnumInParameter {
         /**
-         * Base path where the new directory is created.
+         * Base path where the new directory is created. Default value is the system's temporary directory.
          */
         BASE_PATH("base.path"),
         /**
@@ -149,7 +149,7 @@ public class CreateDirectoryTask extends BaseTask implements StoppableTasklet {
          */
         PREFIX("prefix"),
         /**
-         * HDFS path.
+         * HDFS path. If set, the directory is created on HDFS.
          */
         HDFS_PATH("fs.defaultFS");
 

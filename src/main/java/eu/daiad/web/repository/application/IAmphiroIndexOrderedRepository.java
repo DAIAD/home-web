@@ -92,4 +92,14 @@ public interface IAmphiroIndexOrderedRepository {
      */
     void ignore(AuthenticatedUser user, List<IgnoreShowerRequest.Session> sessions) throws Exception;
 
+    /**
+     * Updates the date time of a historical shower and converts it to a real-time one.
+     *
+     * @param user the owner of the device.
+     * @param device the amphiro b1 device.
+     * @param sessionId the per device unique shower Id.
+     * @param timestamp the real-time timestamp.
+     */
+    void toRealTime(AuthenticatedUser user, AmphiroDevice device, long sessionId, long timestamp);
+
 }

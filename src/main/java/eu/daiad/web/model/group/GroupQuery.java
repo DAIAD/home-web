@@ -4,9 +4,19 @@ import com.vividsolutions.jts.geom.Geometry;
 
 public class GroupQuery {
 
+    private Integer size;
+
     private String name;
 
     private Geometry geometry;
+
+    public Integer getSize() {
+        return size;
+    }
+
+    public void setSize(Integer size) {
+        this.size = size;
+    }
 
     public String getName() {
         return name;

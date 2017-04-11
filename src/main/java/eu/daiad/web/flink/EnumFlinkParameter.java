@@ -10,6 +10,10 @@ public enum EnumFlinkParameter {
      */
     JOB_SCRIPT("job.script"),
     /**
+     * Job script arguments
+     */
+    JOB_SCRIPT_ARGS("job.script.args"),
+    /**
      * HDFS path where job input files are copied before the job execution begins.
      */
     WORKING_DIRECTORY("working.directory");

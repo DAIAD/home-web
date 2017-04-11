@@ -10,7 +10,6 @@ import javax.persistence.TypedQuery;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,12 +28,6 @@ import eu.daiad.web.repository.BaseRepository;
 @Repository("jpaWaterIqRepository")
 @Transactional("applicationTransactionManager")
 public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepository {
-
-    /**
-     * Password reset token interval in hours.
-     */
-    @Value("${daiad.password.reset.token.duration}")
-    private int passwordResetTokenDuration;
 
     /**
      *  Java Persistence entity manager.
@@ -244,4 +237,29 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
     public List<DailyConsumption> getComparisonDailyConsumption(UUID userKey, int year, int month) {
         throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
+
+    /**
+     * Returns the Water IQ as computed by the savings potential algorithm.
+     *
+     * @param month the month.
+     * @param serial the meter serial number.
+     * @return a value from A to F or null if not savings potential data exist.
+     */
+    @Override
+    public String getWaterIqFromSavingsPotential(int month, String serial) {
+        String queryString = "select i.iq from savings_potential_water_iq i where i.month = :month and i.serial = :serial";
+
+        TypedQuery<String> query = entityManager.createQuery(queryString, String.class)
+                                                .setParameter("month", month)
+                                                .setParameter("serial", serial);
+
+        List<String> values = query.getResultList();
+
+        if(values.isEmpty()) {
+            return null;
+        }
+
+        return values.get(0);
+    }
+
 }

@@ -24,6 +24,9 @@ import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.SurveyEntity;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.admin.Counter;
+import eu.daiad.web.model.device.Device;
+import eu.daiad.web.model.device.EnumDeviceType;
+import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SchedulerErrorCode;
 import eu.daiad.web.model.group.Cluster;
@@ -40,6 +43,7 @@ import eu.daiad.web.model.query.MeterUserDataPoint;
 import eu.daiad.web.model.query.RankingDataPoint;
 import eu.daiad.web.model.query.UserDataPoint;
 import eu.daiad.web.model.utility.UtilityInfo;
+import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
@@ -52,22 +56,6 @@ import eu.daiad.web.service.IDataService;
 @Component
 public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet {
 
-    /**
-     * Parameter name for the unique cluster name.
-     */
-    private final String PARAMETER_CLUSTER_NAME = "cluster.name";
-
-    /**
-     * Parameter name for a semicolon delimited list of segment unique names.
-     * The size of the list must match the value of PARAMETER_CLUSTER_SIZE
-     * parameter.
-     */
-    private final String PARAMETER_SEGMENT_NAMES = "cluster.segments";
-
-    /**
-     * Parameter name for the distance of the nearest neighbors.
-     */
-    private final String PARAMETER_NEAREST_DISTANCE = "nearest.distance";
 
     /**
      * Parameter name for setting the reference timestamp.
@@ -103,6 +91,12 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     private IGroupRepository groupRepository;
 
     /**
+     * Repository for accessing device data.
+     */
+    @Autowired
+    private IDeviceRepository deviceRepository;
+
+    /**
      * Repository for updating water IQ data.
      */
     @Autowired
@@ -121,25 +115,25 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
             Map<String, String> parameters = getStepParameters(chunkContext.getStepContext());
 
             // Get cluster name
-            String clusterName = (String) parameters.get(PARAMETER_CLUSTER_NAME);
+            String clusterName = (String) parameters.get(EnumInParameter.CLUSTER_NAME.getValue());
 
             // Get segment names
-            String[] names = StringUtils.split((String) parameters.get(PARAMETER_SEGMENT_NAMES), ";");
+            String[] segmentNames = StringUtils.split((String) parameters.get(EnumInParameter.SEGMENT_NAMES.getValue()), ";");
 
-            if ((names == null) || (names.length == 0)) {
+            if ((segmentNames == null) || (segmentNames.length == 0)) {
                 // The number of segment names must match the number of segments
                 throw createApplicationException(SchedulerErrorCode.SCHEDULER_INVALID_PARAMETER)
-                        .set("parameter", PARAMETER_SEGMENT_NAMES)
-                        .set("value", (String) parameters.get(PARAMETER_SEGMENT_NAMES));
+                        .set("parameter", EnumInParameter.SEGMENT_NAMES.getValue())
+                        .set("value", (String) parameters.get(EnumInParameter.SEGMENT_NAMES.getValue()));
             }
 
             // Get max distance of neighbors
-            float maxDistance = Float.parseFloat((String) parameters.get(PARAMETER_NEAREST_DISTANCE));
+            float maxDistance = Float.parseFloat((String) parameters.get(EnumInParameter.DISTANCE.getValue()));
             if (maxDistance <= 0) {
                 // Max distance must be a positive value
                 throw createApplicationException(SchedulerErrorCode.SCHEDULER_INVALID_PARAMETER)
-                        .set("parameter", PARAMETER_NEAREST_DISTANCE)
-                        .set("value", (String) parameters.get(PARAMETER_NEAREST_DISTANCE));
+                        .set("parameter", EnumInParameter.DISTANCE.getValue())
+                        .set("value", (String) parameters.get(EnumInParameter.DISTANCE.getValue()));
             }
 
             // Delete the existing cluster and its segments and members
@@ -158,7 +152,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                 context.utilityKey = utility.getKey();
                 context.timezone = DateTimeZone.forID(utility.getTimezone());
                 context.clusterName = clusterName;
-                context.labels = names;
+                context.labels = segmentNames;
 
                 // Get utility counters. The job computes segments only
                 // for utilities that have at least a registered user
@@ -340,6 +334,15 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
             }
 
             cluster.getSegments().get(index).getMembers().add(meter.getKey());
+
+            // Override value if savings potential data exist
+            List<Device> devices = deviceRepository.getUserDevices(point.getKey(), EnumDeviceType.METER);
+            if (devices.size() == 1) {
+                index = overrideWaterIqWithSavingPotentialResult(context,
+                                                                 index,
+                                                                 context.start.getMonthOfYear(),
+                                                                 ((WaterMeterDevice) devices.get(0)).getSerial());
+            }
 
             comparisons.getUserByKey(meter.getKey()).getSelf().value = index;
         }
@@ -591,5 +594,55 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
          * Maximum user consumption
          */
         double maxConsumption = 0;
+    }
+
+
+    /**
+     * Enumeration of job input parameters.
+     */
+    public static enum EnumInParameter {
+        /**
+         * Cluster name.
+         */
+        CLUSTER_NAME("cluster.name"),
+        /**
+         * Segment names separated with (;).
+         */
+        SEGMENT_NAMES("cluster.segments"),
+        /**
+         * Distance in meters for computing nearest consumers.
+         */
+        DISTANCE("nearest.distance"),
+        /**
+         * Reference timestamp for computing year and month.
+         */
+        REFERENCE_TIMESTAMP("reference.timestamp");
+
+
+        private final String value;
+
+        public String getValue() {
+            return value;
+        }
+
+        private EnumInParameter(String value) {
+            this.value = value;
+        }
+    }
+
+    private int overrideWaterIqWithSavingPotentialResult(ExecutionContext context, int current, int month, String serial) {
+        String value = waterIqRepository.getWaterIqFromSavingsPotential(month, serial);
+
+        if (StringUtils.isBlank(value)) {
+            return current;
+        }
+
+        for (int i = 0, count = context.labels.length; i < count; i++) {
+            if (context.labels[i].equalsIgnoreCase(value)) {
+                return i;
+            }
+        }
+
+        return current;
     }
 }

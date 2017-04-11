@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum EnumQueryFavouriteType {
-    UNDEFINED(0), MAP(1), CHART(2);
+    UNDEFINED(0), MAP(1), CHART(2), FORECAST(3);
     
 	private final int value;
 

@@ -43,6 +43,8 @@ public class UpdateProfileRequest extends AuthenticatedRequest {
 
     private byte[] photo;
 
+    private boolean resetPhoto = false;
+
     private Boolean garden;
 
     @JsonDeserialize(using = EnumUnit.Deserializer.class)
@@ -174,6 +176,14 @@ public class UpdateProfileRequest extends AuthenticatedRequest {
 
     public void setGarden(Boolean garden) {
         this.garden = garden;
+    }
+
+    public boolean isResetPhoto() {
+        return resetPhoto;
+    }
+
+    public void setResetPhoto(boolean resetPhoto) {
+        this.resetPhoto = resetPhoto;
     }
 
 }

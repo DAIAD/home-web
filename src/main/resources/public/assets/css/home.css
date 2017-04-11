@@ -324,10 +324,10 @@ label {
 	display: block;
 	position: fixed;
 	top: 35vh;
-  left: 50vw;
+  left: 46vw;
 	width: 80px;
 	height: 80px;
-  z-index: 100;
+  z-index: 2000;
 	animation: counter-spin 0.8s linear infinite;
 }
 
@@ -335,10 +335,10 @@ label {
 	display: block;
 	position: fixed;
 	top: 35vh;
-  left: 50vw;
+  left: 46vw;
 	width: 80px;
 	height: 80px;
-  z-index: 100;
+  z-index: 2000;
 	animation: spin 0.8s linear infinite;
 }
 @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
@@ -670,15 +670,19 @@ div[class^="section."]{
 	padding: 0;
 }
 .notification-list ul li{
+  display: inline-block;
+  height: 100%;
+  width: 100%;
 }
 
 .notification-list ul li a {
-	padding: 2px 10px;
+	padding: 15px 10px;
 	color: #424242; 
 	border-bottom: 1px #9fa1a2 solid;
 	font-weight: normal;
-	float: left;
+  display: inline-block;
 	width: 100%;
+  //min-height:400px;
 }
 
 .primary .notification-list ul li a {
@@ -702,14 +706,30 @@ div[class^="section."]{
 	margin-left: 15px;
 }
 
-.unread a:before{
-	font-size: 20px;
-	content: '\2022';
-	margin-right: 6px;
+.read a > i, .unread a > i {
+  display: inline-block;
+  vertical-align: middle;
+  color: #2D3580;
+  margin-right: 10px;
 }
-.read a:before{
-	content: '';
-	margin-right: 10px;
+
+.read a > span, .unread a > span {
+  display: inline-block;
+  vertical-align: middle;
+  width: 89%;
+}
+
+.read a > i:before, .unread a > i:before {
+  float: left;
+	font-size: 1.5em;
+  line-height: 1.1em;
+}
+
+.unread a > i:before{
+	content: '\2022';
+}
+.read a > i:before{
+	content: '\00A0';
 }
 
 .deviceCount{
@@ -998,6 +1018,10 @@ div[class^="section.login"]{
   margin-top: 20px;
 }
 
+.form-captcha > div > div {
+  border: 1px #2D3580 solid;
+}
+
 /* Dashboard */
 
 .dashboard { 
@@ -1021,7 +1045,7 @@ div[class^="section.login"]{
   
 }
 
-.infobox {
+.widget {
   display: flex;
   flex-direction: column;
   background: #FFF;
@@ -1030,76 +1054,76 @@ div[class^="section.login"]{
   width: 100%;
   height: 100%;
 }
-.infobox-header {
+.widget-header {
   flex-grow: 0;
   padding: 8px 5px 5px 8px;
   min-height: 37px;
   border-bottom: 1px #9fa1a2 solid;
 }
-.infobox-header h4 {
+.widget-header h4 {
   margin: 0;
 }
-.infobox-header span, .infobox-header div, .infobox-header a {
+.widget-header span, .widget-header div, .widget-header a {
   display: inline-block;
   font-size: 0.95em;
 }
 
-.infobox-body {
+.widget-body {
   flex-grow: 1;
   flex-shrink: 1;
 }
-.infobox-body span {
+.widget-body span {
   font-size: 1.02em;
 }
-.infobox-body p {
+.widget-body p {
   margin: 0;
 }
-.infobox-footer {
+.widget-footer {
   flex-grow: 0;
   text-align: center;
   padding: 5px;
   min-height: 37px;
   border-top: 1px #9fa1a2 solid;
 }
-.infobox-x {
+.widget-x {
   font-weight: normal;
   color: lightgrey;
 }
-.infobox-x:hover {
+.widget-x:hover {
   color: lightgrey;
 }
-.infobox-error {
+.widget-error {
   font-size: 1.1em;
 }
 
-.add-infobox-modal .modal-body {
+.add-widget-modal .modal-body {
   padding: 0;
 }
-.add-infobox-modal .modal-content {
+.add-widget-modal .modal-content {
   background:#E8F5FD;
 }
-.add-infobox {
+.add-widget {
   display: flex;
   flex-direction: row;
 }
-.add-infobox-left {
+.add-widget-left {
   flex-grow: 1;
   padding: 20px 0;
   background: #fff;
 }
-.add-infobox-right {
+.add-widget-right {
   flex-grow: 0;
   flex-basis: 200px;
   padding: 20px 0;
 }
-.add-infobox-modal p {
+.add-widget-modal p {
   padding: 15px;
 }
 
-.add-infobox-types {
+.add-widget-types {
   list-style: none;
 }
-.add-infobox-types > li > a {
+.add-widget-types > li > a {
   width: 190px;
   float: left;
   padding: 50px 30px;
@@ -1107,12 +1131,12 @@ div[class^="section.login"]{
   border: 1px #2D3580 solid;
   overflow: hidden;
 }
-.add-infobox-types > li > a:hover {
+.add-widget-types > li > a:hover {
   background: #D0EAFA;
   //background: #2D3580;
   //color: #fff;
 }
-.add-infobox-types > li > a.selected {
+.add-widget-types > li > a.selected {
   background: #D0EAFA;
 }
 .dashboard-device-info {
@@ -1165,6 +1189,8 @@ div[class^="section.login"]{
 .navigator-child{
   display: inline-block;
   margin-top: -10px;
+  min-width: 50px;
+  min-height: 50px;
 }
 
 .history-chart {
@@ -1212,7 +1238,7 @@ div[class^="section.login"]{
 }
 
 .session-item{
-  max-height: 75px;
+  //max-height: 75px;
   overflow: hidden;
   border-top: 1px #666 solid;
 }
@@ -1278,12 +1304,32 @@ input[name="amphiro-devices"] {
 }
 /* Session Details */
 
-.modal-body .session-item{
+.session-modal .modal-body {
+  min-height: 80vh;
+}
+
+.session-modal .modal-body .session-item{
   padding: 10px 0;
 }
 
+.shower-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+}
+
 .shower-chart-area {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-basis: 364px;
+}
+
+.limited-data-text {
+  align-self: center;
+}
+
+.shower-info {
 }
 
 .shower-info .headline {
@@ -1300,6 +1346,24 @@ input[name="amphiro-devices"] {
 .shower-info .headline-user {
   float: right;
 }
+
+.session-item .in-pictures {
+  float: left;
+  width: 78%;
+  margin-left: 20px;
+}
+
+.in-pictures > .picture {
+  float: left;
+  margin-left: 10px;
+  height: 30px;
+}
+.in-pictures > .picture.light-bulb {
+  width: 50px;
+  height: 30px;
+  margin: 0 -10px;
+}
+
 /* Notifications */
 
 .notifications { 
@@ -1309,19 +1373,31 @@ input[name="amphiro-devices"] {
 }
 .notifications-left {
   flex-grow: 1;
+  flex-basis: 475px;
   background: #fff;
 }
 .notifications-right {
   flex-grow: 0;
   flex-shrink: 1;
-  flex-basis: 700px;
+  flex-basis: 600px;
   display: flex;
-  padding: 20px;
+  padding: 30px 20px;
 }
 .notification {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
+  justify-content: space-between;
+}
+
+div[class^="section.notifications"] .notifications .scrollable {
+	overflow: auto;
+	max-height: 85vh;
+}
+
+div[class^="section.notifications"] .notification-list ul li a {
+  font-size: 1.2em;
+  padding: 25px 20px;
 }
 
 .notification-header {
@@ -1339,8 +1415,19 @@ input[name="amphiro-devices"] {
 .notification-details {
 	margin-top: 50px;
 	font-size: 1.1em;
-  flex-grow: 1;
+  flex-grow: 0;
 }
+
+.acknowledged {
+  width: 100%;
+  text-align: right;
+  font-size: 0.8em;
+}
+
+.acknowledged > i {
+  margin-right: 5px;
+}
+
 .notification-pagination {
   flex-grow: 0;
 }

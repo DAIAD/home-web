@@ -58,7 +58,7 @@ public class WeatherController extends BaseRestController {
     @RequestMapping(value = "/api/v1/weather/service", method = RequestMethod.POST, produces = "application/json")
     public RestResponse getWeatherService(@RequestBody Credentials credentials) {
         try {
-            AuthenticatedUser user = this.authenticate(credentials);
+            AuthenticatedUser user = authenticate(credentials);
 
             WeatherServiceResponse weatherServiceResponse = new WeatherServiceResponse();
 
@@ -71,7 +71,7 @@ public class WeatherController extends BaseRestController {
                 service.setName(serviceEntity.getName());
 
                 for (WeatherServiceUtilityEntity utilityEntity : serviceEntity.getUtilities()) {
-                    if (user.canAccessUtility(utilityEntity.getId())) {
+                    if (user.canAccessUtility(utilityEntity.getUtility().getId())) {
                         service.getUtilities().add(new UtilityInfo(utilityEntity.getUtility()));
                     }
                 }
@@ -107,7 +107,7 @@ public class WeatherController extends BaseRestController {
                                        @PathVariable String from,
                                        @PathVariable String to) {
         try {
-            AuthenticatedUser user = this.authenticate(credentials);
+            AuthenticatedUser user = authenticate(credentials);
 
             WeatherQueryResponse weatherQueryResponse = new WeatherQueryResponse();
 

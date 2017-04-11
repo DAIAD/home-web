@@ -26,6 +26,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -35,6 +37,11 @@ import org.apache.hadoop.io.IOUtils;
  * Submits a map reduce job to a Hadoop YARN cluster.
  */
 public class RunJar {
+
+    /**
+     * Logger instance for writing events using the configured logging API.
+     */
+    private static final Log logger = LogFactory.getLog(RunJar.class);
 
     /**
      * Environment specific temporary directory.
@@ -94,11 +101,11 @@ public class RunJar {
      * @throws Throwable if the job execution fails.
      */
     public void run(Map<String, String> properties) throws Throwable {
-        ensureParameter(properties, EnumMapReduceParameter.JOB_NAME.getValue(), "Job name is not set");
-        ensureParameter(properties, EnumMapReduceParameter.JAR_NAME.getValue(), "JAR is not set");
+        ensureParameter(properties, EnumJobMapReduceParameter.JOB_NAME.getValue(), "Job name is not set");
+        ensureParameter(properties, EnumJobMapReduceParameter.JAR_NAME.getValue(), "JAR is not set");
 
         // Get JAR file
-        String jarFilename = properties.get(EnumMapReduceParameter.JAR_NAME.getValue());
+        String jarFilename = properties.get(EnumJobMapReduceParameter.JAR_NAME.getValue());
 
         File file = new File(jarFilename);
         if (!file.exists() || !file.isFile()) {
@@ -122,14 +129,18 @@ public class RunJar {
         jarFile.close();
 
         if (mainClassName == null) {
-            ensureParameter(properties, EnumMapReduceParameter.MAIN_CLASS_NAME.getValue(), "Main Class is not set");
+            ensureParameter(properties, EnumJobMapReduceParameter.MAIN_CLASS_NAME.getValue(), "Main Class is not set");
 
-            mainClassName = properties.get(EnumMapReduceParameter.MAIN_CLASS_NAME.getValue());
+            mainClassName = properties.get(EnumJobMapReduceParameter.MAIN_CLASS_NAME.getValue());
         }
         mainClassName = mainClassName.replaceAll("/", ".");
 
         // Create working directory
-        File tmpDir = new File(System.getProperty(PROPERTY_TMP_DIRECTORY));
+        String tmpDirPath = properties.get(EnumJobMapReduceParameter.LOCAL_TMP_PATH.getValue());
+        if (StringUtils.isBlank(tmpDirPath)) {
+            tmpDirPath = System.getProperty(PROPERTY_TMP_DIRECTORY);
+        }
+        File tmpDir = new File(tmpDirPath);
         ensureDirectory(tmpDir);
 
         final File workDir;
@@ -149,8 +160,8 @@ public class RunJar {
 
         // Get external libraries directory
         File libDir = null;
-        if (ensureParameter(properties, EnumMapReduceParameter.LIB_LOCAL_PATH.getValue(), "Lib path is not set", false)) {
-            libDir = new File(properties.get(EnumMapReduceParameter.LIB_LOCAL_PATH.getValue()));
+        if (ensureParameter(properties, EnumJobMapReduceParameter.LOCAL_LIB_PATH.getValue(), "Lib path is not set", false)) {
+            libDir = new File(properties.get(EnumJobMapReduceParameter.LOCAL_LIB_PATH.getValue()));
 
             ensureDirectory(libDir);
         }
@@ -170,7 +181,7 @@ public class RunJar {
             List<String> arguments = new ArrayList<>();
 
             for (String key : properties.keySet()) {
-                switch (EnumMapReduceParameter.fromString(key)) {
+                switch (EnumJobMapReduceParameter.fromString(key)) {
                     case JAR_NAME:
                         // Ignore JAR file name
                         break;
@@ -186,6 +197,8 @@ public class RunJar {
             // Initialize class loader and execute application
             loader = createClassLoader(file, libDir, workDir);
             Thread.currentThread().setContextClassLoader(loader);
+
+            logCommand(jarFilename, mainClassName, arguments);
 
             // Invoke job
             mainClass = Class.forName(mainClassName, true, loader);
@@ -334,29 +347,37 @@ public class RunJar {
      */
     private void copyLocalFilesToHdfs(Map<String, String> properties) throws IOException {
         // Create random base path
-        String basePath = Paths.get(properties.get(EnumMapReduceParameter.TMP_HDFS_PATH.getValue()),
+        String basePath = Paths.get(properties.get(EnumJobMapReduceParameter.HDFS_TMP_PATH.getValue()),
                                     RandomStringUtils.randomAlphanumeric(8)).toString();
 
         // Update temporary HDFS path
-        properties.put(EnumMapReduceParameter.TMP_HDFS_PATH.getValue(), basePath);
+        properties.put(EnumJobMapReduceParameter.HDFS_TMP_PATH.getValue(), basePath);
 
         // Copy files to HDFS. These files are accessible from HDFS.
-        String localPath = properties.get(EnumMapReduceParameter.FILE_LOCAL_PATH.getValue());
-        String hdfsPath = Paths.get(basePath, "files").toString();
+        String localFilePath = properties.get(EnumJobMapReduceParameter.LOCAL_FILE_PATH.getValue());
 
-        copyFilesToHdfs(properties, localPath, hdfsPath);
+        String hdfsFilePath = properties.get(EnumJobMapReduceParameter.HDFS_FILE_PATH.getValue());
+        if (StringUtils.isBlank(hdfsFilePath)) {
+            hdfsFilePath = Paths.get(basePath, "files").toString();
+        }
+
+        copyFilesToHdfs(properties, localFilePath, hdfsFilePath);
 
         // Update parameter of the HDFS path in order to include the random base path.
-        properties.put(EnumMapReduceParameter.FILE_HDFS_PATH.getValue(), hdfsPath);
+        properties.put(EnumJobMapReduceParameter.HDFS_FILE_PATH.getValue(), hdfsFilePath);
 
         // Copy files from cache to HDFS. These files will be accessible locally on every YARN node.
-        localPath = properties.get(EnumMapReduceParameter.CACHE_LOCAL_PATH.getValue());
-        hdfsPath = Paths.get(basePath, "cache").toString();
+        String localCachePath = properties.get(EnumJobMapReduceParameter.LOCAL_CACHE_PATH.getValue());
 
-        copyFilesToHdfs(properties, localPath, hdfsPath);
+        String hdfsCachePath = properties.get(EnumJobMapReduceParameter.HDFS_CACHE_PATH.getValue());
+        if (StringUtils.isBlank(hdfsCachePath)) {
+            hdfsCachePath = Paths.get(basePath, "cache").toString();
+        }
+
+        copyFilesToHdfs(properties, localCachePath, hdfsCachePath);
 
         // Update parameter of the HDFS path in order to include the random base path.
-        properties.put(EnumMapReduceParameter.CACHE_HDFS_PATH.getValue(), hdfsPath);
+        properties.put(EnumJobMapReduceParameter.HDFS_CACHE_PATH.getValue(), hdfsCachePath);
     }
 
     private void copyFilesToHdfs(Map<String, String> properties, String source, String target) throws IOException {
@@ -368,10 +389,10 @@ public class RunJar {
                                                  files.size(),
                                                  source,
                                                  target,
-                                                 properties.get(EnumMapReduceParameter.HDFS_PATH.getValue())));
+                                                 properties.get(EnumHadoopParameter.HDFS_PATH.getValue())));
 
                 Configuration conf = new Configuration();
-                conf.set(EnumMapReduceParameter.HDFS_PATH.getValue(), properties.get(EnumMapReduceParameter.HDFS_PATH.getValue()));
+                conf.set(EnumHadoopParameter.HDFS_PATH.getValue(), properties.get(EnumHadoopParameter.HDFS_PATH.getValue()));
 
                 FileSystem hdfsFileSystem = FileSystem.get(conf);
 
@@ -406,5 +427,30 @@ public class RunJar {
             }
         }
         return files;
+    }
+
+    /**
+     * Logs the command alternative for executing the job from the command line.
+     *
+     * @param jar the MapReduce job jar.
+     * @param main the main class to initialize.
+     * @param arguments the arguments to use.
+     */
+    private void logCommand(String jar, String main, List<String> arguments) {
+        StringBuilder text = new StringBuilder();
+
+        text.append(String.format("bin/hadoop jar %s \\", jar));
+        text.append(System.lineSeparator());
+        text.append(String.format("%s \\", main));
+        text.append(System.lineSeparator());
+        if (!arguments.isEmpty()) {
+            for (int index = 0, count = arguments.size() - 1; index < count; index++) {
+                text.append(String.format("\"%s\" \\", arguments.get(index)));
+                text.append(System.lineSeparator());
+            }
+            text.append(String.format("%s", arguments.get(arguments.size() - 1)));
+        }
+
+        logger.info(text.toString());
     }
 }

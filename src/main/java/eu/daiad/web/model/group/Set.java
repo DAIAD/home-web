@@ -1,9 +1,22 @@
 package eu.daiad.web.model.group;
 
+import java.util.UUID;
+
 public class Set extends Group {
 
-	@Override
-	public EnumGroupType getType() {
-		return EnumGroupType.SET;
-	}
+    private UUID ownerKey;
+
+    public Set(UUID ownerKey) {
+        this.ownerKey = ownerKey;
+    }
+
+    public UUID getOwnerKey() {
+        return ownerKey;
+    }
+
+    @Override
+    public EnumGroupType getType() {
+        return EnumGroupType.SET;
+    }
+
 }

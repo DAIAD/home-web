@@ -6,31 +6,70 @@ import java.util.UUID;
 
 public class ExpandedPopulationFilter {
 
+    private EnumPopulationFilterType type = EnumPopulationFilterType.UNDEFINED;
+
+    private int size;
+
     private String label;
 
     private Long areaId;
 
-    private List<UUID> users = new ArrayList<UUID>();
+    private UUID groupKey;
 
-    private List<String> labels = new ArrayList<String>();
-
-    private List<byte[]> hashes = new ArrayList<byte[]>();
-
-    private List<byte[]> serials = new ArrayList<byte[]>();
+    private UUID areaKey;
 
     private Ranking ranking;
 
-    public ExpandedPopulationFilter() {
+    private List<UUID> userKeys = new ArrayList<UUID>();
 
+    private List<String> labels = new ArrayList<String>();
+
+    private List<byte[]> userKeyHashes = new ArrayList<byte[]>();
+
+    private List<byte[]> serialHashes = new ArrayList<byte[]>();
+
+    public ExpandedPopulationFilter(PopulationFilter filter, int size) {
+        this.size = size;
+
+        type = filter.getType();
+        label = filter.getLabel();
+        ranking = filter.getRanking();
+        switch (filter.getType()) {
+            case USER:
+                groupKey = null;
+                break;
+            case GROUP:
+                groupKey = ((GroupPopulationFilter) filter).getGroup();
+                break;
+            case UTILITY:
+                groupKey = ((UtilityPopulationFilter) filter).getUtility();
+                break;
+            default:
+                throw new IllegalArgumentException(String.format("Filter type [%s] is not supported.", filter.getType()));
+        }
     }
 
-    public ExpandedPopulationFilter(String label) {
-        this.label = label;
+    public ExpandedPopulationFilter(ExpandedPopulationFilter population) {
+        type = population.type;
+        label = population.label;
+        areaId = population.areaId;
+        areaKey = population.areaKey;
+        ranking = population.ranking;
+        groupKey = population.groupKey;
     }
 
-    public ExpandedPopulationFilter(String label, Ranking ranking) {
-        this.label = label;
-        this.ranking = ranking;
+    public ExpandedPopulationFilter(ExpandedPopulationFilter population, long areaId, UUID areaKey) {
+        type = population.type;
+        label = population.label;
+        ranking = population.ranking;
+        groupKey = population.groupKey;
+
+        this.areaId = areaId;
+        this.areaKey = areaKey;
+    }
+
+    public EnumPopulationFilterType getType() {
+        return type;
     }
 
     public String getLabel() {
@@ -41,16 +80,16 @@ public class ExpandedPopulationFilter {
         this.label = label;
     }
 
-    public List<UUID> getUsers() {
-        return users;
+    public List<UUID> getUserKeys() {
+        return userKeys;
     }
 
-    public List<byte[]> getHashes() {
-        return hashes;
+    public List<byte[]> getUserKeyHashes() {
+        return userKeyHashes;
     }
 
-    public List<byte[]> getSerials() {
-        return serials;
+    public List<byte[]> getSerialHashes() {
+        return serialHashes;
     }
 
     public List<String> getLabels() {
@@ -65,8 +104,19 @@ public class ExpandedPopulationFilter {
         return areaId;
     }
 
-    public void setAreaId(Long areaId) {
-        this.areaId = areaId;
+    public UUID getGroupKey() {
+        return groupKey;
+    }
+
+    public UUID getAreaKey() {
+        return areaKey;
+    }
+
+    public int getSize() {
+        if(!userKeys.isEmpty()) {
+            return userKeys.size();
+        }
+        return size;
     }
 
 }

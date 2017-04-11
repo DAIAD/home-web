@@ -5,19 +5,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.rmi.server.ExportException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.UUID;
-import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -34,21 +30,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import eu.daiad.web.connector.RemoteFileAttributes;
-import eu.daiad.web.connector.SecureFileTransferConnector;
-import eu.daiad.web.domain.admin.UploadEntity;
 import eu.daiad.web.model.error.ActionErrorCode;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
-import eu.daiad.web.model.loader.DataTransferConfiguration;
 import eu.daiad.web.model.loader.EnumUploadFileType;
 import eu.daiad.web.model.loader.FileProcessingStatus;
 import eu.daiad.web.model.meter.WaterMeterForecast;
 import eu.daiad.web.model.meter.WaterMeterForecastCollection;
 import eu.daiad.web.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.web.model.meter.WaterMeterStatusQueryResult;
-import eu.daiad.web.repository.application.IWaterMeterForecastRepository;
-import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.repository.application.IMeterDataRepository;
+import eu.daiad.web.repository.application.IMeterForecastingDataRepository;
 
 /**
  * Service that provides methods for importing smart water meter readings to HBASE.
@@ -56,6 +48,11 @@ import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 @Service
 @Transactional("managementTransactionManager")
 public class WaterMeterDataLoaderService extends BaseService implements IWaterMeterDataLoaderService {
+
+    /**
+     * Maximum number of rows to parse.
+     */
+    private static final int CHUNK_SIZE = 100000;
 
     /**
      * Logger instance for writing events using the configured logging API.
@@ -68,12 +65,6 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
     private static final String dateFormatPattern = "dd/MM/yyyy HH:mm:ss";
 
     /**
-     * Secure FTP connection.
-     */
-    @Autowired
-    SecureFileTransferConnector sftConnector;
-
-    /**
      * Entity manager for persisting upload meta data.
      */
     @PersistenceContext(unitName = "management")
@@ -83,115 +74,13 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
      * Repository for storing smart water meter readings to HBASE.
      */
     @Autowired
-    IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+    IMeterDataRepository waterMeterMeasurementRepository;
 
     /**
      * Repository for storing forecasting data for water consumption.
      */
     @Autowired
-    IWaterMeterForecastRepository waterMeterForecastRepository;
-
-    /**
-     * Downloads one or more files with smart water meter readings from a remote SFTP server, parses the files
-     * and inserts data in HBASE based on the given configuration.
-     *
-     * @param config the configuration
-     */
-    @Override
-    public void load(DataTransferConfiguration config) {
-        try {
-            // Create local folder
-            FileUtils.forceMkdir(new File(config.getLocalFolder()));
-
-            // Set time zone
-            Set<String> zones = DateTimeZone.getAvailableIDs();
-            if (config.getTimezone() == null) {
-                config.setTimezone("UTC");
-            }
-            if (!zones.contains(config.getTimezone())) {
-                throw new ExportException(String.format("Time zone [%s] is not supported.", config.getTimezone()));
-            }
-
-            // Construct regular expression for filtering file names
-            Pattern allowedFilenames = null;
-            if (!StringUtils.isBlank(config.getFilterRegEx())) {
-                allowedFilenames = Pattern.compile(config.getFilterRegEx());
-            }
-
-            // Enumerate files from the remote folder
-            ArrayList<RemoteFileAttributes> files = sftConnector.ls(config.getSftpProperties(), config
-                            .getRemoteFolder());
-
-            String sqlString = "select      u " +
-                               "from        upload u " +
-                               "where       u.remoteFolder = :remoteFolder and " +
-                               "            u.remoteFilename = :remoteFilename and " +
-                               "            u.size = :fileSize " +
-                               "order by    u.id desc";
-
-            for (RemoteFileAttributes f : files) {
-                // Check if a file with the same path, name and size has already been imported
-                TypedQuery<UploadEntity> uploadQuery = entityManager.createQuery(sqlString, UploadEntity.class).setFirstResult(0).setMaxResults(1);
-
-                uploadQuery.setParameter("remoteFolder", f.getRemoteFolder());
-                uploadQuery.setParameter("remoteFilename", f.getFilename());
-                uploadQuery.setParameter("fileSize", f.getSize());
-
-                List<UploadEntity> uploads = uploadQuery.getResultList();
-
-                UploadEntity existingUpload = null;
-                if (uploads.size() != 0) {
-                    existingUpload = uploads.get(0);
-                }
-
-                if ((existingUpload == null) ||
-                    ((existingUpload.getSkippedRows() + existingUpload.getProccessedRows()) != existingUpload.getTotalRows())) {
-                    // Filter file names based on a regular expression
-                    if ((allowedFilenames != null) && (!allowedFilenames.matcher(f.getFilename()).matches())) {
-                        continue;
-                    }
-
-                    // Create upload record
-                    UploadEntity upload = new UploadEntity();
-
-                    upload.setSource(f.getSource());
-                    upload.setRemoteFolder(f.getRemoteFolder());
-                    upload.setRemoteFilename(f.getFilename());
-
-                    upload.setSize(f.getSize());
-                    upload.setModifiedOn(f.getModifiedOn());
-
-                    upload.setLocalFolder(config.getLocalFolder());
-                    upload.setLocalFilename(UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(f.getFilename()));
-
-                    String target = FilenameUtils.concat(config.getLocalFolder(), upload.getLocalFilename());
-
-                    // Download file to the local folder
-                    upload.setUploadStartedOn(new DateTime());
-                    sftConnector.get(config.getSftpProperties(), config.getRemoteFolder(), f.getFilename(), target);
-
-                    upload.setUploadCompletedOn(new DateTime());
-
-                    // Process data and import records to HBASE
-                    upload.setProcessingStartedOn(new DateTime());
-
-                    FileProcessingStatus status = parse(target, config.getTimezone(), EnumUploadFileType.METER_DATA, null);
-
-                    upload.setTotalRows(status.getTotalRows());
-                    upload.setProccessedRows(status.getProcessedRows());
-                    upload.setSkippedRows(status.getSkippedRows());
-                    upload.setNegativeDifferenceRows(status.getNegativeDifference());
-
-                    upload.setProcessingCompletedOn(new DateTime());
-
-                    entityManager.persist(upload);
-                    entityManager.flush();
-                }
-            }
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex);
-        }
-    }
+    IMeterForecastingDataRepository waterMeterForecastRepository;
 
     /**
      * Loads smart water meter readings data from a file into HBASE.
@@ -215,7 +104,10 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                 }
                 FileProcessingStatus status = parseMeterData(filename, timezone);
 
-                renameFile(filename, timezone, status.getMinTimestamp(), status.getMaxTimestamp());
+                String newFilename = renameFile(filename, timezone, status.getMinTimestamp(), status.getMaxTimestamp());
+                if (!StringUtils.isBlank(newFilename)) {
+                    status.setFilename(FilenameUtils.getName(newFilename));
+                }
 
                 return status;
             case METER_DATA_FORECAST:
@@ -232,11 +124,12 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
      * @param timezone the time zone.
      * @param minTimestamp the minimum timestamp.
      * @param maxTimestamp the maximum timestamp.
+     * @return the new filename.
      * @throws IOException in case an I/O exception occurs.
      */
-    private void renameFile(String filename, String timezone, Long minTimestamp, Long maxTimestamp) throws IOException {
-        if ((minTimestamp == 0) || (maxTimestamp == 0)) {
-            return;
+    private String renameFile(String filename, String timezone, Long minTimestamp, Long maxTimestamp) throws IOException {
+        if ((minTimestamp == null) || (maxTimestamp == null)) {
+            return null;
         }
 
         DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.forID(timezone));
@@ -249,6 +142,8 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         newFilename = FilenameUtils.concat(FilenameUtils.getFullPath(filename), newFilename);
 
         FileUtils.moveFile(new File(filename), new File(newFilename));
+
+        return newFilename;
     }
 
     /**
@@ -281,6 +176,8 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         MeterDataRow row;
         String line = "";
         int lineIndex = 0;
+        int chunkSize = 0;
+        String lastSerial = null;
 
         // Check if file exists
         File file = new File(filename);
@@ -312,6 +209,28 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
                 String[] tokens = StringUtils.split(line, ";");
 
+                if(chunkSize > CHUNK_SIZE) {
+                    // Decide if all rows for the current serial have been parsed
+                    boolean doImport = false;
+                    switch (tokens.length) {
+                        case 3:
+                            doImport = !tokens[0].equals(lastSerial);
+                            break;
+                        case 6:
+                            doImport = !tokens[2].equals(lastSerial);
+                            break;
+                        default:
+                            break;
+                    }
+                    // Update and import row data
+                    if(doImport) {
+                        importMeterDataToHBase(status, rows);
+
+                        rows = new ArrayList<MeterDataRow>();
+                        chunkSize = 0;
+                    }
+                }
+
                 switch (tokens.length) {
                     case 3:
                         row = new MeterDataRow();
@@ -336,6 +255,8 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                         }
 
                         rows.add(row);
+                        chunkSize++;
+                        lastSerial = row.serial;
                         break;
                     case 6:
                         row = new MeterDataRow();
@@ -362,13 +283,15 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                         try {
                             row.difference = Float.parseFloat(tokens[5]);
                         } catch (Exception ex) {
-                            logger.error(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
+                            logger.debug(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
                                                        tokens[5], lineIndex, filename), ex);
-                            status.skipRow();
-                            continue;
+                            // Do not skip row. Difference value will be overridden.
+                            row.difference = 0f;
                         }
 
                         rows.add(row);
+                        chunkSize++;
+                        lastSerial = row.serial;
                         break;
                     default:
                         // Row format is not supported
@@ -406,7 +329,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
             return;
         }
 
-        // Sort data rows
+        // Sort data rows by date time
         Collections.sort(rows, new Comparator<MeterDataRow>() {
 
             @Override
@@ -427,24 +350,29 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         });
 
         // Get time stamp range
-        status.setMinTimestamp(rows.get(0).timestamp);
-        status.setMaxTimestamp(rows.get(rows.size()-1).timestamp);
+        for (int i = 0, count = rows.size(); i < count; i++) {
+            if ((status.getMinTimestamp() == null) || (status.getMinTimestamp() > rows.get(i).timestamp)) {
+                status.setMinTimestamp(rows.get(i).timestamp);
+            }
+            if ((status.getMaxTimestamp() == null) || (status.getMaxTimestamp() < rows.get(i).timestamp)) {
+                status.setMaxTimestamp(rows.get(i).timestamp);
+            }
+        }
 
         // Compute any missing values
         for (int i = 0, count = rows.size(); i < count; i++) {
             // Set difference for the first row for every unique serial number
             if ((i == 0) || (!rows.get(i).serial.equals(rows.get(i - 1).serial))) {
-                if (rows.get(i).difference == null) {
-                    WaterMeterStatusQueryResult meterStatus = waterMeterMeasurementRepository.getStatus(new String[] { rows.get(i).serial }, rows.get(i).timestamp - 1);
+                WaterMeterStatusQueryResult meterStatus = waterMeterMeasurementRepository.getStatusBefore(new String[] { rows.get(i).serial },
+                                                                                                          rows.get(i).timestamp - 1);
 
-                    if ((meterStatus == null) || (meterStatus.getDevices().size() == 0)) {
-                        rows.get(i).difference = 0f;
-                    } else {
-                        rows.get(i).difference = rows.get(i).volume - meterStatus.getDevices().get(0).getVolume();
+                if ((meterStatus == null) || (meterStatus.getDevices().isEmpty())) {
+                    rows.get(i).difference = 0f;
+                } else {
+                    rows.get(i).difference = rows.get(i).volume - meterStatus.getDevices().get(0).getVolume();
 
-                        if (rows.get(i).difference < 0) {
-                            status.increaseNegativeDifference();
-                        }
+                    if (rows.get(i).difference < 0) {
+                        status.increaseNegativeDifference();
                     }
                 }
             } else if ((rows.get(i).serial.equals(rows.get(i - 1).serial)) && (rows.get(i).difference == null)) {
@@ -457,14 +385,9 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
             // Validate difference
             if ((i != 0) && (rows.get(i).difference != null) && (rows.get(i).serial.equals(rows.get(i - 1).serial))) {
-                float diff = rows.get(i).volume - rows.get(i - 1).volume;
-
-                if (diff != rows.get(i).difference) {
-                    rows.get(i).difference = diff;
-
-                    if (diff < 0) {
-                        status.increaseNegativeDifference();
-                    }
+                rows.get(i).difference = rows.get(i).volume - rows.get(i - 1).volume;
+                if (rows.get(i).difference < 0) {
+                    status.increaseNegativeDifference();
                 }
             }
         }
@@ -491,6 +414,15 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         status.processRow();
     }
 
+    /**
+     * Parses a file with meter forecasting data and imports its data to HBASE.
+     *
+     * @param filename the file name.
+     * @param timezone the timestamp time zone.
+     * @param hdfsPath Optional HDFS path.
+     * @return the result of the operation.
+     * @throws ApplicationException if an error occurs.
+     */
     private FileProcessingStatus parseMeterForecastData(String filename, String timezone, String hdfsPath) throws ApplicationException {
         // Initialize status
         FileProcessingStatus status = new FileProcessingStatus();
@@ -531,11 +463,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                     while (scan.hasNextLine()) {
                         line = scan.nextLine();
 
-                        if(StringUtils.isBlank(line)) {
-                            continue;
-                        }
                         index++;
-
                         parseForecastingDataLine(index, line, formatter, filename, status);
                     }
 
@@ -549,14 +477,10 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                                                 new InputStreamReader(hdfsFileSystem.open(new org.apache.hadoop.fs.Path(filename))))) {
                     line = reader.readLine();
                     while (line != null) {
-                        line = reader.readLine();
-
-                        if(StringUtils.isBlank(line)) {
-                            continue;
-                        }
                         index++;
-
                         parseForecastingDataLine(index, line, formatter, filename, status);
+
+                        line = reader.readLine();
                     }
                 }
             }
@@ -571,7 +495,6 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         return status;
     }
 
-
     /**
      * Parses a line with meter forecasting data and imports results to HBase.
      *
@@ -582,6 +505,9 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
      * @param status the process status.
      */
     private void parseForecastingDataLine(int index, String line, DateTimeFormatter formatter, String filename, FileProcessingStatus status) {
+        if(StringUtils.isBlank(line)) {
+            return;
+        }
         float difference;
 
         String[] tokens = StringUtils.split(line, ";");

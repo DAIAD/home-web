@@ -19,9 +19,11 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.message.AlertReceiversResponse;
+import eu.daiad.web.model.message.AlertStatisticsRequest;
 import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.AnnouncementDetailsResponse;
 import eu.daiad.web.model.message.AnnouncementRequest;
+import eu.daiad.web.model.message.EnumAlertType;
 import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.EnumRecommendationType;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
@@ -35,16 +37,15 @@ import eu.daiad.web.model.message.ReceiverAccount;
 import eu.daiad.web.model.message.RecommendationReceiversResponse;
 import eu.daiad.web.model.message.RecommendationStatisticsRequest;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
-import eu.daiad.web.model.message.StaticRecommendation;
+import eu.daiad.web.model.message.Tip;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.RoleConstant;
-import eu.daiad.web.repository.application.IMessageRepository;
 import eu.daiad.web.repository.application.IProfileRepository;
+import eu.daiad.web.service.message.IMessageService;
 
 /**
  * Provides actions for loading messages and saving acknowledgments.
- *
  */
 @RestController
 public class MessageController extends BaseController {
@@ -66,10 +67,10 @@ public class MessageController extends BaseController {
     private IProfileRepository profileRepository;
 
     /**
-     * Repository for accessing messages.
+     * Service for accessing messages.
      */
     @Autowired
-    private IMessageRepository messageRepository;
+    private IMessageService service;
 
     /**
      * Loads messages i.e. alerts, recommendations and tips. Optionally filters messages.
@@ -83,11 +84,11 @@ public class MessageController extends BaseController {
         @AuthenticationPrincipal AuthenticatedUser user, @RequestBody MessageRequest request)
     {
         try {
-            Profile profile = profileRepository.getProfileByUsername(EnumApplication.HOME);
+            Profile profile = profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.HOME);
             if(!profile.isSendMessageEnabled()) {
                 return new MultiTypeMessageResponse();
             } else {
-                MessageResult result = messageRepository.getMessages(user, request);
+                MessageResult result = service.getMessages(user, request);
                 return new MultiTypeMessageResponse(result);
             }
         } catch (Exception ex) {
@@ -109,7 +110,7 @@ public class MessageController extends BaseController {
     {
         RestResponse response = new RestResponse();
         try {
-            messageRepository.setMessageAcknowledgement(user, request.getMessages());
+            service.acknowledgeMessages(user, request.getMessages());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             response.add(this.getError(ex));
@@ -118,46 +119,45 @@ public class MessageController extends BaseController {
     }
 
     /**
-     * Gets static localized recommendations (tips) based on locale.
+     * Gets localized tips
      *
      * @param user the user
      * @param locale the locale
      * @return the static recommendations.
      */
-    @RequestMapping(value = "/action/recommendation/static/{locale}", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = "/action/tip/localized/{locale}", method = RequestMethod.GET, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getRecommendations(
         @AuthenticationPrincipal AuthenticatedUser user, @PathVariable String locale)
     {
         try {
             SingleTypeMessageResponse messages = new SingleTypeMessageResponse();
-            messages.setType(EnumMessageType.RECOMMENDATION_STATIC);
-            messages.setMessages(messageRepository.getTips(locale));
+            messages.setType(EnumMessageType.TIP);
+            messages.setMessages(service.getTips(locale));
             return messages;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             return new RestResponse(getError(ex));
         }
     }
 
     /**
-     * Activate/Deactivate the received recommendations (tips).
+     * Activate/Deactivate tips
      *
      * @param request the messages to change activity status
      * @return the controller response.
      */
-    @RequestMapping(value = "/action/recommendation/static/status/save/", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = "/action/tip/status/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse setStaticTipsActivityStatusChange(@RequestBody List<StaticRecommendation> request) {
+    public RestResponse setTipsActivityStatus(@RequestBody List<Tip> request)
+    {
         RestResponse response = new RestResponse();
         try {
-            for (StaticRecommendation st : request){
-                messageRepository.persistAdvisoryMessageActiveStatus(st.getId(), st.isActive());
+            for (Tip tip: request){
+                service.setTipActiveStatus(tip.getId(), tip.isActive());
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             response.add(this.getError(ex));
         }
         return response;
@@ -169,22 +169,18 @@ public class MessageController extends BaseController {
      * @param request the message to add or edit
      * @return the controller response.
      */
-    @RequestMapping(value = "/action/recommendation/static/insert", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = "/action/tip/save", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse insertStaticRecommendation(@RequestBody StaticRecommendation request) {
+    public RestResponse saveTip(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody Tip request)
+    {
         RestResponse response = new RestResponse();
-
         try {
-            if(request.getId() == 0 || request.getIndex() == 0){
-                messageRepository.persistNewAdvisoryMessage(request);
-            }
-            else{
-                messageRepository.updateAdvisoryMessage(request);
-            }
+            if (request.getLocale() == null)
+                request.setLocale(user.getLocale());
+            service.saveTip(request);
         } catch (Exception ex) {
-                logger.error(ex.getMessage(), ex);
-
-                response.add(this.getError(ex));
+            logger.error(ex.getMessage(), ex);
+            response.add(this.getError(ex));
         }
         return response;
     }
@@ -192,21 +188,21 @@ public class MessageController extends BaseController {
     /**
      * Delete an existing recommendation (tip).
      *
-     * @param request the message to delete
-     * @return the controller response.
+     * @param user the authenticated user.
+     * @param id the tip id.
+     * @return an instance of {@link RestResponse}.
      */
-    @RequestMapping(value = "/action/recommendation/static/delete", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = "/action/tip/delete/{id}", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse deleteStaticRecommendation(@RequestBody StaticRecommendation request) {
+    public RestResponse deleteTip(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String id)
+    {
         RestResponse response = new RestResponse();
-
         try {
-            messageRepository.deleteAdvisoryMessage(request);
+            int tipId = Integer.parseInt(id);
+            service.deleteTip(tipId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             response.add(this.getError(ex));
-
         }
         return response;
     }
@@ -214,20 +210,23 @@ public class MessageController extends BaseController {
     /**
      * Send announcement to the provided accounts.
      *
-     * @param user the user.
+     * @param user the authenticated user.
      * @param request the request containing the announcement and the receivers.
      * @return the controller response.
      */
     @RequestMapping(value = "/action/announcement/broadcast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse broadCastAnnouncement(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody AnnouncementRequest request) {
+    public RestResponse broadCastAnnouncement(
+        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody AnnouncementRequest request)
+    {
         RestResponse response = new RestResponse();
-
         try {
-            messageRepository.broadcastAnnouncement(request, user.getLocale(), DEFAULT_CHANNEL);
+            Announcement a = request.getAnnouncement();
+            if (a.getLocale() == null)
+                a.setLocale(user.getLocale());
+            service.broadcastAnnouncement(request, DEFAULT_CHANNEL);
         } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
-
                 response.add(this.getError(ex));
         }
         return response;
@@ -241,17 +240,15 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/announcement/history", method = RequestMethod.GET, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse getAnnouncements(@AuthenticationPrincipal AuthenticatedUser user) {
+    public RestResponse getAnnouncements(@AuthenticationPrincipal AuthenticatedUser user)
+    {
         try {
             SingleTypeMessageResponse messages = new SingleTypeMessageResponse();
-
             messages.setType(EnumMessageType.ANNOUNCEMENT);
-            messages.setMessages(messageRepository.getAnnouncements(user.getLocale()));
-
+            messages.setMessages(service.getAnnouncements(user.getLocale()));
             return messages;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             return new RestResponse(getError(ex));
         }
     }
@@ -260,19 +257,20 @@ public class MessageController extends BaseController {
      * Delete an existing announcement.
      *
      * @param user the user
-     * @param request the announcement to delete
+     * @param id the announcement id
      * @return the controller response.
      */
-    @RequestMapping(value = "/action/announcement/delete", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = "/action/announcement/delete/{id}", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse deleteAnnouncement(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody Announcement request) {
+    public RestResponse deleteAnnouncement(
+        @AuthenticationPrincipal AuthenticatedUser user, @PathVariable String id)
+    {
         RestResponse response = new RestResponse();
-
         try {
-            messageRepository.deleteAnnouncement(request);
+            int announcementId = Integer.parseInt(id);
+            service.deleteAnnouncement(announcementId);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             response.add(this.getError(ex));
         }
         return response;
@@ -287,21 +285,20 @@ public class MessageController extends BaseController {
      */
     @RequestMapping(value = "/action/announcement/details/{id}", method = RequestMethod.GET, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse getAnnouncementDetails(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable String id) {
+    public RestResponse getAnnouncementDetails(
+        @AuthenticationPrincipal AuthenticatedUser user, @PathVariable String id)
+    {
         try {
+            AnnouncementDetailsResponse response = new AnnouncementDetailsResponse();
+            int announcementId = Integer.parseInt(id);
+            response.setAnnouncement(
+                service.getAnnouncement(announcementId, user.getLocale()));
+            response.setReceivers(
+                service.getAnnouncementReceivers(announcementId));
 
-            AnnouncementDetailsResponse announcementDetailsResponse = new AnnouncementDetailsResponse();
-
-            int intId = Integer.parseInt(id);
-            String locale = user.getLocale();
-
-            announcementDetailsResponse.setAnnouncement(messageRepository.getAnnouncement(intId, locale));
-            announcementDetailsResponse.setReceivers(messageRepository.getAnnouncementReceivers(intId));
-
-            return announcementDetailsResponse;
+            return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-
             return new RestResponse(getError(ex));
         }
     }
@@ -313,7 +310,7 @@ public class MessageController extends BaseController {
      * @param request the request
      * @return the message statistics.
      */
-    @RequestMapping(value = "/action/recommendation/dynamic/statistics", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @RequestMapping(value = "/action/recommendation/statistics", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getMessageStatistics(
         @AuthenticationPrincipal AuthenticatedUser user, @RequestBody MessageStatisticsRequest request)
@@ -327,16 +324,14 @@ public class MessageController extends BaseController {
                 }
             }
 
-            int utilityId = user.getUtilityId();
             UUID utilityKey = user.getUtilityKey();
-
             MessageStatisticsResponse response = new MessageStatisticsResponse();
 
             response.setAlertStatistics(
-                messageRepository.getAlertStatistics(utilityId, query));
+                service.getAlertStatistics(utilityKey, query));
 
             response.setRecommendationStats(
-                messageRepository.getRecommendationStatistics(utilityKey, query));
+                service.getRecommendationStatistics(utilityKey, query));
 
             return response;
         } catch (Exception ex) {
@@ -346,70 +341,52 @@ public class MessageController extends BaseController {
     }
 
     /**
-     * Get alert details receivers.
-     *
-     * @param user the user
-     * @param id the alert id
-     * @param request the request
-     * @return the alert details, including receivers.
-     *
-     * Todo Change endpoint to /action/alerts/receivers, supply {type, subtype} with request body
+     * Get receivers for alerts of a given type
      */
-    @RequestMapping(value = "/action/recommendation/dynamic/alert/receivers/{id}", method = RequestMethod.POST, produces = "application/json")
+    @RequestMapping(value = "/action/alert/receivers", method = RequestMethod.POST, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
     public RestResponse getAlertReceivers(
-        @AuthenticationPrincipal AuthenticatedUser user,
-        @PathVariable String id, @RequestBody MessageStatisticsRequest request) {
-        try {
-            int intId = Integer.parseInt(id);
-            UUID utilityKey = user.getUtilityKey();
-
-            MessageStatisticsQuery query = request.getQuery();
-
-            if (query != null) {
-                if (StringUtils.isBlank(query.getTimezone())) {
-                    query.setTimezone(user.getTimezone());
-                }
-            }
-
-            AlertReceiversResponse alertReceiversResponse = new AlertReceiversResponse();
-            alertReceiversResponse.setAlert(messageRepository.getAlert(intId, user.getLocale()));
-            alertReceiversResponse.setReceivers(messageRepository
-                    .getAlertReceivers(intId, user.getUtilityId(), query));
-
-            return alertReceiversResponse;
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-
-            return new RestResponse(getError(ex));
-        }
-    }
-
-    /**
-     * Get recommendation details and receivers.
-     *
-     * @param user the user
-     * @param type the recommendation type
-     * @param request the request
-     * @return the announcement details.
-     */
-    @RequestMapping(value = "/action/recommendation/dynamic/recommendation/receivers", method = RequestMethod.POST, produces = "application/json")
-    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse getRecommendationReceivers(
-        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody RecommendationStatisticsRequest request)
+        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody AlertStatisticsRequest request)
     {
         try {
-            MessageStatisticsQuery query = request.getQuery();
-            EnumRecommendationType recommendationType = request.getType();
+            EnumAlertType alertType = request.getType();
             UUID utilityKey = user.getUtilityKey();
 
+            MessageStatisticsQuery query = request.getQuery();
             if (query != null) {
                 if (StringUtils.isBlank(query.getTimezone()))
                     query.setTimezone(user.getTimezone());
             }
 
             List<ReceiverAccount> receivers =
-                messageRepository.getRecommendationReceivers(recommendationType, utilityKey, query);
+                service.getAlertReceivers(alertType, utilityKey, query);
+            return new AlertReceiversResponse(alertType, receivers);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Get receivers for recommendations of a given type.
+     */
+    @RequestMapping(value = "/action/recommendation/receivers", method = RequestMethod.POST, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getRecommendationReceivers(
+        @AuthenticationPrincipal AuthenticatedUser user, @RequestBody RecommendationStatisticsRequest request)
+    {
+        try {
+            EnumRecommendationType recommendationType = request.getType();
+            UUID utilityKey = user.getUtilityKey();
+
+            MessageStatisticsQuery query = request.getQuery();
+            if (query != null) {
+                if (StringUtils.isBlank(query.getTimezone()))
+                    query.setTimezone(user.getTimezone());
+            }
+
+            List<ReceiverAccount> receivers =
+                service.getRecommendationReceivers(recommendationType, utilityKey, query);
             return new RecommendationReceiversResponse(recommendationType, receivers);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

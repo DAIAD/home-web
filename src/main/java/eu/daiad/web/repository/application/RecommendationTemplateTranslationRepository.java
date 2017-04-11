@@ -13,33 +13,33 @@ import org.springframework.transaction.annotation.Transactional;
 import eu.daiad.web.domain.application.RecommendationTemplateTranslationEntity;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 
-@Repository 
+@Repository
 @Transactional("applicationTransactionManager")
 public class RecommendationTemplateTranslationRepository
     implements IRecommendationTemplateTranslationRepository
 {
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
-    
+
     @Override
     public RecommendationTemplateTranslationEntity findByTemplate(
         EnumRecommendationTemplate template, Locale locale)
     {
-        TypedQuery<RecommendationTemplateTranslationEntity> q = entityManager
-            .createQuery(
-                "SELECT t FROM recommendation_template_translation t WHERE " +
-                    "t.locale = :lang AND t.template.value = :template", 
-                RecommendationTemplateTranslationEntity.class);
+        TypedQuery<RecommendationTemplateTranslationEntity> q = entityManager.createQuery(
+            "SELECT t FROM recommendation_template_translation t WHERE " +
+                "t.locale = :lang AND t.template.value = :template",
+            RecommendationTemplateTranslationEntity.class);
+
         q.setParameter("lang", locale.getLanguage());
         q.setParameter("template", template.getValue());
-        
+
         RecommendationTemplateTranslationEntity result;
         try {
             result = q.getSingleResult();
         } catch (NoResultException x) {
             result = null;
         }
-        
+
         return result;
     }
 

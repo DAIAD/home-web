@@ -1,53 +1,111 @@
 package eu.daiad.web.repository.application;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+import org.joda.time.DateTime;
 import org.joda.time.Interval;
 
 import eu.daiad.web.domain.application.AccountAlertEntity;
 import eu.daiad.web.domain.application.AccountEntity;
+import eu.daiad.web.domain.application.AlertResolverExecutionEntity;
+import eu.daiad.web.model.PagingOptions;
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.Alert;
+import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 import eu.daiad.web.model.message.EnumAlertType;
 
 public interface IAccountAlertRepository
 {
     AccountAlertEntity findOne(int id);
-    
-    Long countAll();
+
+    int countAll();
+
     
     List<AccountAlertEntity> findByAccount(UUID accountKey);
-    
-    Long countByAccount(UUID accountKey);
-    
+
     List<AccountAlertEntity> findByAccount(UUID accountKey, Interval interval);
+
+    List<AccountAlertEntity> findByAccount(UUID accountKey, int minId);
+
+    List<AccountAlertEntity> findByAccount(UUID accountKey, int minId, PagingOptions pagination);
+
+    int countByAccount(UUID accountKey);
+
+    int countByAccount(UUID accountKey, Interval interval);
+
+    int countByAccount(UUID accountKey, int minId);
+
     
-    Long countByAccount(UUID accountKey, Interval interval);
-    
-    List<AccountAlertEntity> findByType(EnumAlertType alertType);
-    
-    Long countByType(EnumAlertType alertType);
-    
-    List<AccountAlertEntity> findByType(EnumAlertType alertType, Interval interval);
-    
-    Long countByType(EnumAlertType alertType, Interval interval);
+    List<AccountAlertEntity> findByType(EnumAlertType alertType, UUID utilityKey);
+
+    List<AccountAlertEntity> findByType(EnumAlertType alertType, UUID utilityKey, Interval interval);
+
+    int countByType(EnumAlertType alertType, UUID utilityKey);
+
+    int countByType(EnumAlertType alertType, UUID utilityKey, Interval interval);
+
+    Map<EnumAlertType, Integer> countByType(UUID utilityKey);
+
+    Map<EnumAlertType, Integer> countByType(UUID utilityKey, Interval interval);
+
     
     List<AccountAlertEntity> findByAccountAndType(UUID accountKey, EnumAlertType alertType);
-    
-    Long countByAccountAndType(UUID accountKey, EnumAlertType alertType);
-    
+
     List<AccountAlertEntity> findByAccountAndType(UUID accountKey, EnumAlertType alertType, Interval interval);
+
+    int countByAccountAndType(UUID accountKey, EnumAlertType alertType);
+
+    int countByAccountAndType(UUID accountKey, EnumAlertType alertType, Interval interval);
+
     
-    Long countByAccountAndType(UUID accountKey, EnumAlertType alertType, Interval interval);
+    List<AccountAlertEntity> findByExecution(int executionId);
+    
+    List<AccountAlertEntity> findByExecution(List<Integer> executionIds);
+    
+    List<AccountAlertEntity> findByAccountAndExecution(UUID accountKey, int executionId);
+    
+    List<AccountAlertEntity> findByAccountAndExecution(UUID accountKey, List<Integer> executionIds);
+    
+    int countByExecution(int executionId);
+    
+    int countByExecution(List<Integer> executionIds);
+    
+    int countByAccountAndExecution(UUID accountKey, int executionId);
+    
+    int countByAccountAndExecution(UUID accountKey, List<Integer> executionIds);
+    
     
     AccountAlertEntity create(AccountAlertEntity e);
+
+    AccountAlertEntity createWith(
+        UUID accountKey,
+        ParameterizedTemplate parameterizedTemplate,
+        AlertResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType);
+
+    AccountAlertEntity createWith(
+        AccountEntity account,
+        ParameterizedTemplate parameterizedTemplate,
+        AlertResolverExecutionEntity resolverExecution,
+        EnumDeviceType deviceType);
+
     
-    AccountAlertEntity createWith(UUID accountKey, Alert.ParameterizedTemplate parameters);
+    boolean acknowledge(int id, DateTime acknowledged);
+
+    boolean acknowledge(AccountAlertEntity r, DateTime acknowledged);
+
+    boolean acknowledge(UUID accountKey, int id, DateTime acknowledged);
+
     
-    AccountAlertEntity createWith(AccountEntity account, Alert.ParameterizedTemplate parameters);
+    Alert formatMessage(int id, Locale locale);
+
+    Alert formatMessage(AccountAlertEntity r, Locale locale);
+
     
     void delete(int id);
-    
+
     void delete(AccountAlertEntity e);
 }

@@ -19,12 +19,18 @@
 		<link href="/assets/lib/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
 		<link href="/assets/lib/react-datetime/react-datetime.css" rel="stylesheet" />
     <link href="/assets/css/home.css" rel="stylesheet" />
-		
-		<script th:inline="javascript">
-        var properties = {
-       	    reload: [[${reload}]],
-       	    locale: 'en'
-     	};
+
+	<script th:inline="javascript">
+		var properties = {
+		  reload: [[${reload}]],
+		  locale: 'en',
+		  captchaKey: [[${googleReCAPTCHASiteKey}]],
+		  dataApiUseAggregatedData:  [[${dataApiUseAggregatedData}]]
+		};
+
+		var recaptchaOptions = {
+		  lang: [[${locale}]]
+		};
     </script>
 
 </head>

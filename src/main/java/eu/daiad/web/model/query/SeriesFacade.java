@@ -14,6 +14,16 @@ public interface SeriesFacade
      * Does this series contain any points?
      */
     boolean isEmpty();
+ 
+    /**
+     * Get the actual size of the population involved in this series.
+     */
+    int getPopulationCount();
+    
+    /**
+     * Get a label for this series (optional).
+     */
+    String getLabel();
     
     /**
      * Get an iterator on (time, value) pairs for this series.

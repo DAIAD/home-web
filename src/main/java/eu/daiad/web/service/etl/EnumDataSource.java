@@ -33,7 +33,7 @@ public enum EnumDataSource {
     }
 
     public int getValue() {
-        return this.value;
+        return value;
     }
 
     private static final Map<Integer, EnumDataSource> intToTypeMap = new HashMap<Integer, EnumDataSource>();

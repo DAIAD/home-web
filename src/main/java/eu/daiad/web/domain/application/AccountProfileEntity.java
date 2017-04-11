@@ -98,7 +98,7 @@ public class AccountProfileEntity {
 
     @Column(name = "mobile_app_version")
     private String mobileApplicationVersion;
-
+    
     public int getId() {
         return id;
     }

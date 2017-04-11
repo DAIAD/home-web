@@ -29,6 +29,7 @@ import org.springframework.stereotype.Repository;
 
 import com.google.common.collect.ImmutableMap;
 
+import eu.daiad.web.hbase.EnumHBaseColumnFamily;
 import eu.daiad.web.model.amphiro.AmphiroAbstractDataPoint;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
 import eu.daiad.web.model.amphiro.AmphiroDataSeries;
@@ -96,7 +97,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
 
             table = connection.getTable(amphiroTableSessionIndex);
 
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
             byte[] columnQualifier = Bytes.toBytes("ts");
 
             for (int i = 0, length = data.getSessions().size(); i < length; i++) {
@@ -150,7 +151,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             for (int i = data.getSessions().size() - 1; i >= 0; i--) {
                 AmphiroSession s = data.getSessions().get(i);
@@ -325,7 +326,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             for (int i = 0; i < data.getSessions().size(); i++) {
                 AmphiroSession s = data.getSessions().get(i);
@@ -673,7 +674,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableMeasurements);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             for (int i = 0; i < data.getMeasurements().size(); i++) {
                 AmphiroMeasurement m = data.getMeasurements().get(i);
@@ -786,7 +787,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableMeasurements);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyHash = md.digest(userKey);
@@ -966,7 +967,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyHash = md.digest(userKey);
@@ -1142,7 +1143,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyHash = md.digest(userKey);
@@ -1263,7 +1264,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
 
             table = connection.getTable(amphiroTableMeasurements);
 
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] userKey = query.getUserKey().toString().getBytes("UTF-8");
             byte[] userKeyHash = md.digest(userKey);
@@ -1357,11 +1358,11 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
 
         ArrayList<GroupDataSeries> result = new ArrayList<GroupDataSeries>();
         for (ExpandedPopulationFilter filter : query.getGroups()) {
-            result.add(new GroupDataSeries(filter.getLabel(), filter.getUsers().size(), filter.getAreaId()));
+            result.add(new GroupDataSeries(filter.getLabel(), filter.getSize(), filter.getAreaId()));
         }
         try {
             table = connection.getTable(amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
             DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
@@ -1483,14 +1484,14 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
                         for (ExpandedPopulationFilter filter : query.getGroups()) {
                             GroupDataSeries series = result.get(filterIndex);
 
-                            int index = inArray(filter.getHashes(), userHash);
+                            int index = inArray(filter.getUserKeyHashes(), userHash);
                             if (index >= 0) {
                                 if (filter.getRanking() == null) {
                                     series.addAmhiroDataPoint(query.getGranularity(), timestamp, volume, energy,
                                                     duration, temperature, flow, query.getMetrics(), query
                                                                     .getTimezone());
                                 } else {
-                                    series.addAmphiroRankingDataPoint(query.getGranularity(), filter.getUsers().get(
+                                    series.addAmphiroRankingDataPoint(query.getGranularity(), filter.getUserKeys().get(
                                                     index), filter.getLabels().get(index), timestamp, volume, energy,
                                                     duration, temperature, flow, query.getMetrics(), query
                                                                     .getTimezone());
@@ -1660,7 +1661,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] rowKey;
 
@@ -1720,7 +1721,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             long timestamp, offset, timeBucket;
 
@@ -1842,7 +1843,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByUser);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] rowKey;
 
@@ -1899,7 +1900,7 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(amphiroTableSessionByTime);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             long timestamp, offset, timeBucket;
 
@@ -1987,6 +1988,19 @@ public class HBaseAmphiroRepositoryV2 extends AbstractAmphiroHBaseRepository imp
             }
             filterIndex++;
         }
+    }
+
+    /**
+     * Updates the date time of a historical shower and converts it to a real-time one.
+     *
+     * @param user the device owner.
+     * @param device the amphiro b1 device
+     * @param sessionId the per device unique shower Id.
+     * @param timestamp the real-time timestamp.
+     */
+    @Override
+    public void toRealTime(AuthenticatedUser user, AmphiroDevice device, long sessionId, long timestamp) {
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 
 }

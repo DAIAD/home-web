@@ -5,13 +5,12 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import eu.daiad.web.domain.application.AlertAnalyticsEntity;
 import eu.daiad.web.model.RestResponse;
 
 public class MessageStatisticsResponse extends RestResponse
 {
     @JsonIgnore
-    private List<AlertAnalyticsEntity> alertStats;
+    private AlertStatistics alertStats;
 
     @JsonIgnore
     private RecommendationStatistics recommendationStats;
@@ -29,13 +28,13 @@ public class MessageStatisticsResponse extends RestResponse
     }
 
     @JsonIgnore
-    public List<AlertAnalyticsEntity> getAlertStats()
+    public AlertStatistics getAlertStats()
     {
         return alertStats;
     }
 
     @JsonIgnore
-    public void setAlertStatistics(List<AlertAnalyticsEntity> stats)
+    public void setAlertStatistics(AlertStatistics stats)
     {
         this.alertStats = stats;
     }
@@ -47,9 +46,8 @@ public class MessageStatisticsResponse extends RestResponse
     }
 
     @JsonProperty("alertStatistics")
-    public List<AlertAnalyticsEntity> getAlertStatsAsList()
+    public List<AlertStatistics.ByType> getAlertStatsAsList()
     {
-        // Todo Return a list as in JsonProprty("recommendationStatistics")
-        return alertStats;
+        return alertStats.asList();
     }
 }

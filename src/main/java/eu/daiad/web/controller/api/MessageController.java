@@ -18,8 +18,8 @@ import eu.daiad.web.model.message.MultiTypeMessageResponse;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
-import eu.daiad.web.repository.application.IMessageRepository;
 import eu.daiad.web.repository.application.IProfileRepository;
+import eu.daiad.web.service.message.IMessageService;
 
 /**
  * Provides actions for loading messages and saving acknowledgments.
@@ -39,10 +39,10 @@ public class MessageController extends BaseRestController {
     private IProfileRepository profileRepository;
 
     /**
-     * Repository for accessing messages.
+     * Service for accessing messages.
      */
     @Autowired
-    private IMessageRepository messageRepository;
+    private IMessageService service;
 
     /**
      * Loads messages i.e. alerts, recommendations and tips. Optionally filters messages.
@@ -55,11 +55,11 @@ public class MessageController extends BaseRestController {
     {
         try {
             AuthenticatedUser user = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
-            Profile profile = profileRepository.getProfileByUsername(EnumApplication.MOBILE);
+            Profile profile = profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.MOBILE);
             if(!profile.isSendMessageEnabled()) {
                 return new MultiTypeMessageResponse();
             } else {
-                MessageResult result = messageRepository.getMessages(user, request);
+                MessageResult result = service.getMessages(user, request);
                 return new MultiTypeMessageResponse(result);
             }
         } catch (Exception ex) {
@@ -81,7 +81,7 @@ public class MessageController extends BaseRestController {
 
         try {
             AuthenticatedUser user = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
-            messageRepository.setMessageAcknowledgement(user, request.getMessages());
+            service.acknowledgeMessages(user, request.getMessages());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             response.add(this.getError(ex));

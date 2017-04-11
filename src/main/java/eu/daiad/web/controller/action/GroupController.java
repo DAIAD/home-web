@@ -21,6 +21,10 @@ import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.group.EnumGroupType;
 import eu.daiad.web.model.group.Group;
+import eu.daiad.web.model.group.GroupInfoCollectionResponse;
+import eu.daiad.web.model.group.GroupInfoResponse;
+import eu.daiad.web.model.group.GroupMember;
+import eu.daiad.web.model.group.GroupMemberCollectionResponse;
 import eu.daiad.web.model.group.GroupQueryRequest;
 import eu.daiad.web.model.group.GroupQueryResponse;
 import eu.daiad.web.model.group.GroupSetCreateRequest;
@@ -65,7 +69,7 @@ public class GroupController extends BaseController {
         try {
             GroupQueryResponse response = new GroupQueryResponse();
 
-            response.setGroups(this.groupRepository.getGroupsByUtilityKey(user.getUtilityKey()));
+            response.setGroups(groupRepository.getGroupsByUtilityKey(user.getUtilityKey()));
 
             for (Group g : response.getGroups()) {
                 if (g.getType() == EnumGroupType.SET) {
@@ -93,7 +97,7 @@ public class GroupController extends BaseController {
         try {
             GroupQueryResponse response = new GroupQueryResponse();
 
-            response.setGroups(this.groupRepository.filterByName(user.getUtilityKey(), text));
+            response.setGroups(groupRepository.filterByName(user.getUtilityKey(), text));
 
             for (Group g : response.getGroups()) {
                 if (g.getType() == EnumGroupType.SET) {
@@ -101,6 +105,23 @@ public class GroupController extends BaseController {
                 }
             }
             return response;
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Enumerates user defined groups.
+     *
+     * @return the available groups.
+     */
+    @RequestMapping(value = "/action/groups", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getGroupsInfo(@AuthenticationPrincipal AuthenticatedUser user) {
+        try {
+            return new GroupInfoCollectionResponse(groupRepository.getUtilityGroupInfo(user.getUtilityKey()));
         } catch (ApplicationException ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -117,8 +138,7 @@ public class GroupController extends BaseController {
      */
     @RequestMapping(value = "/action/group", method = RequestMethod.PUT, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public @ResponseBody RestResponse create(@AuthenticationPrincipal AuthenticatedUser user,
-                                             @RequestBody GroupSetCreateRequest request) {
+    public @ResponseBody RestResponse create(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody GroupSetCreateRequest request) {
         RestResponse response = new RestResponse();
         try {
             if (StringUtils.isBlank(request.getTitle())) {
@@ -136,6 +156,43 @@ public class GroupController extends BaseController {
 
         return response;
     }
+
+    /**
+     * Get a group by its id.
+     *
+     * @param key the group key.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/group/{key}", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getGroupInfoByKey(@PathVariable UUID key) {
+        try{
+            return new GroupInfoResponse(groupRepository.getGroupInfoByKey(key));
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Gets the members of a group.
+     *
+     * @param key the group key.
+     * @return a collection of {@link GroupMember}.
+     */
+    @RequestMapping(value = "/action/group/members/{key}", method = RequestMethod.GET, produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getGroupMembers(@PathVariable UUID key) {
+        try{
+            return new GroupMemberCollectionResponse(groupRepository.getGroupMembers(key));
+        } catch (ApplicationException ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
 
     /**
      * Deletes a group

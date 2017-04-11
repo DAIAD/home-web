@@ -11,12 +11,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.profile.EnumMemberSelectionMode;
+import eu.daiad.web.model.profile.EnumRealTimeMode;
 
 public class AmphiroSession extends AmphiroAbstractSession {
 
     private long id;
 
     private boolean history;
+
+    @JsonIgnore
+    private EnumRealTimeMode realTimeMode = EnumRealTimeMode.AUTO;
 
     private Member member;
 
@@ -28,6 +32,9 @@ public class AmphiroSession extends AmphiroAbstractSession {
 
     @JsonIgnore
     private boolean ignored;
+
+    @JsonIgnore
+    private Long ignoredTimestamp;
 
     private List<KeyValuePair> properties;
 
@@ -47,8 +54,23 @@ public class AmphiroSession extends AmphiroAbstractSession {
         return history;
     }
 
+    @JsonProperty
+    public EnumRealTimeMode getRealTimeMode() {
+        return realTimeMode;
+    }
+
     public void setHistory(boolean history) {
         this.history = history;
+    }
+
+    @JsonIgnore
+    public void setRealTimeMode(EnumRealTimeMode mode) {
+        realTimeMode = mode;
+    }
+
+    public void setRealTimeManually() {
+        history = false;
+        realTimeMode = EnumRealTimeMode.MANUAL;
     }
 
     public List<KeyValuePair> getProperties() {
@@ -140,12 +162,24 @@ public class AmphiroSession extends AmphiroAbstractSession {
         this.versions = versions;
     }
 
+    @JsonProperty
     public boolean isIgnored() {
         return ignored;
     }
 
+    @JsonIgnore
     public void setIgnored(boolean ignored) {
         this.ignored = ignored;
+    }
+
+    @JsonProperty
+    public Long getIgnoredTimestamp() {
+        return ignoredTimestamp;
+    }
+
+    @JsonIgnore
+    public void setIgnoredTimestamp(Long ignoredTimestamp) {
+        this.ignoredTimestamp = ignoredTimestamp;
     }
 
 }

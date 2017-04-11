@@ -32,8 +32,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.amphiro.HistoricalToRealTimeRequest;
+import eu.daiad.web.model.amphiro.IgnoreShowerRequest;
+import eu.daiad.web.model.amphiro.MemberAssignmentRequest;
+import eu.daiad.web.model.device.AmphiroDevice;
 import eu.daiad.web.model.error.ActionErrorCode;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.QueryErrorCode;
 import eu.daiad.web.model.error.ResourceNotFoundException;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -57,6 +62,8 @@ import eu.daiad.web.model.query.StoreDataQueryRequest;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.model.spatial.ReferenceSystem;
+import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
+import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IExportRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.IDataImportService;
@@ -100,6 +107,12 @@ public class DataController extends BaseController {
     private IUserRepository userRepository;
 
     /**
+     * Repository for accessing device data.
+     */
+    @Autowired
+    private IDeviceRepository deviceRepository;
+
+    /**
      * Service for importing data.
      */
     @Autowired
@@ -110,6 +123,12 @@ public class DataController extends BaseController {
      */
     @Autowired
     private IWaterMeterDataLoaderService waterMeterDataLoaderService;
+
+    /**
+     * Repository for accessing amphiro b1 data indexed by shower id.
+     */
+    @Autowired
+    private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
 
     /**
      * Service for querying smart water and amphiro b1 data in HBASE.
@@ -303,16 +322,59 @@ public class DataController extends BaseController {
 
         try {
 
-            // Set defaults if needed
-            List<DataQuery> queries = request.getNamedQuery().getQueries();
-            if (queries != null && !queries.isEmpty()) {
-                // Initialize time zone
-                if (StringUtils.isBlank(queries.get(0).getTimezone())) {
-                    queries.get(0).setTimezone(user.getTimezone());
-                }
-            }
-
             dataService.deleteStoredQuery(request.getNamedQuery(), user.getKey());
+
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
+    /**
+     * Pin query to dashboard.
+     *
+     * @param user the user
+     * @param request the requested query to pin.
+     * @return the result of the operation.
+     */
+    @RequestMapping(value = "/action/data/query/pin", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse pinQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+
+            dataService.pinStoredQuery(request.getNamedQuery().getId(), user.getKey());
+
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
+    /**
+     * Unpin query from dashboard.
+     *
+     * @param user the user
+     * @param request the requested query to unpin.
+     * @return the result of the operation.
+     */
+    @RequestMapping(value = "/action/data/query/unpin", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse unpinQuery(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody StoreDataQueryRequest request) {
+
+        RestResponse response = new RestResponse();
+
+        try {
+
+            dataService.unpinStoredQuery(request.getNamedQuery().getId(), user.getKey());
+
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -580,5 +642,79 @@ public class DataController extends BaseController {
         }
 
         throw new ResourceNotFoundException();
+    }
+
+    /**
+     * Assigns household members to amphiro b1 sessions.
+     *
+     * @param user the currently authenticated user.
+     * @param request member assignment data
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/data/session/member", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_USER })
+    public RestResponse assignMemberToSession(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody MemberAssignmentRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            amphiroIndexOrderedRepository.assignMember(user, request.getAssignments());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
+    /**
+     * Marks an amphiro b1 message as not being a shower.
+     *
+     * @param user the currently authenticated user.
+     * @param request shower data.
+     * @return the controller's response.
+     */
+    @RequestMapping(value = "/action/data/session/ignore", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_USER })
+    public RestResponse invalidateShower(@AuthenticationPrincipal AuthenticatedUser user, @RequestBody IgnoreShowerRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            amphiroIndexOrderedRepository.ignore(user, request.getSessions());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
+    /**
+     * Updates the date time of a historical shower and converts it to a real-time one.
+     *
+     * @param user the currently authenticated user.
+     * @param request the shower data including its unique id and timestamp.
+     * @return an instance of {@link RestResponse}.
+     */
+    @RequestMapping(value = "/action/data/session/date", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_USER })
+    public RestResponse convertHistoricalToRealTimeShower(@AuthenticationPrincipal AuthenticatedUser user,
+                                                          @RequestBody HistoricalToRealTimeRequest request) {
+        RestResponse response = new RestResponse();
+
+        try {
+            AmphiroDevice device = deviceRepository.getUserAmphiroByKey(user.getKey(), request.getDeviceKey());
+            if(device == null) {
+                throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", request.getDeviceKey());
+            }
+            amphiroIndexOrderedRepository.toRealTime(user, device, request.getSessionId(), request.getTimestamp());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
     }
 }

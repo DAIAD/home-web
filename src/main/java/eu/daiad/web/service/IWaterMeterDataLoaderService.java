@@ -3,7 +3,6 @@ package eu.daiad.web.service;
 import java.io.IOException;
 
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.loader.DataTransferConfiguration;
 import eu.daiad.web.model.loader.EnumUploadFileType;
 import eu.daiad.web.model.loader.FileProcessingStatus;
 
@@ -11,14 +10,6 @@ import eu.daiad.web.model.loader.FileProcessingStatus;
  * Provides methods for importing smart water meter readings to HBASE.
  */
 public interface IWaterMeterDataLoaderService {
-
-	/**
-	 * Downloads one or more files with smart water meter readings from a remote SFTP server, parses the files
-	 * and inserts data in HBASE based on the given configuration.
-	 *
-	 * @param config the configuration
-	 */
-	void load(DataTransferConfiguration config);
 
 	/**
 	 * Loads smart water meter readings data from a file into HBASE.

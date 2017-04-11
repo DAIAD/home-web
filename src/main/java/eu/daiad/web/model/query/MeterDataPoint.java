@@ -5,25 +5,43 @@ import java.util.Map;
 
 public class MeterDataPoint extends DataPoint {
 
-	private Map<EnumMetric, Double> volume = new EnumMap<EnumMetric, Double>(EnumMetric.class);
+    private Map<EnumMetric, Double> volume = new EnumMap<EnumMetric, Double>(EnumMetric.class);
 
-	public MeterDataPoint() {
-		super();
-		this.type = EnumDataPointType.METER;
-	}
+    public void merge(MeterDataPoint p) {
+        for(EnumMetric m : volume.keySet()) {
+            switch(m) {
+                case SUM:
+                    volume.put(m, volume.get(m) + p.getVolume().get(m));
+                    break;
+                case MIN:
+                    volume.put(m, volume.get(m) + p.getVolume().get(m));
+                    break;
+                case MAX:
+                    break;
+                case COUNT:
+                    break;
+                case AVERAGE:
+                    break;
+                default:
+                    throw new IllegalArgumentException(String.format("EnumMetric member [%s] is not supported.", m));
+            }
+        }
+    }
 
-	public MeterDataPoint(long timestamp) {
-		super(timestamp);
-		this.type = EnumDataPointType.METER;
-	}
+    public MeterDataPoint() {
+        super(EnumDataPointType.METER);
+    }
 
-	public Map<EnumMetric, Double> getVolume() {
-		return volume;
-	}
-	
-	@Override
-	public Map<EnumMetric, Double> field(EnumDataField field)
-	{
-	    return volume;
-	}
+    public MeterDataPoint(long timestamp) {
+        super(EnumDataPointType.METER, timestamp);
+    }
+
+    public Map<EnumMetric, Double> getVolume() {
+        return volume;
+    }
+
+    @Override
+    public Map<EnumMetric, Double> field(EnumDataField field) {
+        return volume;
+    }
 }

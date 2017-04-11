@@ -2,45 +2,70 @@ package eu.daiad.web.model.group;
 
 import java.util.UUID;
 
+import org.joda.time.DateTime;
+
+import com.vividsolutions.jts.geom.Geometry;
+
+import eu.daiad.web.domain.application.AccountEntity;
+
 public class GroupMember {
 
-	private UUID key;
+    private UUID key;
 
-	private String username;
+    private String username;
 
-	private long addeOn;
+    private String fullName;
 
-	private String fullname;
+    private Geometry location;
 
-	public UUID getKey() {
-		return key;
-	}
+    private DateTime createdOn;
 
-	public void setKey(UUID key) {
-		this.key = key;
-	}
+    public GroupMember(AccountEntity account) {
+        key = account.getKey();
+        username = account.getUsername();
+        fullName = account.getFullname();
+        location = account.getLocation();
+        createdOn = account.getCreatedOn();
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public UUID getKey() {
+        return key;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public void setKey(UUID key) {
+        this.key = key;
+    }
 
-	public long getAddeOn() {
-		return addeOn;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public void setAddeOn(long addeOn) {
-		this.addeOn = addeOn;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public String getFullname() {
-		return fullname;
-	}
+    public String getFullName() {
+        return fullName;
+    }
 
-	public void setFullname(String fullname) {
-		this.fullname = fullname;
-	}
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public Geometry getLocation() {
+        return location;
+    }
+
+    public void setLocation(Geometry location) {
+        this.location = location;
+    }
+
+    public DateTime getCreatedOn() {
+        return createdOn;
+    }
+
+    public void setCreatedOn(DateTime createdOn) {
+        this.createdOn = createdOn;
+    }
+
 }

@@ -45,6 +45,10 @@ import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.ExportErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
+import eu.daiad.web.service.etl.model.EnumPhase;
+import eu.daiad.web.service.etl.model.MemorySessionStore;
+import eu.daiad.web.service.etl.model.Phase;
+import eu.daiad.web.service.etl.model.PhaseTimeline;
 
 /**
  * Service that exports amphiro b1 data for a utility.
@@ -244,23 +248,26 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
      * @param row the row to append phase data.
      * @param phase the phase to export.
      * @param formatter formatter for date/time properties.
+     * @param interpolationError true if an error has occurred during the interpolation or shower index values.
      */
-    private void createPhaseRowWithShowers(List<String> row, Phase phase, DateTimeFormatter formatter) {
-        if(phase == null) {
-            row.add("");
-            row.add("");
-            row.add("");
+    private void createPhaseRowWithShowers(List<String> row, Phase phase, DateTimeFormatter formatter, boolean interpolationError) {
+        row.add(phase.getPhase().merge().toString());
+        if(phase.getMinSessionId() != null) {
+            row.add(phase.getMinSessionId().toString());
         } else {
-            row.add(phase.getPhase().toString());
-            if(phase.getMinSessionId() != null) {
-                row.add(phase.getMinSessionId().toString());
-            } else {
+            if(!interpolationError) {
                 row.add("");
+            } else {
+                row.add("N/A");
             }
-            if(phase.getMaxSessionId() != null) {
-                row.add(phase.getMaxSessionId().toString());
-            } else {
+        }
+        if(phase.getMaxSessionId() != null) {
+            row.add(phase.getMaxSessionId().toString());
+        } else {
+            if(!interpolationError) {
                 row.add("");
+            } else {
+                row.add("N/A");
             }
         }
     }
@@ -787,6 +794,10 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
         row.add("Phase 2 start");
         row.add("Phase 2 end");
 
+        row.add("Phase 3");
+        row.add("Phase 3 start");
+        row.add("Phase 3 end");
+
         printer.printRecord(row);
 
         for (SurveyEntity survey : userRepository.getSurveyDataByUtilityId(query.getUtility().getId())) {
@@ -822,7 +833,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
 
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
                     try {
-                        SessionCollection sessions = new SessionCollection(device.getSessions());
+                        MemorySessionStore sessions = new MemorySessionStore(device.getSessions());
 
                         // Remove any historical sessions before the pairing. Such
                         // sessions may include showers before the pairing or failed
@@ -834,140 +845,118 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                         }
 
                         // Get timeline
-                        PhaseTimeline phaseTimeline = constructAmphiroPhaseTimeline(user.getKey(), device.getDeviceKey());
+                        PhaseTimeline timeline = constructAmphiroPhaseTimeline(user.getKey(), device.getDeviceKey());
 
-                        Phase phase1 = phaseTimeline.getPhase(EnumPhase.BASELINE);
-                        Phase phase2a = phaseTimeline.getPhase(EnumPhase.MOBILE_ON_AMPHIRO_OFF);
-                        Phase phase2b = phaseTimeline.getPhase(EnumPhase.MOBILE_OFF_AMPHIRO_ON);
-                        Phase phase3 = phaseTimeline.getPhase(EnumPhase.MOBILE_ON_AMPHIRO_ON);
+                        boolean interpolationError = false;
+                        for (int i = 0, total = timeline.size(); i < total; i++) {
+                            Phase phase = timeline.get(i);
 
-                        if (phase1 != null) {
-                            phase1.setMinSessionId(sessions.get(0).getId());
-                        }
-
-                        if(phase2a != null) {
-                            // Mobile On, Amphiro off
-                            if(phase1 == null) {
-                                phase2a.setMinSessionId(sessions.get(0).getId());
-                            } else {
-                                long[] indexes = sessions.interpolate(phase2a.getStartTimestamp(),
-                                                                      phase1.getDays(),
-                                                                      phase2a.getDays(),
-                                                                      survey.getHouseholdMemberTotal(),
-                                                                      survey.getShowersPerWeek(),
-                                                                      devices.size());
-                                if (indexes == null) {
-                                    throw new RuntimeException(String.format("Failed to interpolate session indexes for phase [%s]. Total sessions [%d]",
-                                                                             phase2a.getPhase(),
-                                                                             sessions.size()));
-                                }
-
-                                phase1.setMaxSessionId(indexes[0]);
-                                phase2a.setMinSessionId(indexes[1]);
+                            if (phase.getPhase() == EnumPhase.EMPTY) {
+                                continue;
                             }
+                            if(!interpolationError) {
+                                switch(phase.getLeftBoundSelection()) {
+                                    case NEAREST:
+                                        AmphiroSession nearest = sessions.getNearestSession(phase.getStartTimestamp());
 
-                            if(phase3 == null) {
-                                phase2a.setMaxSessionId(sessions.get(sessions.size() - 1).getId());
-                            } else {
-                                AmphiroSession phase3NearestSession = sessions.getNearestSession(phase3.getStartTimestamp());
+                                        if (nearest == null) {
+                                            throw new RuntimeException(String.format("Failed to find the session index associated with phase [%s]. Total sessions [%d]. Timeline : %s",
+                                                                                     phase.getPhase(),
+                                                                                     sessions.size(),
+                                                                                     timeline));
+                                        }
 
-                                if (phase3NearestSession == null) {
-                                    throw new RuntimeException(String.format("Failed to find the session index associated with phase [%s]. Total sessions [%d]",
-                                                                             phase3.getPhase(),
-                                                                             sessions.size()));
-                                }
+                                        phase.setMinSessionId(nearest.getId());
+                                        break;
+                                    case INTERPOLATION:
+                                        long[] indexes = sessions.interpolate(phase.getStartTimestamp(),
+                                                                              phase.getPrevious().getDays(),
+                                                                              phase.getDays(),
+                                                                              survey.getHouseholdMemberTotal(),
+                                                                              survey.getShowersPerWeek(),
+                                                                              devices.size());
+                                          if (indexes == null) {
+                                              String message = String.format("Failed to interpolate session indexes for phase [%s]. Total sessions [%d]. Timeline : %s",
+                                                                             phase.getPhase(),
+                                                                             sessions.size(),
+                                                                             timeline);
 
-                                phase2a.setMaxSessionId(sessions.getPreviousId(phase3NearestSession.getId()));
+                                              result.addMessage(user.getKey(),
+                                                               user.getUsername(),
+                                                               device.getDeviceKey(),
+                                                               String.format("Cannot compute shower indexes for all phases for user [%s]: %s", user.getUsername(), message));
 
-                                phase3.setMinSessionId(phase3NearestSession.getId());
-                                phase3.setMaxSessionId(sessions.get(sessions.size() - 1).getId());
-                            }
-                        } else if(phase2b != null) {
-                            // Mobile Off, Amphiro On
-                            if(phase1 == null) {
-                                phase2b.setMinSessionId(sessions.get(0).getId());
-                            } else {
-                                AmphiroSession phase2NearestSession = sessions.getNearestSession(phase2b.getStartTimestamp());
+                                              interpolationError = true;
+                                             break;
+                                          }
 
-                                if (phase2NearestSession == null) {
-                                    throw new RuntimeException(String.format("Failed to find the session index associated with phase [%s]. Total sessions [%d]",
-                                                                             phase2b.getPhase(),
-                                                                             sessions.size()));
-                                }
-
-                                phase1.setMaxSessionId(sessions.getPreviousId(phase2NearestSession.getId()));
-                                phase2b.setMinSessionId(phase2NearestSession.getId());
-                            }
-
-                            if(phase3 == null) {
-                                phase2b.setMaxSessionId(sessions.get(sessions.size() - 1).getId());
-                            } else {
-                                long[] indexes = sessions.interpolate(phase3.getStartTimestamp(),
-                                                                      phase2b.getDays(),
-                                                                      phase3.getDays(),
-                                                                      survey.getHouseholdMemberTotal(),
-                                                                      survey.getShowersPerWeek(),
-                                                                      devices.size());
-                                if (indexes == null) {
-                                    throw new RuntimeException(String.format("Failed to interpolate session indexes for phase [%s]. Total sessions [%d]",
-                                                                             phase3.getPhase(),
-                                                                             sessions.size()));
-                                }
-
-                                phase2b.setMaxSessionId(indexes[0]);
-                                phase3.setMinSessionId(indexes[1]);
-
-                                phase3.setMaxSessionId(sessions.get(sessions.size() - 1).getId());
-                            }
-                        } else {
-                            // Only the baseline phase may exist
-                            if (phase1 != null) {
-                                phase1.setMaxSessionId(sessions.get(sessions.size() - 1).getId());
-                            }
-                        }
-
-                        // Check intervals
-                        if (phase2a != null) {
-                            // Mobile On, Amphiro Off: The phase 3 left limit is considered the most accurate.
-                            if (phase3 != null) {
-                                if (phase3.getMinSessionId() > phase3.getMaxSessionId()) {
-                                    phase3.setMaxSessionId(phase3.getMinSessionId());
-                                }
-                                // Align phase 2a
-                                phase2a.setMaxSessionId(sessions.getPreviousId(phase3.getMinSessionId()));
-                            }
-                            if(phase2a.getMaxSessionId() < phase2a.getMinSessionId()) {
-                                phase2a.setMinSessionId(phase2a.getMaxSessionId());
-                            }
-                            // Align phase 1
-                            if (phase1 != null) {
-                                phase1.setMaxSessionId(sessions.getPreviousId(phase2a.getMinSessionId()));
-                                if (phase1.getMaxSessionId() == null) {
-                                    phase1.setMinSessionId(null);
+                                          phase.setMinSessionId(indexes[1]);
+                                        break;
+                                    case MIN:
+                                        phase.setMinSessionId(sessions.get(0).getId());
+                                        break;
+                                    default:
+                                        throw new RuntimeException(String.format("Cannot resolve left bound for phase [%s].", phase.getPhase()));
                                 }
                             }
-                        } else if (phase2b != null) {
-                            // Mobile Off, Amphiro On: The phase 2b left limit is considered the most accurate.
-                            if (phase2b.getMinSessionId() > phase2b.getMaxSessionId()) {
-                                phase2b.setMaxSessionId(phase2b.getMinSessionId());
-                            }
-                            // Align phase 3b
-                            if (phase3 != null) {
-                                phase3.setMinSessionId(sessions.getNextId(phase2b.getMaxSessionId()));
-                                if (phase3.getMinSessionId() == null) {
-                                    phase3.setMaxSessionId(null);
+                            if(!interpolationError) {
+                                switch(phase.getRightBoundSelection()) {
+                                    case NEAREST:
+                                        AmphiroSession nearest = sessions.getNearestSession(phase.getNext().getStartTimestamp());
+
+                                        if (nearest == null) {
+                                            throw new RuntimeException(String.format("Failed to find the session index associated with phase [%s]. Total sessions [%d]. Timeline : %s",
+                                                                                     phase.getPhase(),
+                                                                                     sessions.size(),
+                                                                                     timeline));
+                                        }
+
+                                        Long previousId = sessions.getBefore(nearest.getId());
+                                        if (previousId == null) {
+                                            phase.invalidate();
+                                            continue;
+                                        } else {
+                                            phase.setMaxSessionId(previousId);
+                                        }
+                                        break;
+                                    case INTERPOLATION:
+                                        long[] indexes = sessions.interpolate(phase.getEndTimestamp(),
+                                                                              phase.getDays(),
+                                                                              phase.getNext().getDays(),
+                                                                              survey.getHouseholdMemberTotal(),
+                                                                              survey.getShowersPerWeek(),
+                                                                              devices.size());
+                                        if (indexes == null) {
+                                             String message = String.format("Failed to interpolate session indexes for phase [%s]. Total sessions [%d]. Timeline : %s",
+                                                            phase.getPhase(),
+                                                            sessions.size(),
+                                                            timeline);
+
+                                             result.addMessage(user.getKey(),
+                                                              user.getUsername(),
+                                                              device.getDeviceKey(),
+                                                              String.format("Cannot to compute shower indexes for all phases for user [%s]: %s", user.getUsername(), message));
+
+                                            interpolationError = true;
+                                            phase.setMaxSessionId(sessions.get(sessions.size() - 1).getId());
+                                            break;
+                                        }
+
+                                        phase.setMaxSessionId(indexes[0]);
+                                        break;
+                                    case MAX:
+                                        phase.setMaxSessionId(sessions.get(sessions.size() - 1).getId());
+                                        break;
+                                    default:
+                                        throw new RuntimeException(String.format("Cannot resolve right bound for phase [%s].", phase.getPhase()));
                                 }
                             }
-                            // Align phase 1
-                            if (phase1 != null) {
-                                phase1.setMaxSessionId(sessions.getPreviousId(phase2b.getMinSessionId()));
-                                if (phase1.getMaxSessionId() == null) {
-                                    phase1.setMinSessionId(null);
-                                }
+                            if(interpolationError) {
+                                break;
                             }
                         }
 
-                        phaseTimeline.validate();
+                        timeline.validate();
 
                         row = new ArrayList<String>();
 
@@ -976,16 +965,23 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                         row.add(device.getDeviceKey().toString());
                         row.add(device.getName());
 
-                        createPhaseRowWithShowers(row, phase1, formatter);
-                        if(phase2a != null) {
-                            createPhaseRowWithShowers(row, phase2a, formatter);
-                        } else if(phase2b != null) {
-                            createPhaseRowWithShowers(row, phase2b, formatter);
-                        } else {
-                            createPhaseRowWithShowers(row, null, formatter);
-                        }
-                        createPhaseRowWithShowers(row, phase3, formatter);
+                        for (int i = 0, size = timeline.size(); i < size; i++) {
+                            Phase phase = timeline.get(i);
 
+                            if (phase.getPhase() == EnumPhase.EMPTY) {
+                                row.add("");
+                                row.add("");
+                                row.add("");
+                            } else {
+                                createPhaseRowWithShowers(row, phase, formatter, interpolationError);
+                            }
+                        }
+                        // Add empty entries
+                        for (int i = timeline.size(); i < 4; i++) {
+                            row.add("");
+                            row.add("");
+                            row.add("");
+                        }
                         totalRows++;
 
                         printer.printRecord(row);
@@ -1025,11 +1021,13 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
         Collections.sort(sessions, new Comparator<AmphiroAbstractSession>() {
             @Override
             public int compare(AmphiroAbstractSession s1, AmphiroAbstractSession s2) {
-                if (s1.getVolume() <= s2.getVolume()) {
+                if (s1.getVolume() < s2.getVolume()) {
                     return -1;
-                } else {
+                }
+                if (s1.getVolume() > s2.getVolume()) {
                     return 1;
                 }
+                return 0;
             }
         });
 
@@ -1053,268 +1051,5 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
         });
 
         return volume;
-    }
-
-    /**
-     * Helper class for managing amphiro b1 sessions.
-     */
-    private static class SessionCollection {
-
-        List<AmphiroAbstractSession> sessions;
-
-        public SessionCollection(List<AmphiroAbstractSession> sessions) {
-            this.sessions = sessions;
-
-            Collections.sort(sessions, new Comparator<AmphiroAbstractSession>() {
-
-                @Override
-                public int compare(AmphiroAbstractSession s1, AmphiroAbstractSession s2) {
-                    AmphiroSession as1 = (AmphiroSession) s1;
-                    AmphiroSession as2 = (AmphiroSession) s2;
-
-                    if (as1.getId() == as2.getId()) {
-                        throw new RuntimeException(String.format("Found duplicate session index [%d]",  as1.getId()));
-                    } else if (as1.getId() < as2.getId()) {
-                        return -1;
-                    } else {
-                        return 1;
-                    }
-                }
-            });
-        }
-
-        /**
-         * Returns the element at the specified position in this list.
-         *
-         * @param index index of the element to return.
-         * @return the element at the specified position in this list.
-         */
-        public AmphiroSession get(int index) {
-            return (AmphiroSession) sessions.get(index);
-        }
-
-        /**
-         * Returns the number of elements in this list.
-         *
-         * @return the number of elements in this list.
-         */
-        public int size() {
-            return sessions.size();
-        }
-
-        /**
-         * Returns true if this list contains no elements.
-         *
-         * @return true if this list contains no elements.
-         */
-        public boolean isEmpty() {
-            return sessions.isEmpty();
-        }
-
-        /**
-         * Removes all the historical data before the initial device pairing.
-         *
-         * @throws RuntimeException if a duplicate session index is found.
-         */
-        public void cleanPairingSessions() throws RuntimeException {
-
-            int count = 0;
-
-            for(AmphiroAbstractSession session : sessions) {
-                AmphiroSession amphiroSession = (AmphiroSession) session;
-
-                if(amphiroSession.isHistory()) {
-                    count++;
-                } else {
-                    break;
-                }
-            }
-
-            for (int i = 0; i < count; i++) {
-                // Do not remove sessions
-                //sessions.remove(0);
-            }
-        }
-
-        /**
-         * Given a timestamp, it returns the most recent real-time session before it.
-         *
-         * @param timestamp the timestamp to search.
-         * @return the amphiro b1 real-time session that occurred before the given timestamp.
-         */
-        public AmphiroSession getRealTimeSessionBefore(long timestamp) {
-            AmphiroSession result = null;
-
-            for(AmphiroAbstractSession session : sessions) {
-                AmphiroSession amphiroSession = (AmphiroSession) session;
-
-                if ((!amphiroSession.isHistory()) && (amphiroSession.getTimestamp() <= timestamp)) {
-                    if ((result == null) || (result.getTimestamp() < amphiroSession.getTimestamp())) {
-                        result = amphiroSession;
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        /**
-         * Given a timestamp, it returns the most recent real-time session after it.
-         *
-         * @param timestamp the timestamp to search.
-         * @return the amphiro b1 real-time session that occurred after the given timestamp.
-         */
-        public AmphiroSession getRealTimeSessionAfter(long timestamp) {
-            AmphiroSession result = null;
-
-            for(AmphiroAbstractSession session : sessions) {
-                AmphiroSession amphiroSession = (AmphiroSession) session;
-
-                if ((!amphiroSession.isHistory()) && (amphiroSession.getTimestamp() >= timestamp)) {
-                    if ((result == null) || (result.getTimestamp() > amphiroSession.getTimestamp())) {
-                        result = amphiroSession;
-                    }
-                }
-            }
-
-            return result;
-        }
-
-
-        /**
-         * Given a timestamp, it returns the most recent real-time session before or after it.
-         *
-         * @param timestamp the timestamp to search.
-         * @return the amphiro b1 real-time session that occurred most recently before or after the given timestamp.
-         */
-        public AmphiroSession getNearestSession(long timestamp) {
-            AmphiroSession result = null;
-
-            for(AmphiroAbstractSession session : sessions) {
-                AmphiroSession amphiroSession = (AmphiroSession) session;
-
-                if (!amphiroSession.isHistory()) {
-                    if ((result == null) ||
-                        (Math.abs(result.getTimestamp() - timestamp) >
-                         Math.abs(amphiroSession.getTimestamp() - timestamp))) {
-                        result = amphiroSession;
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        /**
-         * Returns the previous session id for the given id.
-         *
-         * @param id the session id to search for.
-         * @return the id of the session which is immediately before the session with the given id.
-         */
-        public Long getPreviousId(long id) {
-            for (int i = 0, count = sessions.size() - 1; i < count; i++) {
-                if (((AmphiroSession) sessions.get(i + 1)).getId() == id) {
-                    return ((AmphiroSession) sessions.get(i)).getId();
-                }
-            }
-
-            throw new RuntimeException(String.format("Cannot find previous id for shower id [%d]", id));
-        }
-
-        /**
-         * Returns the next session id for the given id.
-         *
-         * @param id the session id to search for.
-         * @return the id of the session which is immediately after the session with the given id.
-         */
-        public Long getNextId(long id) {
-            for (int i = 0, count = sessions.size() - 1; i < count; i++) {
-                if (((AmphiroSession) sessions.get(i)).getId() == id) {
-                    return ((AmphiroSession) sessions.get(i + 1)).getId();
-                }
-            }
-
-            throw new RuntimeException(String.format("Cannot find next id for shower id [%d]", id));
-        }
-
-        /**
-         * Given a timestamp, the two most recent real time sessions before and
-         * after it are computed. The session index interval defined by the two
-         * sessions is separated into two sets based on either (a) the given
-         * weight values or (b) the number of household members and the number
-         * of showers per week in the specific household. In the latter case,
-         * the number of amphiro b1 devices is also considered.
-         *
-         * @param timestamp reference timestamp
-         * @param interval1 weight for the first set.
-         * @param interval2 weight of the second set.
-         * @param householdMembers the number of household members.
-         * @param showerPerWeek the number of showers per week.
-         * @param numberOfAmphiro the number of installed amphiro devices.
-         * @return the indexes of sessions that split the sessions between the
-         *         given indexes in two sets based on the given weights.
-         */
-        public long[] interpolate(long timestamp, float interval1, float interval2, int householdMembers, Integer showerPerWeek, int numberOfAmphiro) {
-            if(numberOfAmphiro > 3) {
-                numberOfAmphiro = 3;
-            }
-            if (showerPerWeek == null) {
-                showerPerWeek = 0;
-            }
-
-            AmphiroSession sessionBefore = getRealTimeSessionBefore(timestamp);
-            AmphiroSession sessionAfter = getRealTimeSessionAfter(timestamp);
-
-            if ((sessionBefore == null) || (sessionAfter == null)) {
-                return null;
-            }
-
-            long[] result = new long[] { sessionBefore.getId(), sessionAfter.getId()};
-
-            int count = 0;
-
-            // Count sessions between the two indexes
-            for(AmphiroAbstractSession session : sessions) {
-                AmphiroSession amphiroSession = (AmphiroSession) session;
-                if ((amphiroSession.getId() > sessionBefore.getId()) && (amphiroSession.getId() < sessionAfter.getId())) {
-                    count++;
-                }
-            }
-
-            if (count == 0) {
-                // No sessions found between the two indexes.
-                return result;
-            }
-
-            // Check the result can be computed based on the household members
-            // and number of showers per week
-            int middle = 0;
-
-            float threshold = ((float) showerPerWeek / 7) * 20 / numberOfAmphiro;
-            if (count <= threshold) {
-                middle = Math.round((count * (timestamp - sessionBefore.getTimestamp())) /
-                                    (sessionAfter.getTimestamp() - sessionBefore.getTimestamp()));
-            } else {
-                // Compute the middle index based on the weight values.
-                middle = Math.round(count * interval1 / (interval1 + interval2));
-            }
-
-            count = 0;
-
-            for (AmphiroAbstractSession session : sessions) {
-                AmphiroSession amphiroSession = (AmphiroSession) session;
-                if ((amphiroSession.getId() > sessionBefore.getId()) && (amphiroSession.getId() < sessionAfter.getId())) {
-                    if (count < middle) {
-                        count++;
-                        result[0] = amphiroSession.getId();
-                    } else {
-                        result[1] = amphiroSession.getId();
-                        return result;
-                    }
-                }
-            }
-
-            return result;
-        }
     }
 }

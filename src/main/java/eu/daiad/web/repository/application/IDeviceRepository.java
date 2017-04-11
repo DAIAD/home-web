@@ -14,6 +14,7 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceConfigurationCollection;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.DeviceUpdateRequest;
+import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
 
@@ -35,6 +36,8 @@ public interface IDeviceRepository {
 
     Device getDeviceByKey(UUID deviceKey) throws ApplicationException;
 
+    AmphiroDevice getUserAmphiroByKey(UUID userKey, UUID deviceKey);
+
     Device getUserAmphiroDeviceByMacAddress(UUID userKey, String macAddress) throws ApplicationException;
 
     Device getUserWaterMeterDeviceBySerial(UUID userKey, String serial) throws ApplicationException;
@@ -42,6 +45,8 @@ public interface IDeviceRepository {
     Device getWaterMeterDeviceBySerial(String serial) throws ApplicationException;
 
     List<Device> getUserDevices(UUID userKey, DeviceRegistrationQuery query) throws ApplicationException;
+
+    List<Device> getUserDevices(UUID userKey, EnumDeviceType deviceType) throws ApplicationException;
 
     void shareDevice(UUID ownerID, String assigneeUsername, UUID deviceKey, boolean shared) throws ApplicationException;
 

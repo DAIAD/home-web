@@ -32,6 +32,7 @@ import eu.daiad.web.domain.application.HouseholdEntity;
 import eu.daiad.web.domain.application.HouseholdMemberEntity;
 import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.model.EnumApplication;
+import eu.daiad.web.model.EnumGender;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceConfigurationCollection;
 import eu.daiad.web.model.device.DeviceRegistration;
@@ -42,6 +43,7 @@ import eu.daiad.web.model.error.DeviceErrorCode;
 import eu.daiad.web.model.error.ProfileErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.EnumMobileMode;
+import eu.daiad.web.model.profile.EnumUnit;
 import eu.daiad.web.model.profile.EnumUtilityMode;
 import eu.daiad.web.model.profile.EnumWebMode;
 import eu.daiad.web.model.profile.Household;
@@ -77,43 +79,14 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
     Environment environment;
 
     @Override
-    public Profile getProfileByUsername(EnumApplication application) throws ApplicationException
+    public Profile getProfileByUserKey(UUID userKey, EnumApplication application) throws ApplicationException
     {
-        // Fixme not a proper place to query security context (should be at controller).
-        // Also, related to this, the name of this method disagrees with signature.
-
         try {
-            // Check user permissions
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthenticatedUser user = null;
-
-            if (auth.getPrincipal() instanceof AuthenticatedUser) {
-                user = (AuthenticatedUser) auth.getPrincipal();
-            } else {
-                throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
-            }
-
-            switch (application) {
-                case HOME:
-                case MOBILE:
-                    if (!user.hasRole(EnumRole.ROLE_USER)) {
-                        throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
-                    }
-                    break;
-                case UTILITY:
-                    if (!user.hasRole(EnumRole.ROLE_UTILITY_ADMIN, EnumRole.ROLE_SYSTEM_ADMIN)) {
-                        throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
-                    }
-                    break;
-                default:
-                    throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", application);
-            }
-
             // Load account data
             TypedQuery<eu.daiad.web.domain.application.AccountEntity> userQuery = entityManager.createQuery(
-                            "select a from account a where a.username = :username",
+                            "select a from account a where a.key = :userKey",
                             eu.daiad.web.domain.application.AccountEntity.class).setFirstResult(0).setMaxResults(1);
-            userQuery.setParameter("username", user.getUsername());
+            userQuery.setParameter("userKey", userKey);
 
             // Load registered device data
             AccountEntity account = userQuery.getSingleResult();
@@ -488,7 +461,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
     }
 
     @Override
-    public void deactivateProfile(ProfileDeactivateRequest userDeactId) {
+    public void deactivateProfile(ProfileDeactivateRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         AuthenticatedUser user = null;
 
@@ -507,7 +480,7 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                                                               .setFirstResult(0)
                                                               .setMaxResults(1);
 
-        accountQuery.setParameter("key", userDeactId.getUserDeactId());
+        accountQuery.setParameter("key", request.getUserkey());
 
         AccountEntity account = accountQuery.getSingleResult();
         UUID newVersion = UUID.randomUUID();
@@ -684,32 +657,41 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             throw createApplicationException(SharedErrorCode.AUTHORIZATION_ANONYMOUS_SESSION);
         }
 
-        TypedQuery<AccountEntity> query = entityManager.createQuery("select a from account a where a.key = :key",
-                        AccountEntity.class).setFirstResult(0).setMaxResults(1);
+        String accountQueryString = "select a from account a where a.key = :key";
+        TypedQuery<AccountEntity> query = entityManager.createQuery(accountQueryString, AccountEntity.class).setFirstResult(0).setMaxResults(1);
         query.setParameter("key", user.getKey());
 
         // Update account and profile
         AccountEntity account = query.getSingleResult();
 
-        switch (updates.getApplication()) {
-            case HOME:
-                account.getProfile().setWebConfiguration(updates.getConfiguration());
-                break;
-            case MOBILE:
-                account.getProfile().setMobileConfiguration(updates.getConfiguration());
-                break;
-            case UTILITY:
-                account.getProfile().setUtilityConfiguration(updates.getConfiguration());
-                break;
-            default:
-                throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application",
-                                updates.getApplication());
+        if (!StringUtils.isBlank(updates.getConfiguration())) {
+            switch (updates.getApplication()) {
+                case HOME:
+                    account.getProfile().setWebConfiguration(updates.getConfiguration());
+                    break;
+                case MOBILE:
+                    account.getProfile().setMobileConfiguration(updates.getConfiguration());
+                    break;
+                case UTILITY:
+                    account.getProfile().setUtilityConfiguration(updates.getConfiguration());
+                    break;
+                default:
+                    throw createApplicationException(ProfileErrorCode.PROFILE_NOT_SUPPORTED).set("application", updates.getApplication());
+            }
         }
 
-        account.getProfile().setDailyMeterBudget(updates.getDailyMeterBudget());
-        account.getProfile().setDailyAmphiroBudget(updates.getDailyAmphiroBudget());
-        account.getProfile().setUnit(updates.getUnit());
-        account.getProfile().setGarden(updates.getGarden());
+        if (updates.getDailyMeterBudget() != null) {
+            account.getProfile().setDailyMeterBudget(updates.getDailyMeterBudget());
+        }
+        if (updates.getDailyAmphiroBudget() != null) {
+            account.getProfile().setDailyAmphiroBudget(updates.getDailyAmphiroBudget());
+        }
+        if ((updates.getUnit() != null) && (updates.getUnit() != EnumUnit.UNDEFINED)) {
+            account.getProfile().setUnit(updates.getUnit());
+        }
+        if (updates.getGarden() != null) {
+            account.getProfile().setGarden(updates.getGarden());
+        }
 
         if (!StringUtils.isBlank(updates.getLastname())) {
             account.setLastname(updates.getLastname());
@@ -728,13 +710,29 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             account.setTimezone(updates.getTimezone());
         }
 
-        account.setAddress(updates.getAddress());
-        account.setCountry(updates.getCountry());
-        account.setPostalCode(updates.getPostalCode());
+        if (!StringUtils.isBlank(updates.getAddress())) {
+            account.setAddress(updates.getAddress());
+        }
+        if (!StringUtils.isBlank(updates.getCountry())) {
+            account.setCountry(updates.getCountry());
+        }
+        if (!StringUtils.isBlank(updates.getPostalCode())) {
+            account.setPostalCode(updates.getPostalCode());
+        }
 
-        account.setPhoto(updates.getPhoto());
-        account.setBirthdate(updates.getBirthdate());
-        account.setGender(updates.getGender());
+        if((updates.getPhoto() == null) || (updates.getPhoto().length == 0)) {
+            if(updates.isResetPhoto()) {
+                account.setPhoto(null);
+            }
+        } else {
+            account.setPhoto(updates.getPhoto());
+        }
+        if (updates.getBirthdate() == null) {
+            account.setBirthdate(updates.getBirthdate());
+        }
+        if ((updates.getGender() != null) && (updates.getGender() != EnumGender.UNDEFINED)) {
+            account.setGender(updates.getGender());
+        }
 
         /*
         // Update default household member
@@ -874,7 +872,9 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             }
             */
 
-            householdMemberEntity.setActive(member.isActive());
+            if (member.getIndex() != 0) {
+                householdMemberEntity.setActive(member.isActive());
+            }
             householdMemberEntity.setName(member.getName());
             householdMemberEntity.setGender(member.getGender());
             householdMemberEntity.setAge(member.getAge());
@@ -882,8 +882,10 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
         }
 
         for (HouseholdMemberEntity householdMemberEntity : account.getHousehold().getMembers()) {
-            if(updates.getMember(householdMemberEntity.getIndex()) == null) {
-                householdMemberEntity.setActive(false);
+            if (updates.getMember(householdMemberEntity.getIndex()) == null) {
+                if (householdMemberEntity.getIndex() != 0) {
+                    householdMemberEntity.setActive(false);
+                }
             }
         }
     }
