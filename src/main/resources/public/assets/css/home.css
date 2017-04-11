@@ -1125,6 +1125,7 @@ div[class^="section.login"]{
 }
 .add-widget-types > li > a {
   width: 190px;
+  height: 160px;
   float: left;
   padding: 50px 30px;
   margin: 5px;
@@ -1133,8 +1134,6 @@ div[class^="section.login"]{
 }
 .add-widget-types > li > a:hover {
   background: #D0EAFA;
-  //background: #2D3580;
-  //color: #fff;
 }
 .add-widget-types > li > a.selected {
   background: #D0EAFA;
@@ -1337,14 +1336,42 @@ input[name="amphiro-devices"] {
   font-size: 1.3em;
   border-bottom: 1px #666 solid;
   text-align: left;
+  padding-bottom: 10px;
 }
-.shower-info .headline i {
+
+.shower-info .headline-date {
+  display: inline-block;
+}
+
+.shower-info .headline-date-wrapper {
+  display: inline-block;
+}
+
+.shower-info .headline-date-input {
+  display: inline-block;
+}
+
+.shower-info .headline-date > i {
   margin-right: 10px;
 }
-.shower-info .headline-date {
-}
+
 .shower-info .headline-user {
   float: right;
+}
+
+.shower-info .headline-user > i {
+  margin-right: 10px;
+}
+
+.edit-shower-control {
+  float: right;
+  margin-left: 10px;
+}
+
+.ignore-shower {
+  position: absolute;
+  top: 20px;
+  right: 20px;
 }
 
 .session-item .in-pictures {
@@ -1439,7 +1466,6 @@ div[class^="section.commons"] .primary {
   flex-direction: row;
 }
 .commons-right {
-  padding: 20px;
   background: #D0EAFA;
   height: 100%;
 }
@@ -1485,6 +1511,18 @@ div[class^="section.commons"] .primary {
   font-size: 1.2em;
   padding: 15px;
 }
+
+/* Reports */
+
+.reports-time-selector {
+  margin: 0 auto;
+  width: 130px;
+}
+
+.reports-time-selector > input {
+  text-align: center;
+}
+
 /* Settings */
 
 div[class^="section.settings"] {
@@ -1494,6 +1532,11 @@ div[class^="section.settings"] {
 /* Profile */
 
 div[class^="section.profile"]{
+}
+
+#form-change-password .modal-body {
+  max-width: 334px;
+  text-align: left;
 }
 
 /* React grid layout */
