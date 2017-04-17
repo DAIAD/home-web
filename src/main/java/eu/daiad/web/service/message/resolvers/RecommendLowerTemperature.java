@@ -12,8 +12,11 @@ import java.util.UUID;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
+import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -40,6 +43,7 @@ import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
+import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.service.ICurrencyRateService;
@@ -205,10 +209,9 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
         Assert.state(deviceType == EnumDeviceType.AMPHIRO);
         
         final int N = 3; // number of months to examine
-        final Period period = Period.months(N); 
-        
-        DateTime end = refDate.withDayOfMonth(1)
-            .withTimeAtStartOfDay();
+        final Period period = Period.months(N);
+        final EnumTimeAggregation granularity = EnumTimeAggregation.MONTH;
+        final DateTime end = refDate.withDayOfMonth(1).withTimeAtStartOfDay();
         
         Double averageTemperature = statisticsService.getNumber(
                 end, period, EnumMeasurementField.AMPHIRO_TEMPERATURE, EnumStatistic.AVERAGE_PER_SESSION)
@@ -220,7 +223,7 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, granularity)
             .amphiro()
             .sum()
             .average();
@@ -234,12 +237,17 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
         double thresholdConsumption = period.getMonths() *
             config.getVolumeThreshold(EnumDeviceType.AMPHIRO, EnumTimeUnit.MONTH);
         
-        double userConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM);
-        double userAverageTemperature = series.get(EnumDataField.TEMPERATURE, EnumMetric.AVERAGE);
-        
+        Interval interval = query.getTime().asInterval();
+        Double userConsumption = series.aggregate(
+            EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval), new Sum());
+        Double userAverageTemperature = series.aggregate(
+            EnumDataField.TEMPERATURE, EnumMetric.AVERAGE, Point.betweenTime(interval), new Mean());
+       
         boolean fire = 
-            (userAverageTemperature > TEMPERATURE_HIGH_RATIO * averageTemperature) &&
-            (userConsumption > VOLUME_THRESHOLD_RATIO * thresholdConsumption);
+            userConsumption != null &&
+            userAverageTemperature != null &&
+            userAverageTemperature > TEMPERATURE_HIGH_RATIO * averageTemperature &&
+            userConsumption > VOLUME_THRESHOLD_RATIO * thresholdConsumption;
         if (fire) {
             // Get a rough estimate for annual money savings if temperature is 1 degree lower
             final int numMonthsPerYear = 12;

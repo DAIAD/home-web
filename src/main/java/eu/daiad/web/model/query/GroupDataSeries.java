@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.collections4.Predicate;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
@@ -497,6 +498,33 @@ public class GroupDataSeries
             Map<EnumMetric, Double> m = p0.field(field);
             return m != null? m.get(metric) : null;
         }
+        
+        @Override
+        public Double get(EnumDataField field, EnumMetric metric, Predicate<Point> pred)
+        {
+            Double result = null;
+            for (DataPoint datapoint: points) {
+                Map<EnumMetric, Double> f = datapoint.field(field);
+                if (f == null)
+                    continue; // the field is not present
+                Long t = datapoint.getTimestamp();
+                if (t == null)
+                    continue; // not paired with a timestamp
+                Point point = Point.of(t, f.get(metric));
+                if (pred.evaluate(point)) {
+                    // A suitable point is found; check is a single one
+                    if (result == null)
+                        // this is the 1st time we encounter a suitable point
+                        result = point.getValue();
+                    else {
+                        // found a duplicate: do not accept as a result
+                        result = null;
+                        break;
+                    }
+                }
+            }
+            return result;
+        }
 
         /**
          * Get an iterable of (time, value) pairs from this series
@@ -584,7 +612,9 @@ public class GroupDataSeries
             {
                 DataPoint p = points.get(currIndex);
                 currIndex++;
-                return Point.of(p.getTimestamp(), p.field(field).get(metric));
+                
+                Map<EnumMetric, Double> f = p.field(field);
+                return Point.of(p.getTimestamp(), f.get(metric));
             }
         }
     }

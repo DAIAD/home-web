@@ -11,7 +11,9 @@ import java.util.UUID;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -37,6 +39,7 @@ import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
+import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
@@ -147,9 +150,8 @@ public class RecommendShampooChange extends AbstractRecommendationResolver
         
         final int N = 3; // number of months to examine
         final Period period = Period.months(N); 
-        
-        DateTime end = refDate.withDayOfMonth(1)
-            .withTimeAtStartOfDay();
+        final EnumTimeAggregation granularity = EnumTimeAggregation.MONTH;
+        final DateTime end = refDate.withDayOfMonth(1).withTimeAtStartOfDay();
         
         Double averageConsumption = statisticsService.getNumber(
                 end, period, EnumMeasurementField.AMPHIRO_VOLUME, EnumStatistic.AVERAGE_PER_USER)
@@ -160,7 +162,7 @@ public class RecommendShampooChange extends AbstractRecommendationResolver
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, granularity)
             .amphiro()
             .sum()
             .average();
@@ -171,8 +173,10 @@ public class RecommendShampooChange extends AbstractRecommendationResolver
         if (series == null || series.isEmpty())
             return Collections.emptyList();
 
-        double userConsumption = series.get(EnumDataField.VOLUME, EnumMetric.SUM);
-        if (userConsumption > averageConsumption * VOLUME_HIGH_RATIO) {
+        Interval interval = query.getTime().asInterval();
+        Double userConsumption = series.aggregate(
+            EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval), new Sum());
+        if (userConsumption != null && userConsumption > averageConsumption * VOLUME_HIGH_RATIO) {
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType)
                 .withAverageConsumption(averageConsumption)
                 .withUserAverageConsumption(userConsumption);          

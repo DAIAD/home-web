@@ -22,7 +22,26 @@ public abstract class AbstractSeriesFacade implements SeriesFacade
     {
         aggregator.clear();
         for (Point p: iterPoints(field, metric))
-            aggregator.increment(p.getValue());
+            if (p.getValue() != null) 
+                aggregator.increment(p.getValue());
+        
+        long n = aggregator.getN();
+        return (n > 0)? aggregator.getResult() : null;
+    }
+    
+    /**
+     * Aggregate values over a subset of points (satisfying a predicate).
+     * 
+     * Note that this implementation clears any internal state on aggregator.
+     */
+    @Override
+    public Double aggregate(
+        EnumDataField field, EnumMetric metric, Predicate<Point> pred, StorelessUnivariateStatistic aggregator)
+    {
+        aggregator.clear();
+        for (Point p: iterPoints(field, metric))
+            if (p.getValue() != null && pred.evaluate(p)) 
+                aggregator.increment(p.getValue());
         
         long n = aggregator.getN();
         return (n > 0)? aggregator.getResult() : null;
@@ -33,7 +52,7 @@ public abstract class AbstractSeriesFacade implements SeriesFacade
     {
         int n = 0;
         for (Point p: iterPoints(field, metric))
-            if (pred.evaluate(p))
+            if (p.getValue() != null && pred.evaluate(p))
                 n++;
         return n;
     }

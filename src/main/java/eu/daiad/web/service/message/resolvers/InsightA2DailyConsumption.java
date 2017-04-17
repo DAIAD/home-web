@@ -13,6 +13,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,8 @@ import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
+
+import static eu.daiad.web.model.query.Point.betweenTime;
 
 @MessageGenerator(period = "P1D")
 @Component
@@ -154,6 +157,7 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
         DataQuery query;
         DataQueryResponse queryResponse;
         SeriesFacade series;
+        Interval interval = null;
 
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
@@ -166,12 +170,14 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
         DateTime start = refDate.withTimeAtStartOfDay();
         
         query = queryBuilder
-            .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+            .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
+        interval = query.getTime().asInterval();
         Double targetValue = (series != null)? 
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+            series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
+            null;
         if (targetValue == null || targetValue < dailyThreshold)
             return Collections.emptyList(); // nothing to compare to
         
@@ -181,12 +187,14 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
         for (int i = 0; i < N; i++) {
             start = start.minusDays(1);
             query = queryBuilder
-                .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+                .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
                 .build();
             queryResponse = dataService.execute(query);
             series = queryResponse.getFacade(deviceType);
+            interval = query.getTime().asInterval();
             Double val = (series != null)? 
-                series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+                series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
+                null;
             if (val != null)
                 summary.addValue(val);
         }
