@@ -71,10 +71,6 @@ public class AbstractHBaseMeterAggregateDataRepository extends AbstractHBaseMete
         month = (int) (time % 100);
         year = (int) (time / 100);
 
-        if (granularity == EnumTimeAggregation.ALL) {
-            throw new IllegalArgumentException("Granularity level not supported.");
-        }
-
         DateTime date = new DateTime(year, month, day, hour, 0, 0, timezone);
 
         return date.getMillis();
@@ -87,9 +83,6 @@ public class AbstractHBaseMeterAggregateDataRepository extends AbstractHBaseMete
         }
         byte[] groupHash = md.digest(key.getBytes("UTF-8"));
 
-        if(aggregation == EnumTimeAggregation.ALL) {
-            throw new IllegalArgumentException(String.format("Time aggregation level [%s] is not supported.", aggregation.toString()));
-        }
         byte granularity = (byte) aggregation.getValue();
 
         byte[] timestampBytes = Bytes.toBytes(timestamp);

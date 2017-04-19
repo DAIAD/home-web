@@ -234,13 +234,16 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     private void computeRanking(ExecutionContext context) {
         DataQuery query = DataQueryBuilder.create()
                                           .timezone(context.timezone)
-                                          .absolute(context.start, context.end, EnumTimeAggregation.ALL)
+                                          .absolute(context.start, context.end, EnumTimeAggregation.MONTH)
                                           .utilityTop("Utility", context.utilityKey, EnumMetric.SUM, Integer.MAX_VALUE)
                                           .meter()
                                           .build();
 
         DataQueryResponse result = dataService.execute(query);
 
+        if ((!result.getMeters().isEmpty()) && (result.getMeters().size() != 1)) {
+            throw new RuntimeException("Expected a single value for the ranking.");
+        }
         if ((!result.getMeters().isEmpty()) &&
             (!result.getMeters().get(0).getPoints().isEmpty())) {
             context.ranking = (RankingDataPoint) result.getMeters().get(0).getPoints().get(0);
@@ -373,7 +376,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
 
             DataQuery lastMonthQuery = DataQueryBuilder.create()
                                                        .timezone(context.timezone)
-                                                       .absolute(context.start, context.end, EnumTimeAggregation.ALL)
+                                                       .absolute(context.start, context.end, EnumTimeAggregation.MONTH)
                                                        .user("self", user.getKey())
                                                        .users("similar", user.getSimilarUsers())
                                                        .users("nearest", user.getNearestUsers())
@@ -385,6 +388,12 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
             DataQueryResponse result = dataService.execute(lastMonthQuery);
 
             if (result.getSuccess()) {
+                for (GroupDataSeries series : result.getMeters()) {
+                    if ((!series.getPoints().isEmpty()) && (series.getPoints().size() != 1)) {
+                        throw new RuntimeException("Expected a single value for the series.");
+                    }
+                }
+
                 for (GroupDataSeries series : result.getMeters()) {
                     switch (series.getLabel()) {
                         case "self":

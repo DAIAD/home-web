@@ -9,14 +9,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
-public enum EnumTimeAggregation 
+public enum EnumTimeAggregation
 {
-	HOUR(1), 
-	DAY(2), 
-	WEEK(3), 
-	MONTH(4), 
-	YEAR(5), 
-	ALL(6);
+	HOUR(1),
+	DAY(2),
+	WEEK(3),
+	MONTH(4),
+	YEAR(5);
 
 	private final int value;
 

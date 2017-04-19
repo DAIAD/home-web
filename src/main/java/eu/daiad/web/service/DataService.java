@@ -23,7 +23,6 @@ import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
-import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -141,10 +140,6 @@ public class DataService extends BaseService implements IDataService {
             response.add(this.getError(QueryErrorCode.TIME_FILTER_NOT_SET));
         } else {
             // Granularity
-            if((query.isUsingPreAggregation()) && (query.getTime().getGranularity() == EnumTimeAggregation.ALL)) {
-                response.add(this.getError(QueryErrorCode.GRANULARITY_NOT_SUPPORTED));
-            }
-
             switch (query.getTime().getType()) {
                 case ABSOLUTE:
                     if (query.getTime().getEnd() == null) {

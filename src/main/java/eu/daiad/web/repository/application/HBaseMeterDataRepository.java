@@ -622,9 +622,6 @@ public class HBaseMeterDataRepository extends AbstractHBaseMeterDataRepository i
                     startDate = new DateTime(startDate.getYear(), 1, 1, 0, 0, 0, query.getTimezone());
                     endDate = new DateTime(endDate.getYear(), 12, 31, 23, 59, 59, query.getTimezone());
                     break;
-                case ALL:
-                    // Ignore
-                    break;
                 default:
                     throw createApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level", query.getGranularity());
             }

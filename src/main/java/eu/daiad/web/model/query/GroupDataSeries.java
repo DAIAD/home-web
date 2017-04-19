@@ -106,35 +106,25 @@ public class GroupDataSeries
             case YEAR:
                 date = new DateTime(date.getYear(), 1, 1, 0, 0, 0, timezone);
                 break;
-            case ALL:
-                break;
             default:
                 throw new IllegalArgumentException("Granularity level not supported.");
         }
 
         DataPoint p = null;
+        timestamp = date.getMillis();
 
-        if (granularity == EnumTimeAggregation.ALL) {
-            if (points.size() == 0) {
-                p = createDataPoint(metrics, type, null);
-            } else {
-                p = points.get(0);
-            }
-        } else {
-            timestamp = date.getMillis();
+        for (int i = 0, count = points.size(); i < count; i++) {
+            if (timestamp == points.get(i).getTimestamp()) {
+                p = points.get(i);
 
-            for (int i = 0, count = points.size(); i < count; i++) {
-                if (timestamp == points.get(i).getTimestamp()) {
-                    p = points.get(i);
-
-                    break;
-                }
-            }
-
-            if (p == null) {
-                p = createDataPoint(metrics, type, timestamp);
+                break;
             }
         }
+
+        if (p == null) {
+            p = createDataPoint(metrics, type, timestamp);
+        }
+
         return p;
     }
 
@@ -379,32 +369,23 @@ public class GroupDataSeries
             case YEAR:
                 date = new DateTime(date.getYear(), 1, 1, 0, 0, 0, timezone);
                 break;
-            case ALL:
-                break;
             default:
                 throw new IllegalArgumentException("Granularity level not supported.");
         }
 
-        if (granularity == EnumTimeAggregation.ALL) {
-            if (points.size() == 0) {
-                points.add(new RankingDataPoint());
+        timestamp = date.getMillis();
+
+        for (int i = 0, count = points.size(); i < count; i++) {
+            if (timestamp == points.get(i).getTimestamp()) {
+                return (RankingDataPoint) points.get(i);
             }
-
-            return (RankingDataPoint) points.get(0);
-        } else {
-            timestamp = date.getMillis();
-
-            for (int i = 0, count = points.size(); i < count; i++) {
-                if (timestamp == points.get(i).getTimestamp()) {
-                    return (RankingDataPoint) points.get(i);
-                }
-            }
-
-            RankingDataPoint point = new RankingDataPoint(timestamp);
-            points.add(point);
-
-            return point;
         }
+
+        RankingDataPoint point = new RankingDataPoint(timestamp);
+        points.add(point);
+
+        return point;
+
     }
 
     private UserDataPoint getUserDataPoint(EnumTimeAggregation granularity,
@@ -498,7 +479,7 @@ public class GroupDataSeries
             Map<EnumMetric, Double> m = p0.field(field);
             return m != null? m.get(metric) : null;
         }
-        
+
         @Override
         public Double get(EnumDataField field, EnumMetric metric, Predicate<Point> pred)
         {
@@ -612,7 +593,7 @@ public class GroupDataSeries
             {
                 DataPoint p = points.get(currIndex);
                 currIndex++;
-                
+
                 Map<EnumMetric, Double> f = p.field(field);
                 return Point.of(p.getTimestamp(), f.get(metric));
             }
