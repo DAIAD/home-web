@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
@@ -29,7 +31,9 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ResourceNotFoundException;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.report.ReportStatus;
 import eu.daiad.web.model.report.ReportStatusResponse;
+import eu.daiad.web.model.report.YearReportStatusResponse;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.repository.application.IReportRepository;
@@ -99,7 +103,7 @@ public class ReportController extends BaseController {
                                     @PathVariable int month) {
         String path = reportRepository.getReportPath(authenticatedUser.getUsername(), year, month);
 
-        return createReportStatus(path, String.format("action/report/download/%d/%d", year, month));
+        return createReportStatus(path, String.format("action/report/download/%d/%d", year, month), year, month);
     }
 
     /**
@@ -151,7 +155,21 @@ public class ReportController extends BaseController {
 
         String path = reportRepository.getReportPath(reportOwner.getUsername(), year, month);
 
-        return createReportStatus(path, String.format("action/report/download/%s/%d/%d", userKey.toString(), year, month));
+        return createReportStatus(path, String.format("action/report/download/%s/%d/%d", userKey.toString(), year, month), year, month);
+    }
+
+    /**
+     * Returns the available reports for the selected year.
+     *
+     * @param authenticatedUser the currently authenticated user.
+     * @param year the reference year.
+     * @return the report file.
+     */
+    @RequestMapping(value = "/action/report/status/{year}", method = RequestMethod.GET)
+    @Secured({ RoleConstant.ROLE_USER })
+    public RestResponse checkReportForYear(@AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                           @PathVariable int year) {
+        return createReportStatusForYear(authenticatedUser.getUsername(), year);
     }
 
     /**
@@ -189,9 +207,11 @@ public class ReportController extends BaseController {
      *
      * @param path the file location.
      * @param url the URL for downloading the report.
+     * @param year the reference date year.
+     * @param month the reference date month.
      * @return an instance of {@link RestResponse}.
      */
-    private RestResponse createReportStatus(String path, String url) {
+    private RestResponse createReportStatus(String path, String url, int year, int month) {
         try {
             File file = new File(path);
 
@@ -200,7 +220,9 @@ public class ReportController extends BaseController {
 
                 return new ReportStatusResponse(new DateTime(attr.creationTime().toMillis()),
                                                 file.length(),
-                                                baseUrl.endsWith("/") ? baseUrl + url : baseUrl + "/" + url);
+                                                baseUrl.endsWith("/") ? baseUrl + url : baseUrl + "/" + url,
+                                                year,
+                                                month);
             } else {
                 return this.createResponse(SharedErrorCode.RESOURCE_NOT_FOUND);
             }
@@ -209,6 +231,42 @@ public class ReportController extends BaseController {
         }
 
         return this.createResponse(SharedErrorCode.UNKNOWN);
+    }
+
+    /**
+     * Returns a list of {@link ReportStatus} objects for all reports in the selected {@code year}.
+     *
+     * @param username the name of the report owner.
+     * @param year the reference year.
+     * @return a list of {@link ReportStatus} objects.
+     */
+    private RestResponse createReportStatusForYear(String username, int year) {
+        List<ReportStatus> reports = new ArrayList<ReportStatus>();
+
+        for (int month = 1; month < 13; month++) {
+            String path = reportRepository.getReportPath(username, year, month);
+
+            try {
+                File file = new File(path);
+
+                if (file.exists()) {
+                    String url = String.format("action/report/download/%d/%d", year, month);
+                    BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+
+                    reports.add(new ReportStatus(new DateTime(attr.creationTime().toMillis()),
+                                                 file.length(),
+                                                 baseUrl.endsWith("/") ? baseUrl + url : baseUrl + "/" + url,
+                                                 year,
+                                                 month));
+                }
+            } catch (IOException ex) {
+                logger.error(String.format("Failed to query report metadata for file [%s].", Paths.get(path)), ex);
+
+                return this.createResponse(SharedErrorCode.UNKNOWN);
+            }
+        }
+
+        return new YearReportStatusResponse(reports);
     }
 
     /**

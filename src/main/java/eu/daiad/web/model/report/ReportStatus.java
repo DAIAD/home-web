@@ -10,10 +10,16 @@ public class ReportStatus {
 
     private String url;
 
-    public ReportStatus(DateTime createdOn, long size, String url) {
+    private int year;
+
+    private int month;
+
+    public ReportStatus(DateTime createdOn, long size, String url, int year, int month) {
         this.createdOn = createdOn;
         this.size = size;
         this.url = url;
+        this.year = year;
+        this.month = month;
     }
 
     public DateTime getCreatedOn() {
@@ -26,6 +32,14 @@ public class ReportStatus {
 
     public String getUrl() {
         return url;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public int getMonth() {
+        return month;
     }
 
 }
