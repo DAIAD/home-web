@@ -105,15 +105,30 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
                     try {
                         String filename = Paths.get(outputDirectory, user.getUsername() + "-" + from + "-" + to + ".pdf").toString();
 
-                        String command = String.format("%s %s %s %s %s %s:%s %s %s %s %s",
+                        /*
+                            Script    Shell script that executes the report generation process
+                            WorkDir   Working directory for the script execution
+
+                            URL       The NODE server URL
+                            API       The API endpoint
+                            locale    The locale for page rendering (one of en, el, es)
+                            username  User name for API authentication
+                            password  User password for API authentication
+                            userKey   The user UUID key for which to create report
+                            from      The beginning of the period date in ISO-8061 form (YYYYMMDD)
+                            to        The end of the period date in ISO-8061 form (YYYYMMDD)
+                            output    The output filename (the extension can be one of pdf, png)
+                        */
+
+                        String command = String.format("%s %s %s %s %s %s %s %s %s %s %s",
                                                        schellScript,
                                                        workingDirectory,
                                                        endpointReport,
                                                        endpointApi,
                                                        resolveLocale(user.getLocale(), utility.getLocale()),
                                                        utilityUsername[index],
-                                                       user.getUsername(),
                                                        utilityPassword[index],
+                                                       user.getKey().toString(),
                                                        from,
                                                        to,
                                                        filename);
@@ -126,7 +141,7 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
                         if (commandExecutor.execute() == ExitStatus.COMPLETED) {
                             String[] lines = commandExecutor.getOutput();
                             if (lines.length > 0) {
-                                if (lines[lines.length - 1].equals(successMessage)) {
+                                if (lines[lines.length - 1].equalsIgnoreCase(successMessage)) {
                                     success = true;
                                 } else {
                                     errorMessage = lines[lines.length - 1];
