@@ -13,6 +13,7 @@ import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Interval;
@@ -45,6 +46,8 @@ import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
+
+import static eu.daiad.web.model.query.Point.betweenTime;
 
 @MessageGenerator(period = "P1D")
 @Component
@@ -221,31 +224,35 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
             // Compute for part-of-day for target day
 
             query = queryBuilder
-                .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.ALL)
+                .absolute(r.getStart(), r.getEnd(), EnumTimeAggregation.HOUR)
                 .build();
             queryResponse = dataService.execute(query);
             series = queryResponse.getFacade(deviceType);
             Double targetValue = (series != null)? 
-                series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+                series.aggregate(
+                    EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(r), new Sum()):
+                null;
             if (targetValue == null || targetValue < threshold)
                 continue; // skip part-of-day; nothing to compare to
          
             // Compute for part-of-day for past N days
 
             // Note: not so efficient to query for each partOfDay; 
-            // query at HOUR granularity for the whole day and keep separate sums
+            // query for the whole day (at HOUR granularity) and keep separate sums
             DateTime start = refDate;
             SummaryStatistics summary = new SummaryStatistics();
             for (int i = 0; i < N; i++) {
                 start = start.minusDays(1);
                 Interval r1 = partOfDay.toInterval(start);
                 query = queryBuilder
-                    .absolute(r1.getStart(), r1.getEnd(), EnumTimeAggregation.ALL)
+                    .absolute(r1.getStart(), r1.getEnd(), EnumTimeAggregation.HOUR)
                     .build();
                 queryResponse = dataService.execute(query);
                 series = queryResponse.getFacade(deviceType);
                 Double val = (series != null)? 
-                    series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+                    series.aggregate(
+                        EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(r1), new Sum()):
+                    null;
                 if (val != null)
                     summary.addValue(val);
             }

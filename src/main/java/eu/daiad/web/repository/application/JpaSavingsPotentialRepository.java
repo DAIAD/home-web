@@ -157,25 +157,6 @@ public class JpaSavingsPotentialRepository extends BaseRepository implements ISa
         return result.get(0);
     }
 
-
-    /**
-     * Initializes scenario job execution.
-     *
-     * @param key the scenario key.
-     * @param jobId job id.
-     * @param updatedOn update timestamp.
-     */
-    @Override
-    public void initJobExecution(UUID key, long jobId, DateTime updatedOn) {
-        SavingsPotentialScenarioEntity scenario = getScenarioByKey(key);
-
-        scenario.setJobId(jobId);
-        scenario.setStatus(EnumSavingScenarioStatus.RUNNING);
-        scenario.setProcessingDateBegin(updatedOn);
-
-        entityManager.flush();
-    }
-
     /**
      * Updates scenario job execution.
      *

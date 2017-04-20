@@ -47,6 +47,9 @@ import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
 
+import static eu.daiad.web.model.query.Point.betweenTime;
+
+
 @MessageGenerator(period = "P1W", dayOfWeek = EnumDayOfWeek.MONDAY, maxPerWeek = 1)
 @Component
 @Scope("prototype")
@@ -164,7 +167,8 @@ public class InsightB1WeeklyConsumption extends AbstractRecommendationResolver
         DataQuery query;
         DataQueryResponse queryResponse;
         SeriesFacade series;
-
+        Interval interval;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
@@ -174,12 +178,14 @@ public class InsightB1WeeklyConsumption extends AbstractRecommendationResolver
         // Compute for target period
 
         query = queryBuilder
-            .sliding(targetDate, +1, EnumTimeUnit.WEEK, EnumTimeAggregation.ALL)
+            .sliding(targetDate, +1, EnumTimeUnit.WEEK, EnumTimeAggregation.WEEK)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
+        interval = query.getTime().asInterval();
         Double targetValue = (series != null)? 
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+            series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
+            null;
         if (targetValue == null || targetValue < threshold)
             return Collections.emptyList(); // nothing to compare to
 
@@ -190,12 +196,14 @@ public class InsightB1WeeklyConsumption extends AbstractRecommendationResolver
         for (int i = 0; i < N; i++) {
             start = start.minusWeeks(1);
             query = queryBuilder
-                .sliding(start, +1, EnumTimeUnit.WEEK, EnumTimeAggregation.ALL)
+                .sliding(start, +1, EnumTimeUnit.WEEK, EnumTimeAggregation.WEEK)
                 .build();
             queryResponse = dataService.execute(query);
             series = queryResponse.getFacade(deviceType);
+            interval = query.getTime().asInterval();
             Double val = (series != null)? 
-                series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+                series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
+                null;
             if (val != null)
                 summary.addValue(val);
         }

@@ -64,15 +64,6 @@ public interface ISavingsPotentialRepository {
     void deleteScenarioByKey(UUID key);
 
     /**
-     * Initializes scenario job execution.
-     *
-     * @param key the scenario key.
-     * @param jobId job id.
-     * @param updatedOn update timestamp.
-     */
-    void initJobExecution(UUID key, long jobId, DateTime updatedOn);
-
-    /**
      * Updates scenario job execution.
      *
      * @param key the scenario key.
@@ -95,7 +86,6 @@ public interface ISavingsPotentialRepository {
      * @param key the scenario key.
      * @param consumption consumption volume.
      * @param saved savings volume.
-     * @param percent savings percent.
      * @param updatedOn update timestamp.
      */
     void updateSavings(UUID key, double consumption, double saved, DateTime updatedOn);

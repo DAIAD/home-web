@@ -12,8 +12,10 @@ import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -42,6 +44,7 @@ import eu.daiad.web.model.query.EnumMeasurementDataSource;
 import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMetric;
+import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
@@ -175,6 +178,7 @@ public class AlertExcessiveWaterConsumption extends AbstractAlertResolver
         UUID accountKey, EnumDeviceType deviceType)
     {
         final Period period = Period.weeks(1); 
+        final EnumTimeAggregation granularity = EnumTimeAggregation.WEEK;
         final EnumMeasurementField measurementField = 
             EnumMeasurementField.valueOf(deviceType, EnumDataField.VOLUME);
         
@@ -189,7 +193,7 @@ public class AlertExcessiveWaterConsumption extends AbstractAlertResolver
 
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
-            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, granularity)
             .user("user", accountKey)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
@@ -198,8 +202,11 @@ public class AlertExcessiveWaterConsumption extends AbstractAlertResolver
         DataQueryResponse queryResponse = dataService.execute(query);
         SeriesFacade series = queryResponse.getFacade(deviceType);
 
+        Interval interval = query.getTime().asInterval();
         Double userConsumption = (series != null)?
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+            series.aggregate(
+                EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval), new Sum()):
+            null;
 
         if (userConsumption != null && userConsumption > HIGH_CONSUMPTION_RATIO * averageConsumption) {
             // Get a rough estimate for annual savings if average behavior is adopted

@@ -13,11 +13,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.math3.stat.descriptive.StorelessUnivariateStatistic;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
+import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +46,7 @@ import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.GroupDataSeries;
 import eu.daiad.web.model.query.MeterDataPoint;
+import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IGroupRepository;
@@ -97,20 +103,20 @@ public class DefaultConsumptionAggregationService
             // The time-unit is inferred from how period is expressed.
             
             DateTime end = null;
-            EnumTimeUnit u = null;
+            EnumTimeAggregation u = null;
             if (period.getDays() > 0) {
-                u = EnumTimeUnit.DAY;
+                u = EnumTimeAggregation.DAY;
                 end = refDate.withTimeAtStartOfDay();
             } else if (period.getWeeks() > 0) {
-                u = EnumTimeUnit.WEEK;
+                u = EnumTimeAggregation.WEEK;
                 end = refDate.withDayOfWeek(DateTimeConstants.MONDAY)
                     .withTimeAtStartOfDay();
             } else if (period.getMonths() > 0) {
-                u = EnumTimeUnit.MONTH;
+                u = EnumTimeAggregation.MONTH;
                 end = refDate.withDayOfMonth(1)
                     .withTimeAtStartOfDay();
             } else if (period.getYears() > 0) {
-                u = EnumTimeUnit.YEAR;
+                u = EnumTimeAggregation.YEAR;
                 end = refDate.withDayOfYear(1)
                     .withTimeAtStartOfDay();
             } else {
@@ -123,7 +129,7 @@ public class DefaultConsumptionAggregationService
             
             querybuilder
                 .timezone(tz)
-                .absolute(start, end, EnumTimeAggregation.ALL);
+                .absolute(start, end, u);
             
             return querybuilder;
         }
@@ -142,7 +148,10 @@ public class DefaultConsumptionAggregationService
             
             // Check that summing is meaningful for this (field, statistic)
             EnumDataField field = measurementField.getField();
-            Assert.isTrue(field == EnumDataField.VOLUME || field == EnumDataField.DURATION);
+            Assert.isTrue(
+                field == EnumDataField.VOLUME || 
+                field == EnumDataField.DURATION ||
+                field == EnumDataField.ENERGY);
         }
 
         @Override
@@ -161,7 +170,10 @@ public class DefaultConsumptionAggregationService
             if (series == null || series.isEmpty())
                 return ComputedNumber.UNDEFINED;
             
-            double value = series.get(field, EnumMetric.SUM);
+            Interval interval = query.getTime().asInterval();
+            double value = series.aggregate(
+                field, EnumMetric.SUM, Point.betweenTime(interval), new Sum());
+            
             return ComputedNumber.valueOf(value);
         }
 	    
@@ -177,7 +189,10 @@ public class DefaultConsumptionAggregationService
             
             // Check that averaging-per-user is meaningful for this (field, statistic)
             EnumDataField field = measurementField.getField();
-            Assert.isTrue(field == EnumDataField.VOLUME || field == EnumDataField.DURATION);
+            Assert.isTrue(
+                field == EnumDataField.VOLUME || 
+                field == EnumDataField.DURATION ||
+                field == EnumDataField.ENERGY);
         }
 
         @Override
@@ -196,7 +211,9 @@ public class DefaultConsumptionAggregationService
             if (series == null || series.isEmpty())
                 return ComputedNumber.UNDEFINED;
             
-            double targetValue = series.get(field, EnumMetric.SUM);
+            Interval interval = query.getTime().asInterval();
+            double targetValue = series.aggregate(
+                field, EnumMetric.SUM, Point.betweenTime(interval), new Sum());
             double averageValue = targetValue / series.getPopulationCount();
             
             return ComputedNumber.valueOf(averageValue);
@@ -233,7 +250,20 @@ public class DefaultConsumptionAggregationService
             if (series == null || series.isEmpty())
                 return ComputedNumber.UNDEFINED;
             
-            double averageValue = series.get(field, EnumMetric.AVERAGE);
+            double averageValue = Double.NaN;
+            Interval interval = query.getTime().asInterval();
+            
+            if (field.supports(EnumMetric.SUM)) {
+                double totalValue = series.aggregate(
+                    field, EnumMetric.SUM, Point.betweenTime(interval), new Sum());
+                double numberOfSessions = series.aggregate(
+                    field, EnumMetric.COUNT, Point.betweenTime(interval), new Sum());
+                averageValue = totalValue / numberOfSessions;
+            } else {
+                averageValue = series.aggregate(
+                    field, EnumMetric.AVERAGE, Point.betweenTime(interval), new Mean());
+            }
+            
             return ComputedNumber.valueOf(averageValue);
         }
 	}
@@ -310,8 +340,11 @@ public class DefaultConsumptionAggregationService
                 queryResponse = dataService.execute(query);
                 series = queryResponse.getFacade(deviceType);
                 if (series == null || series.isEmpty())
-                    continue; // no consumption; skip      
-                double value = series.get(field, EnumMetric.SUM);
+                    continue; // no consumption; skip
+                
+                Interval interval = query.getTime().asInterval();
+                double value = series.aggregate(
+                    field, EnumMetric.SUM, Point.betweenTime(interval), new Sum());
                 values.add(value);
             }
             

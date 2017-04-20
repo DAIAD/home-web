@@ -68,7 +68,10 @@
     "Weather",
 
     "Reporting",
+    "YearReportStatus",
+    "CurrentUserReportStatus",
     "CurrentUserReport",
+    "UserReportStatus",
     "UserReport",
 
     "Spatial",

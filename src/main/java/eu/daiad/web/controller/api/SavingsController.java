@@ -80,7 +80,7 @@ public class SavingsController extends BaseRestController {
     }
 
     /**
-     * Refreshes an existing new savings scenario.
+     * Refreshes an existing savings scenario.
      *
      * @param scenarioKey the scenario Key.
      * @param request user credentials.
@@ -119,7 +119,7 @@ public class SavingsController extends BaseRestController {
 
 
     /**
-     * Refreshes an existing new savings scenario.
+     * Query savings scenario consumer data.
      *
      * @param scenarioKey the scenario Key.
      * @param clusterKey the cluster key
@@ -157,7 +157,7 @@ public class SavingsController extends BaseRestController {
     }
 
     /**
-     * Deletes a savings scenario.
+     * Query savings scenarios.
      *
      * @param request request of type {@link SavingScenarioQueryRequest}.
      * @return an instance of {@link RestResponse}.

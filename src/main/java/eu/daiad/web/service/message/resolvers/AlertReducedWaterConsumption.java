@@ -15,6 +15,7 @@ import org.apache.commons.math3.stat.descriptive.summary.Sum;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -60,7 +61,7 @@ public class AlertReducedWaterConsumption extends AbstractAlertResolver
 {
     public static final double CHANGE_PERCENTAGE_THRESHOLD = 20.0;
     
-    public static final double CHANGE_PERCENTAGE_FLOOR = 60.0;
+    public static final double CHANGE_PERCENTAGE_CEIL = 60.0;
     
     @Autowired
     IDataService dataService;
@@ -150,7 +151,8 @@ public class AlertReducedWaterConsumption extends AbstractAlertResolver
         public EnumAlertTemplate getTemplate()
         {
             return (deviceType == EnumDeviceType.AMPHIRO)?
-                EnumAlertTemplate.REDUCED_WATER_USE_SHOWER : EnumAlertTemplate.REDUCED_WATER_USE_METER;
+                EnumAlertTemplate.REDUCED_WATER_USE_SHOWER:
+                EnumAlertTemplate.REDUCED_WATER_USE_METER;
         }
     }
     
@@ -163,7 +165,8 @@ public class AlertReducedWaterConsumption extends AbstractAlertResolver
         DataQuery query = null;
         DataQueryResponse queryResponse = null;
         SeriesFacade series = null;
-
+        Interval interval = null;
+        
         AccountEntity account = userRepository.getAccountByKey(accountKey);
         Assert.state(account != null);
         
@@ -175,25 +178,33 @@ public class AlertReducedWaterConsumption extends AbstractAlertResolver
 
         DateTime registerDate = account.getCreatedOn().withTimeAtStartOfDay();
         query = queryBuilder
-            .sliding(registerDate, +N,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+            .sliding(registerDate, +N,  EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
-        Double c0 = (series != null)? series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+        interval = query.getTime().asInterval();
+        Double c0 = (series != null)? 
+            series.aggregate(
+                EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval), new Sum()):
+            null;
         if (c0 == null)
             return Collections.emptyList();
 
         query = queryBuilder
-            .sliding(refDate.withTimeAtStartOfDay(), -N,  EnumTimeUnit.DAY, EnumTimeAggregation.ALL)
+            .sliding(refDate.withTimeAtStartOfDay(), -N,  EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
-        Double c1 = (series != null)? series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+        interval = query.getTime().asInterval();
+        Double c1 = (series != null)? 
+            series.aggregate(
+                EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval), new Sum()):
+            null;
         if (c1 == null)
             return Collections.emptyList();
 
         Double percentChange = 100 * ((c0 - c1) / c0);
-        if (percentChange > CHANGE_PERCENTAGE_THRESHOLD && percentChange < CHANGE_PERCENTAGE_FLOOR) {
+        if (percentChange > CHANGE_PERCENTAGE_THRESHOLD && percentChange < CHANGE_PERCENTAGE_CEIL) {
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType, c1, c0); 
             MessageResolutionStatus<ParameterizedTemplate> result = 
                 new SimpleMessageResolutionStatus<>(parameterizedTemplate);

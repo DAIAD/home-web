@@ -48,6 +48,9 @@ import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
 
+import static eu.daiad.web.model.query.Point.betweenTime;
+
+
 @MessageGenerator(period = "P1M", dayOfMonth = 2, maxPerMonth = 1)
 @Component
 @Scope("prototype")
@@ -157,6 +160,7 @@ public class InsightB5MonthOfYearConsumption extends AbstractRecommendationResol
         DataQuery query;
         DataQueryResponse queryResponse;
         SeriesFacade series;
+        Interval interval;
 
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(tz)
@@ -167,24 +171,28 @@ public class InsightB5MonthOfYearConsumption extends AbstractRecommendationResol
         // Compute for target month
 
         query = queryBuilder
-            .sliding(targetDate, +1, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .sliding(targetDate, +1, EnumTimeUnit.MONTH, EnumTimeAggregation.MONTH)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
+        interval = query.getTime().asInterval();
         Double targetValue = (series != null)? 
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+            series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
+            null;
         if (targetValue == null || targetValue < monthlyThreshold)
             return Collections.emptyList(); // nothing to compare to
         
         // Compute for same month a year ago
 
         query = queryBuilder
-            .sliding(targetDate.minusYears(1), +1, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .sliding(targetDate.minusYears(1), +1, EnumTimeUnit.MONTH, EnumTimeAggregation.MONTH)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
+        interval = query.getTime().asInterval();
         Double previousValue = (series != null)? 
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+            series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
+            null;
         if (previousValue == null || previousValue < monthlyThreshold)
             return Collections.emptyList(); // nothing to compare to
         

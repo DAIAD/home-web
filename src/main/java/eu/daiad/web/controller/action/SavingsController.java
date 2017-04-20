@@ -80,7 +80,7 @@ public class SavingsController extends BaseController {
     }
 
     /**
-     * Refreshes an existing new savings scenario.
+     * Refreshes an existing savings scenario.
      *
      * @param user the authenticated user.
      * @param scenarioKey the scenario Key.
@@ -116,7 +116,7 @@ public class SavingsController extends BaseController {
     }
 
     /**
-     * Refreshes an existing new savings scenario.
+     * Query savings scenario consumer data.
      *
      * @param user the authenticated user.
      * @param scenarioKey the scenario Key.
@@ -153,7 +153,7 @@ public class SavingsController extends BaseController {
     }
 
     /**
-     * Deletes a savings scenario.
+     * Query savings scenarios.
      *
      * @param user the authenticated user.
      * @param request request of type {@link SavingScenarioQueryRequest}.

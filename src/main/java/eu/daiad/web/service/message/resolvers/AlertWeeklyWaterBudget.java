@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,7 @@ import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
 import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMetric;
+import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
@@ -202,7 +204,7 @@ public class AlertWeeklyWaterBudget extends AbstractAlertResolver
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
-            .sliding(start, +1, EnumTimeUnit.WEEK, EnumTimeAggregation.ALL)
+            .sliding(start, +1, EnumTimeUnit.WEEK, EnumTimeAggregation.WEEK)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
 
@@ -210,8 +212,10 @@ public class AlertWeeklyWaterBudget extends AbstractAlertResolver
         DataQueryResponse queryResponse = dataService.execute(query);
         SeriesFacade series = queryResponse.getFacade(deviceType);
 
+        Interval interval = query.getTime().asInterval();
         Double consumption  = (series != null)?
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+            series.get(EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval)): 
+            null;
         if (consumption == null)
             return Collections.emptyList();
 
