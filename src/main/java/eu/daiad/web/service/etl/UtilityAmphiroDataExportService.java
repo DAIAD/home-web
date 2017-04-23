@@ -9,9 +9,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.csv.CSVFormat;
@@ -21,10 +19,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
-
-import com.ibm.icu.text.MessageFormat;
 
 import eu.daiad.web.domain.application.SurveyEntity;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
@@ -41,7 +36,6 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.ExportErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
@@ -66,77 +60,6 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
      */
     @Autowired
     private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
-
-    /**
-     * Resolves application messages and supports internationalization.
-     */
-    @Autowired
-    protected MessageSource messageSource;
-
-    /**
-     * Returns a localized message based on the error code.
-     *
-     * @param code the error code.
-     * @return the localized message.
-     */
-    protected String getMessage(String code) {
-        return messageSource.getMessage(code, null, code, null);
-    }
-
-    /**
-     * Creates a localized message based on the error code and formats the
-     * message using the given set of properties.
-     *
-     * @param code the error code.
-     * @param properties the properties for formatting the message.
-     * @return the localized message.
-     */
-    protected String getMessage(String code, Map<String, Object> properties) {
-        String message = messageSource.getMessage(code, null, code, null);
-
-        MessageFormat msgFmt = new MessageFormat(message);
-
-        return msgFmt.format(properties);
-    }
-
-    /**
-     * Returns a localized message based on an {@link ErrorCode}.
-     *
-     * @param error the error code.
-     * @return the localized message.
-     */
-    protected String getMessage(ErrorCode error) {
-        return getMessage(error.getMessageKey());
-    }
-
-    /**
-     *
-     * Returns a localized message based on an {@link ErrorCode}.
-     *
-     * @param error the error code.
-     * @param keyValuePairs the properties for formatting the message expressed as key value pairs.
-     * @return the localized message.
-     */
-    protected String getMessage(ErrorCode error, String... keyValuePairs) {
-        Map<String, Object> properties = new HashMap<String, Object>();
-
-        for (int i = 0, count = keyValuePairs.length; i < count; i += 2) {
-            properties.put(keyValuePairs[i], keyValuePairs[i + 1]);
-        }
-        return getMessage(error, properties);
-    }
-
-    /**
-     * Creates a localized message based on the {@link ErrorCode} and formats
-     * the message using the given set of properties.
-     *
-     * @param error the error code.
-     * @param properties the properties for formatting the message.
-     * @return the localized message.
-     */
-    protected String getMessage(ErrorCode error, Map<String, Object> properties) {
-        return getMessage(error.getMessageKey(), properties);
-    }
 
     /**
      * Exports amphiro data for a single utility to a file. Any exported data file is replaced.
@@ -749,7 +672,6 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
 
         result.getFiles().add(new FileLabelPair(new File(filename), "error.csv", result.getMessages().size()));
     }
-
 
     /**
      * Exports phase start/end session index for amphiro b1.
