@@ -56,12 +56,6 @@ import eu.daiad.web.service.IDataService;
 @Component
 public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet {
 
-
-    /**
-     * Parameter name for setting the reference timestamp.
-     */
-    private final String PARAMETER_REF_TIMESTAMP = "reference.timestamp";
-
     /**
      * User counter name.
      */
@@ -167,8 +161,8 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                         // Get current date and time that will be used as a
                         // reference point in time for computing all other dates
                         // required by the step execution
-                        if (parameters.get(PARAMETER_REF_TIMESTAMP) != null) {
-                            context.reference = new DateTime(Long.parseLong((String) parameters.get(PARAMETER_REF_TIMESTAMP)),
+                        if (parameters.get(EnumInParameter.REFERENCE_TIMESTAMP.getValue()) != null) {
+                            context.reference = new DateTime(Long.parseLong((String) parameters.get(EnumInParameter.REFERENCE_TIMESTAMP.getValue())),
                                                              context.timezone);
                         } else {
                             context.reference = new DateTime(context.timezone);
