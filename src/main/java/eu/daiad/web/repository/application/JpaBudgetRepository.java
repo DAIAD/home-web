@@ -591,7 +591,7 @@ public class JpaBudgetRepository extends BaseRepository implements IBudgetReposi
     /**
      * Gets all budget consumers user keys.
      *
-     * @param budgetKey the budget key.
+     * @param key the budget key.
      * @return a list of {@link UUID}.
      */
     @Override
