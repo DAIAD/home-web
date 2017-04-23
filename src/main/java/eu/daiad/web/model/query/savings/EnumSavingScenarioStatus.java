@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 public enum EnumSavingScenarioStatus {
-    UNDEFINED(0), PENDING(1), RUNNING(2), COMPLETED(3), FAILED(4);
+    UNDEFINED(0), PENDING(1), RUNNING(2), COMPLETED(3), FAILED(4), ABANDONED(5);
 
     private final int value;
 

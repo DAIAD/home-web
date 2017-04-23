@@ -22,7 +22,7 @@ public class SavingScenario {
 
     private String name;
 
-    private SavingScenarioParameters parameters;
+    private TemporalSavingsConsumerSelectionFilter parameters;
 
     private Double potential;
 
@@ -43,7 +43,7 @@ public class SavingScenario {
         utilityKey = entity.getUtility().getKey();
         owner = entity.getOwner().getUsername();
         name = entity.getName();
-        parameters = objectMapper.readValue(entity.getParameters(), new TypeReference<SavingScenarioParameters>(){});
+        parameters = objectMapper.readValue(entity.getParameters(), new TypeReference<TemporalSavingsConsumerSelectionFilter>(){});
         potential = entity.getSavingsVolume();
         percent = entity.getSavingsPercent();
         consumption = entity.getConsumption();
@@ -69,7 +69,7 @@ public class SavingScenario {
         return name;
     }
 
-    public SavingScenarioParameters getParameters() {
+    public TemporalSavingsConsumerSelectionFilter getParameters() {
         return parameters;
     }
 

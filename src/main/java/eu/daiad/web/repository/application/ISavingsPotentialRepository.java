@@ -12,10 +12,10 @@ import eu.daiad.web.domain.application.SavingsPotentialScenarioEntity;
 import eu.daiad.web.domain.application.mappings.SavingScenarioSegmentEntity;
 import eu.daiad.web.model.query.savings.EnumSavingScenarioStatus;
 import eu.daiad.web.model.query.savings.SavingScenario;
-import eu.daiad.web.model.query.savings.SavingScenarioParameters;
 import eu.daiad.web.model.query.savings.SavingScenarioQuery;
 import eu.daiad.web.model.query.savings.SavingScenarioQueryResult;
 import eu.daiad.web.model.query.savings.SavingsClusterCollection;
+import eu.daiad.web.model.query.savings.TemporalSavingsConsumerSelectionFilter;
 
 /**
  * Provides methods for accessing savings potential and water IQ data.
@@ -31,7 +31,7 @@ public interface ISavingsPotentialRepository {
      * @return the new scenario key.
      * @throws JsonProcessingException if parameters serialization fails
      */
-    UUID create(int ownerId, String name, SavingScenarioParameters parameters) throws JsonProcessingException ;
+    UUID create(int ownerId, String name, TemporalSavingsConsumerSelectionFilter parameters) throws JsonProcessingException ;
 
     /**
      * Resets the results of a savings potential scenario.
@@ -119,7 +119,6 @@ public interface ISavingsPotentialRepository {
      */
     void storeWaterIq(int utilityId, long jobId, SavingsClusterCollection clusters);
 
-
     /**
      * Returns all the results for a specific scenario.
      *
@@ -136,4 +135,11 @@ public interface ISavingsPotentialRepository {
      * @return a list of {@link SavingScenarioSegmentEntity}.
      */
     List<SavingScenarioSegmentEntity> explore(UUID scenarioKey, UUID clusterKey);
+
+    /**
+     * Resets status for all savings scenarios whose processing has been
+     * interrupted.
+     */
+    void cleanStatus();
+
 }

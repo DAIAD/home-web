@@ -25,7 +25,9 @@ import org.springframework.stereotype.Component;
 
 import eu.daiad.web.model.error.SchedulerErrorCode;
 import eu.daiad.web.model.query.savings.SavingScenario;
-import eu.daiad.web.model.query.savings.SavingScenarioParameters;
+import eu.daiad.web.model.query.savings.SavingsConsumerSelectionFilter;
+import eu.daiad.web.model.query.savings.TemporalSavingsConsumerSelectionFilter;
+import eu.daiad.web.service.savings.ConsumerSelectionUtils;
 import eu.daiad.web.service.savings.ISavingsPotentialService;
 
 /**
@@ -43,7 +45,13 @@ public class SavingsPotentialExportMeterSerialTask extends BaseTask implements S
      * Service for accessing savings potential scenario data.
      */
     @Autowired
-    protected ISavingsPotentialService savingsPotentialService;
+    private ISavingsPotentialService savingsPotentialService;
+
+    /**
+     * Helper service for filtering users based on an instance of {@link SavingsConsumerSelectionFilter}.
+     */
+    @Autowired
+    private ConsumerSelectionUtils consumerSelectionUtils;
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
@@ -92,8 +100,8 @@ public class SavingsPotentialExportMeterSerialTask extends BaseTask implements S
         return RepeatStatus.FINISHED;
     }
 
-    private void export(CSVPrinter printer, SavingScenarioParameters parameters) throws IOException {
-        for (String serial : savingsPotentialService.expandMeters(parameters)) {
+    private void export(CSVPrinter printer, TemporalSavingsConsumerSelectionFilter parameters) throws IOException {
+        for (String serial : consumerSelectionUtils.expandMeters(parameters)) {
             List<String> row = new ArrayList<String>();
             row.add(serial);
             printer.printRecord(row);
