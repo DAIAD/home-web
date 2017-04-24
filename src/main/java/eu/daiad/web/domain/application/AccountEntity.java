@@ -71,7 +71,7 @@ public class AccountEntity {
     @OneToOne(mappedBy = "account")
     private HouseholdEntity household;
 
-    @OneToMany(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
     private Set<WaterIqHistoryEntity> waterIqHistory = new HashSet<>();
 

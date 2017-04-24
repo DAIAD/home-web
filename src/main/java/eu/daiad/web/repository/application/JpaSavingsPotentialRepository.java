@@ -31,12 +31,12 @@ import eu.daiad.web.domain.application.mappings.SavingScenarioSegmentEntity;
 import eu.daiad.web.model.error.SavingsPotentialErrorCode;
 import eu.daiad.web.model.query.savings.EnumSavingScenarioStatus;
 import eu.daiad.web.model.query.savings.SavingScenario;
-import eu.daiad.web.model.query.savings.SavingScenarioParameters;
 import eu.daiad.web.model.query.savings.SavingScenarioQuery;
 import eu.daiad.web.model.query.savings.SavingScenarioQueryResult;
 import eu.daiad.web.model.query.savings.SavingsCluster;
 import eu.daiad.web.model.query.savings.SavingsClusterCollection;
 import eu.daiad.web.model.query.savings.SavingsClusterMonth;
+import eu.daiad.web.model.query.savings.TemporalSavingsConsumerSelectionFilter;
 import eu.daiad.web.repository.BaseRepository;
 
 /**
@@ -78,7 +78,7 @@ public class JpaSavingsPotentialRepository extends BaseRepository implements ISa
      * @throws JsonProcessingException if parameters serialization fails
      */
     @Override
-    public UUID create(int ownerId, String name, SavingScenarioParameters parameters) throws JsonProcessingException {
+    public UUID create(int ownerId, String name, TemporalSavingsConsumerSelectionFilter parameters) throws JsonProcessingException {
         AccountEntity owner = getAccountById(ownerId);
 
         SavingsPotentialScenarioEntity scenario = new SavingsPotentialScenarioEntity();
@@ -248,8 +248,8 @@ public class JpaSavingsPotentialRepository extends BaseRepository implements ISa
                      .executeUpdate();
 
         entityManager.createQuery("delete from savings_potential_account where scenario_id = :scenario_id")
-        .setParameter("scenario_id", scenario.getId())
-        .executeUpdate();
+                     .setParameter("scenario_id", scenario.getId())
+                     .executeUpdate();
 
         entityManager.remove(scenario);
         entityManager.flush();
@@ -417,22 +417,27 @@ public class JpaSavingsPotentialRepository extends BaseRepository implements ISa
         }
     }
 
-    private UtilityEntity getUtilityById(int id) {
-        String queryString = "SELECT u FROM utility u where u.id = :id";
+    /**
+     * Resets status for all savings scenarios whose processing has been
+     * interrupted.
+     */
+    @Override
+    public void cleanStatus() {
+        List<EnumSavingScenarioStatus> status = new ArrayList<EnumSavingScenarioStatus>();
+        for (EnumSavingScenarioStatus value : EnumSavingScenarioStatus.values()) {
+            if ((value != EnumSavingScenarioStatus.COMPLETED) && (value != EnumSavingScenarioStatus.FAILED)) {
+                status.add(value);
+            }
+        }
 
-        TypedQuery<UtilityEntity> utilityQuery = entityManager.createQuery(queryString, UtilityEntity.class)
-                                                              .setParameter("id", id);
+        String queryString = "select s from savings_potential_scenario s where s.status in :status";
 
-        return utilityQuery.getSingleResult();
-    }
+        TypedQuery<SavingsPotentialScenarioEntity> query = entityManager.createQuery(queryString, SavingsPotentialScenarioEntity.class)
+                                                                        .setParameter("status", status);
 
-    private AccountEntity getAccountById(int id) {
-        String queryString = "SELECT a FROM account a where a.id = :id";
-
-        TypedQuery<AccountEntity> utilityQuery = entityManager.createQuery(queryString, AccountEntity.class)
-                                                              .setParameter("id", id);
-
-        return utilityQuery.getSingleResult();
+        for(SavingsPotentialScenarioEntity scenario : query.getResultList()) {
+            scenario.setStatus(EnumSavingScenarioStatus.ABANDONED);
+        }
     }
 
     /**
@@ -445,10 +450,10 @@ public class JpaSavingsPotentialRepository extends BaseRepository implements ISa
     public List<SavingsPotentialResultEntity> getScenarioResults(UUID key) {
         String queryString = "SELECT r FROM savings_potential_result r where r.scenario.key = :key";
 
-        TypedQuery<SavingsPotentialResultEntity> utilityQuery = entityManager.createQuery(queryString, SavingsPotentialResultEntity.class)
-                                                              .setParameter("key", key);
+        TypedQuery<SavingsPotentialResultEntity> query = entityManager.createQuery(queryString, SavingsPotentialResultEntity.class)
+                                                                      .setParameter("key", key);
 
-        return utilityQuery.getResultList();
+        return query.getResultList();
     }
 
     /**
@@ -484,4 +489,21 @@ public class JpaSavingsPotentialRepository extends BaseRepository implements ISa
         return (List<SavingScenarioSegmentEntity>) query.getResultList();
     }
 
+    private UtilityEntity getUtilityById(int id) {
+        String queryString = "SELECT u FROM utility u where u.id = :id";
+
+        TypedQuery<UtilityEntity> utilityQuery = entityManager.createQuery(queryString, UtilityEntity.class)
+                                                              .setParameter("id", id);
+
+        return utilityQuery.getSingleResult();
+    }
+
+    private AccountEntity getAccountById(int id) {
+        String queryString = "SELECT a FROM account a where a.id = :id";
+
+        TypedQuery<AccountEntity> utilityQuery = entityManager.createQuery(queryString, AccountEntity.class)
+                                                              .setParameter("id", id);
+
+        return utilityQuery.getSingleResult();
+    }
 }

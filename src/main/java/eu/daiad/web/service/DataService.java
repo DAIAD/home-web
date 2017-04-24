@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.ibm.icu.text.MessageFormat;
 import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AccountEntity;
@@ -113,18 +112,6 @@ public class DataService extends BaseService implements IDataService {
 
     @Autowired
     IFavouriteRepository favouriteRepository;
-
-    protected String getMessage(ErrorCode error) {
-        return messageSource.getMessage(error.getMessageKey(), null, error.getMessageKey(), null);
-    }
-
-    private String getMessage(ErrorCode error, Map<String, Object> properties) {
-        String message = messageSource.getMessage(error.getMessageKey(), null, error.getMessageKey(), null);
-
-        MessageFormat msgFmt = new MessageFormat(message);
-
-        return msgFmt.format(properties);
-    }
 
     protected Error getError(ErrorCode error) {
         return new Error(error.getMessageKey(), this.getMessage(error));

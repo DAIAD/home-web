@@ -2,11 +2,11 @@ package eu.daiad.web.model.query.savings;
 
 import eu.daiad.web.model.AuthenticatedRequest;
 
-public class CreateSavingScenarioRequest extends AuthenticatedRequest {
+public class CreateBudgetRequest extends AuthenticatedRequest {
 
     private String title;
 
-    TemporalSavingsConsumerSelectionFilter parameters;
+    BudgetParameters parameters;
 
     public String getTitle() {
         return title;
@@ -16,11 +16,11 @@ public class CreateSavingScenarioRequest extends AuthenticatedRequest {
         this.title = title;
     }
 
-    public TemporalSavingsConsumerSelectionFilter getParameters() {
+    public BudgetParameters getParameters() {
         return parameters;
     }
 
-    public void setParameters(TemporalSavingsConsumerSelectionFilter parameters) {
+    public void setParameters(BudgetParameters parameters) {
         this.parameters = parameters;
     }
 
