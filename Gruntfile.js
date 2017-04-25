@@ -53,7 +53,7 @@ module.exports = function(grunt) {
     jsdoc: {
       home: {
         src: [
-          'src/main/resources/public/assets/js/src/home/**/*.js',
+          'src/main/resources/public/assets/js/src/home/actions/*.js',
           'src/main/resources/public/assets/js/src/home/README.md'
         ],
         options: {
@@ -73,7 +73,9 @@ module.exports = function(grunt) {
       },
       'home-build': {
         src: [
-          'src/main/resources/public/assets/js/src/home/**/*.js'
+          'src/main/resources/public/assets/js/src/home/**/*.js',
+          '!src/main/resources/public/assets/js/src/home/node_modules/**',
+          '!src/main/resources/public/assets/js/src/home/lib/**'
         ],
         options: {
           configFile: '.eslintrc.build.json'
@@ -90,7 +92,9 @@ module.exports = function(grunt) {
       },
       'home-dev': {
         src: [
-          'src/main/resources/public/assets/js/src/home/**/*.js'
+          'src/main/resources/public/assets/js/src/home/**/*.js',
+          '!src/main/resources/public/assets/js/src/home/node_modules/**',
+          '!src/main/resources/public/assets/js/src/home/lib/**'
         ],
         options: {
           configFile: '.eslintrc.home.dev.json'
