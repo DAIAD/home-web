@@ -3,20 +3,21 @@ package eu.daiad.web.controller.api;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import eu.daiad.web.controller.BaseRestController;
+import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.MessageAcknowledgementRequest;
 import eu.daiad.web.model.message.MessageRequest;
 import eu.daiad.web.model.message.MessageResult;
 import eu.daiad.web.model.message.MultiTypeMessageResponse;
-import eu.daiad.web.model.message.EnumMessageType;
 import eu.daiad.web.model.message.SingleTypeMessageResponse;
 import eu.daiad.web.model.profile.Profile;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -93,19 +94,19 @@ public class MessageController extends BaseRestController {
         return response;
     }
 
-    
+
     /**
      * Gets localized tips
      *
-     * @param user the user
+     * @param request user credentials.
      * @param locale the locale
      * @return the static recommendations.
      */
     @RequestMapping(value = "/api/v1/tip/localized/{locale}", method = RequestMethod.POST, produces = "application/json")
-    public RestResponse getRecommendations(@RequestBody MessageAcknowledgementRequest request, @PathVariable String locale)
+    public RestResponse getRecommendations(@RequestBody AuthenticatedRequest request, @PathVariable String locale)
     {
         try {
-            AuthenticatedUser user = authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            authenticate(request.getCredentials(), EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
             SingleTypeMessageResponse messages = new SingleTypeMessageResponse();
             messages.setType(EnumMessageType.TIP);
             messages.setMessages(service.getTips(locale));

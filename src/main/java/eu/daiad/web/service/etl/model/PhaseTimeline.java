@@ -3,6 +3,11 @@ package eu.daiad.web.service.etl.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
+import eu.daiad.web.service.etl.model.Phase.EnumSessionSelectionMode;
+
 /**
  * Represents the timeline of trial phases.
  */
@@ -154,6 +159,37 @@ public class PhaseTimeline {
             }
         }
         return text.toString();
+    }
+
+    public void overrideDates(DateTimeZone timezone) {
+        for (int i = 0, count = phases.size(); i < count; i++) {
+            Phase p = phases.get(i);
+            switch(i) {
+                case 2:
+                    p.setInterval(p.getStartTimestamp(),
+                                  (new DateTime(2016, 12, 22, 0, 0, timezone)).getMillis(),
+                                  p.getLeftBoundSelection(),
+                                  EnumSessionSelectionMode.NEAREST);
+                    break;
+                case 3:
+                    long startTimestamp = (new DateTime(2016, 12, 22, 0, 0, timezone)).getMillis();
+
+                    if(p.getStartTimestamp() < startTimestamp) {
+                        p.setInterval("AMPHIRO_ON_MOBILE_ON_SOCIAL_ON",
+                                        startTimestamp,
+                                        (new DateTime(2017, 2, 1, 0, 0, timezone)).getMillis(),
+                                        EnumSessionSelectionMode.NEAREST,
+                                        EnumSessionSelectionMode.NEAREST);
+                    } else {
+                        p.setInterval("AMPHIRO_ON_MOBILE_ON_SOCIAL_OFF",
+                                        startTimestamp,
+                                        (new DateTime(2017, 2, 1, 0, 0, timezone)).getMillis(),
+                                        EnumSessionSelectionMode.NEAREST,
+                                        EnumSessionSelectionMode.NEAREST);
+                    }
+                    break;
+            }
+        }
     }
 
 }

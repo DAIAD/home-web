@@ -120,6 +120,11 @@ public class DataExportJobBuilder extends BaseJobBuilder implements IJobBuilder 
 
                     int defaultUtilityId = Integer.parseInt((String) parameters.get(STEP_EXPORT + Constants.PARAMETER_NAME_DELIMITER + "meter.default.utility"));
 
+                    String exportFinalTrialDataValue = (String) parameters.get(STEP_EXPORT + Constants.PARAMETER_NAME_DELIMITER + "trial.final.export");
+                    boolean exportFinalTrialData = false;
+                    if ((!StringUtils.isBlank(exportFinalTrialDataValue)) && (exportFinalTrialDataValue.equalsIgnoreCase("true"))) {
+                        exportFinalTrialData = true;
+                    }
                     // Export data for every utility
                     for (int index = 0, count = utilityId.length; index < count; index++) {
                         UtilityInfo utility = utilityRepository.getUtilityById(Integer.parseInt(utilityId[index]));
@@ -128,6 +133,7 @@ public class DataExportJobBuilder extends BaseJobBuilder implements IJobBuilder 
 
                         query.setWorkingDirectory(workingDirectory);
                         query.setDateFormat(dateFormat);
+                        query.setExportFinalTrialData(exportFinalTrialData);
 
                         // Export meter data for trial users only
                         query.setFilename(String.format("meter-%s-trial",utility.getName()).toLowerCase());

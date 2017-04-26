@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import eu.daiad.web.domain.admin.ExportFileEntity;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.export.EnumDataExportType;
 import eu.daiad.web.repository.application.IExportRepository;
 import eu.daiad.web.service.BaseService;
 
@@ -122,8 +123,11 @@ public class DefaultDataExportService extends BaseService implements IDataExport
                 if ((query.isComporessed()) || (result.getFiles().size() > 1)) {
                     // Always compress files if output consists of more than one
                     // files.
-                    String zipFilename = buildZipFilename(query.getTargetDirectory(), query.getFilename(), "zip");
+                    String zipFilename = buildZipFilename(query.getTargetDirectory(), query.getFilename(), "zip", !query.isExportFinalTrialData());
                     File zipFile = new File(zipFilename);
+                    if(zipFile.exists()) {
+                        FileUtils.deleteQuietly(zipFile);
+                    }
 
                     compressFiles(result.getFiles(), zipFile);
 
@@ -169,8 +173,15 @@ public class DefaultDataExportService extends BaseService implements IDataExport
         export.setSize(zipFile.length());
         export.setCompletedOn(new DateTime());
         export.setTotalRows(result.getTotalRows());
+        export.setHidden(false);
+        export.setPinned(query.isExportFinalTrialData());
+        export.setType(query.isExportFinalTrialData() ? EnumDataExportType.DATA_EXPORT_TRIAL : EnumDataExportType.DATA_EXPORT);
 
-        exportRepository.create(export);
+        if(query.isExportFinalTrialData()) {
+            exportRepository.replace(export);
+        } else {
+            exportRepository.create(export);
+        }
     }
 
     /**
@@ -179,21 +190,29 @@ public class DefaultDataExportService extends BaseService implements IDataExport
      * @param targetDirectory target directory
      * @param filename filename prefix.
      * @param extension filename extension.
+     * @param appendDateTime when true, the date and time is appended to the file name.
      * @return the filename.
      */
-    private String buildZipFilename(String targetDirectory, String filename, String extension) {
+    private String buildZipFilename(String targetDirectory, String filename, String extension, boolean appendDateTime) {
         if(StringUtils.isBlank(filename)) {
             filename = "export";
         } else {
             filename = filename.replaceAll("[^a-zA-Z0-9]", "-");
         }
+        if(appendDateTime) {
+            DateTimeFormatter fileDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd-HHmmss");
 
-        DateTimeFormatter fileDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd-HHmmss");
-
-        if(StringUtils.isBlank(extension)) {
-            filename = String.format("%s-%s", filename.toLowerCase(), new DateTime().toString(fileDateFormatter));
+            if(StringUtils.isBlank(extension)) {
+                filename = String.format("%s-%s", filename.toLowerCase(), new DateTime().toString(fileDateFormatter));
+            } else {
+                filename = String.format("%s-%s.%s", filename.toLowerCase(), new DateTime().toString(fileDateFormatter), extension);
+            }
         } else {
-            filename = String.format("%s-%s.%s", filename.toLowerCase(), new DateTime().toString(fileDateFormatter), extension);
+            if(StringUtils.isBlank(extension)) {
+                filename = String.format("%s", filename.toLowerCase());
+            } else {
+                filename = String.format("%s.%s", filename.toLowerCase(), extension);
+            }
         }
 
         return FilenameUtils.concat(targetDirectory, filename);

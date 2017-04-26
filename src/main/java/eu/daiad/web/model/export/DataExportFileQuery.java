@@ -3,6 +3,7 @@ package eu.daiad.web.model.export;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 public class DataExportFileQuery {
 
@@ -12,9 +13,12 @@ public class DataExportFileQuery {
     @JsonIgnore
     private Integer days;
 
-    private int index;
+    @JsonDeserialize(using = EnumDataExportType.Deserializer.class)
+    private EnumDataExportType type;
 
-    private int size;
+    private Integer index;
+
+    private Integer size;
 
     public List<Integer> getUtilities() {
         return utilities;
@@ -32,20 +36,28 @@ public class DataExportFileQuery {
         this.days = days;
     }
 
-    public int getIndex() {
+    public Integer getIndex() {
         return index;
     }
 
-    public void setIndex(int index) {
+    public void setIndex(Integer index) {
         this.index = index;
     }
 
-    public int getSize() {
+    public Integer getSize() {
         return size;
     }
 
-    public void setSize(int size) {
+    public void setSize(Integer size) {
         this.size = size;
+    }
+
+    public EnumDataExportType getType() {
+        return type;
+    }
+
+    public void setType(EnumDataExportType type) {
+        this.type = type;
     }
 
 }

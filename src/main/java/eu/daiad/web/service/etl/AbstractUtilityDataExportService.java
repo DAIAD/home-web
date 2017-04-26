@@ -156,6 +156,12 @@ public abstract class AbstractUtilityDataExportService extends AbstractDataExpor
         row.add("Phase 3 start");
         row.add("Phase 3 end");
 
+        if (query.isExportFinalTrialData()) {
+            row.add("Phase 4");
+            row.add("Phase 4 start");
+            row.add("Phase 4 end");
+        }
+
         printer.printRecord(row);
 
         long totalRows = 0;
@@ -198,7 +204,7 @@ public abstract class AbstractUtilityDataExportService extends AbstractDataExpor
                 for (Device device : deviceRepository.getUserDevices(user.getKey(), new DeviceRegistrationQuery())) {
                     if (device.getType() == EnumDeviceType.AMPHIRO) {
                         try {
-                            printPhaseTimeline(user, device, formatter, printer);
+                            printPhaseTimeline(query, user, device, formatter, printer);
                             totalRows++;
                         } catch(Exception ex) {
                             result.addMessage(user.getKey(),
@@ -236,7 +242,7 @@ public abstract class AbstractUtilityDataExportService extends AbstractDataExpor
                 for (Device device : deviceRepository.getUserDevices(user.getKey(), new DeviceRegistrationQuery())) {
                     if(device.getType() == EnumDeviceType.METER) {
                         try {
-                            printPhaseTimeline(user, device, formatter, printer);
+                            printPhaseTimeline(query, user, device, formatter, printer);
                             totalRows++;
                         } catch(Exception ex) {
                             result.addMessage(user.getKey(),
@@ -254,12 +260,15 @@ public abstract class AbstractUtilityDataExportService extends AbstractDataExpor
         return totalRows;
     }
 
-    private void printPhaseTimeline(AuthenticatedUser user, Device device, DateTimeFormatter formatter, CSVPrinter printer) throws IOException {
+    private void printPhaseTimeline(UtilityDataExportQuery query, AuthenticatedUser user, Device device, DateTimeFormatter formatter, CSVPrinter printer) throws IOException {
         PhaseTimeline timeline;
         List<String> row = new ArrayList<String>();
 
         if (device.getType() == EnumDeviceType.AMPHIRO) {
             timeline = constructAmphiroPhaseTimeline(user.getKey(), device.getKey());
+            if(query.isExportFinalTrialData()) {
+                timeline.overrideDates(DateTimeZone.forID(query.getTimezone()));
+            }
         } else {
             timeline = constructMeterPhaseTimeline(user.getKey());
         }
@@ -298,6 +307,20 @@ public abstract class AbstractUtilityDataExportService extends AbstractDataExpor
             row.add("");
             row.add("");
         }
+        // Add extra final phase
+        if (query.isExportFinalTrialData()) {
+            if (timeline.size() != 4) {
+                row.add("");
+                row.add("");
+                row.add("");
+            } else {
+                row.add("AMPHIRO_ON_MOBILE_ON_SOCIAL_ON");
+                row.add("01/02/2017 00:00:00");
+                row.add("01/03/2017 00:00:00");
+            }
+        }
+
+        // Add optional
 
         printer.printRecord(row);
     }
@@ -311,7 +334,7 @@ public abstract class AbstractUtilityDataExportService extends AbstractDataExpor
      * @param formatter formatter for date/time properties.
      */
     private void createPhaseRowWithTimestamps(Phase phase, List<String> row, DateTimeFormatter formatter) {
-        row.add(phase.getPhase().merge().toString());
+        row.add(phase.getPhaseLabel());
         row.add(new DateTime(phase.getStartTimestamp(), DateTimeZone.UTC).toString(formatter));
         row.add(new DateTime(phase.getEndTimestamp(), DateTimeZone.UTC).toString(formatter));
     }

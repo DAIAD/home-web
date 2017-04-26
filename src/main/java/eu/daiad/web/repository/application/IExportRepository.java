@@ -14,54 +14,53 @@ public interface IExportRepository {
 
     /**
      * Store an instance of {@link ExportFileEntity}.
-     * 
+     *
      * @param entity the entity to store.
      */
-    public void create(ExportFileEntity entity);
+    void create(ExportFileEntity entity);
 
     /**
-     * Get an exported file with the given id.
-     * 
-     * @param id of the file.
-     * @return the exported file.
+     * Store an instance of {@link ExportFileEntity}, replacing any export with the same filename.
+     *
+     * @param entity the entity to store.
      */
-    ExportFile getExportFileById(int id);
-    
+    void replace(ExportFileEntity entity);
+
     /**
      * Get an exported file with the given key.
-     * 
+     *
      * @param key of the file.
      * @return the exported file.
      */
     ExportFile getExportFileByKey(UUID key);
-    
+
     /**
      * Get all exported files for a specific utility.
-     * 
+     *
      * @param query query that selects exported data files.
      * @return a list of the exported data files.
      */
     DataExportFileQueryResult getAllExportFiles(DataExportFileQuery query);
-    
+
     /**
      * Get all valid exported files for a specific utility.
-     * 
+     *
      * @param query query that selects exported data files.
      * @return a list of valid exported data files.
      */
-    DataExportFileQueryResult getValidExportFiles(DataExportFileQuery query);
+    DataExportFileQueryResult getNotExpiredExportFiles(DataExportFileQuery query);
 
     /**
      * Get all expired exported files for a specific utility.
-     * 
+     *
      * @param query query that selects exported data files.
      * @return a list of expired exported data files.
      */
     DataExportFileQueryResult getExpiredExportFiles(DataExportFileQuery query);
-    
+
     /**
      * Deletes all expired exported files for a specific utility.
-     * 
+     *
      * @param utilityId the utility id.
      * @param days the number of days after which a file is marked as expired.
      */
