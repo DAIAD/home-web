@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.job.builder.CommandExecutor;
-import eu.daiad.web.job.builder.ReportGenerationJobBuilder;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IUserRepository;
@@ -37,7 +36,7 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
     /**
      * Logger instance for writing events using the configured logging API.
      */
-    private static final Log logger = LogFactory.getLog(ReportGenerationJobBuilder.class);
+    private static final Log logger = LogFactory.getLog(ReportCreationTask.class);
 
     /**
      * Repository for accessing utility data.
@@ -136,10 +135,11 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
                         CommandExecutor commandExecutor = new CommandExecutor(command, timeout, workingDirectory);
 
                         boolean success = false;
+                        String[] lines = null;
                         String errorMessage = "";
 
                         if (commandExecutor.execute() == ExitStatus.COMPLETED) {
-                            String[] lines = commandExecutor.getOutput();
+                            lines = commandExecutor.getOutput();
                             if (lines.length > 0) {
                                 if (lines[lines.length - 1].equalsIgnoreCase(successMessage)) {
                                     success = true;
@@ -154,8 +154,8 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
                                                           user.getUsername()));
                             } else {
                                 logger.warn(String.format("Failed to generated report for user [%s]. Reason : %s",
-                                                          errorMessage,
-                                                          user.getUsername()));
+                                                          user.getUsername(),
+                                                          errorMessage));
                             }
                         }
                     } catch (Exception ex) {
