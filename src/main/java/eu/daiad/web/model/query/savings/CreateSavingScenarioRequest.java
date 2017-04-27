@@ -6,7 +6,7 @@ public class CreateSavingScenarioRequest extends AuthenticatedRequest {
 
     private String title;
 
-    SavingScenarioParameters parameters;
+    TemporalSavingsConsumerSelectionFilter parameters;
 
     public String getTitle() {
         return title;
@@ -16,11 +16,11 @@ public class CreateSavingScenarioRequest extends AuthenticatedRequest {
         this.title = title;
     }
 
-    public SavingScenarioParameters getParameters() {
+    public TemporalSavingsConsumerSelectionFilter getParameters() {
         return parameters;
     }
 
-    public void setParameters(SavingScenarioParameters parameters) {
+    public void setParameters(TemporalSavingsConsumerSelectionFilter parameters) {
         this.parameters = parameters;
     }
 

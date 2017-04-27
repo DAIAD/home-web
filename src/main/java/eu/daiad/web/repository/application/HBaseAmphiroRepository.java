@@ -2425,9 +2425,6 @@ public class HBaseAmphiroRepository extends AbstractAmphiroHBaseRepository imple
                     startDate = new DateTime(startDate.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC);
                     endDate = new DateTime(endDate.getYear(), 12, 31, 23, 59, 59, DateTimeZone.UTC);
                     break;
-                case ALL:
-                    // Ignore
-                    break;
                 default:
                     throw createApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
                                     query.getGranularity());

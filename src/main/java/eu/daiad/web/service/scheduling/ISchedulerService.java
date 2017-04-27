@@ -4,6 +4,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.joda.time.DateTime;
+
 import eu.daiad.web.job.builder.IJobBuilder;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.scheduling.ExecutionQuery;
@@ -30,6 +32,14 @@ public interface ISchedulerService {
 	 * @return the job with the given id.
 	 */
 	JobInfo getJob(long jobId);
+
+	/**
+	 * Returns the job next scheduled execution.
+	 *
+	 * @param jobName the job name.
+	 * @return a {@link DateTime} instance or null if the job is not scheduled.
+	 */
+	DateTime getJobNextExecutionDateTime(String jobName);
 
 	/**
      * Returns a list of {@link JobExecutionInfo}, optionally filtered by a query.

@@ -8,7 +8,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Represents an export file created by {@link eu.daiad.web.service.etl.IDataExportService}
+ * Represents an export file created by
+ * {@link eu.daiad.web.service.etl.IDataExportService}
  */
 public class ExportFile {
 
@@ -72,6 +73,11 @@ public class ExportFile {
      * Date and time the export operation has completed.
      */
     private DateTime completedOn;
+
+    /**
+     * Export type.
+     */
+    private EnumDataExportType type;
 
     public UUID getKey() {
         return key;
@@ -159,6 +165,14 @@ public class ExportFile {
 
     public void setCompletedOn(DateTime completedOn) {
         this.completedOn = completedOn;
+    }
+
+    public EnumDataExportType getType() {
+        return type;
+    }
+
+    public void setType(EnumDataExportType type) {
+        this.type = type;
     }
 
 }

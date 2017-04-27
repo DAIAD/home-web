@@ -5,6 +5,8 @@ import java.util.UUID;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -13,6 +15,8 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
+
+import eu.daiad.web.model.export.EnumDataExportType;
 
 /**
  * Entity of an exported data file.
@@ -100,6 +104,15 @@ public class ExportFileEntity {
     @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
     private DateTime completedOn;
 
+    @Basic()
+    private boolean hidden;
+
+    @Basic()
+    private boolean pinned;
+
+    @Enumerated(EnumType.STRING)
+    private EnumDataExportType type;
+
     public UUID getKey() {
         return key;
     }
@@ -186,6 +199,30 @@ public class ExportFileEntity {
 
     public long getId() {
         return id;
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
+    }
+
+    public EnumDataExportType getType() {
+        return type;
+    }
+
+    public void setType(EnumDataExportType type) {
+        this.type = type;
+    }
+
+    public boolean isPinned() {
+        return pinned;
+    }
+
+    public void setPinned(boolean pinned) {
+        this.pinned = pinned;
     }
 
 }

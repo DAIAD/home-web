@@ -6,27 +6,27 @@ import eu.daiad.web.model.RestResponse;
 
 public class DataExportFileResponse extends RestResponse {
 
-    private int index;
+    private Integer index;
 
-    private int size;
+    private Integer size;
 
     private int total;
 
     private List<ExportFile> files;
 
-    public int getIndex() {
+    public Integer getIndex() {
         return index;
     }
 
-    public void setIndex(int index) {
+    public void setIndex(Integer index) {
         this.index = index;
     }
 
-    public int getSize() {
+    public Integer getSize() {
         return size;
     }
 
-    public void setSize(int size) {
+    public void setSize(Integer size) {
         this.size = size;
     }
 

@@ -6,7 +6,7 @@ import java.util.UUID;
 import eu.daiad.web.domain.application.SavingsPotentialResultEntity;
 import eu.daiad.web.model.query.savings.SavingScenario;
 import eu.daiad.web.model.query.savings.SavingScenarioExploreResult;
-import eu.daiad.web.model.query.savings.SavingScenarioParameters;
+import eu.daiad.web.model.query.savings.TemporalSavingsConsumerSelectionFilter;
 import eu.daiad.web.model.query.savings.SavingScenarioQuery;
 import eu.daiad.web.model.query.savings.SavingScenarioQueryResult;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -24,7 +24,7 @@ public interface ISavingsPotentialService {
      * @param parameters parameters for selecting user data.
      * @return the new scenario key.
      */
-    UUID create(AuthenticatedUser user, String name, SavingScenarioParameters parameters);
+    UUID create(AuthenticatedUser user, String name, TemporalSavingsConsumerSelectionFilter parameters);
 
     /**
      * Schedules a new job for computing the savings potential scenario results.
@@ -64,15 +64,6 @@ public interface ISavingsPotentialService {
      * @param key the unique scenario key.
      */
     void delete(UUID key);
-
-    /**
-     * Given a scenario {@link SavingScenarioParameters}, return all selected
-     * smart water meter serial numbers.
-     *
-     * @param parameters scenario parameters.
-     * @return a list of strings.
-     */
-    List<String> expandMeters(SavingScenarioParameters parameters);
 
     /**
      * Returns all the results for a specific scenario.

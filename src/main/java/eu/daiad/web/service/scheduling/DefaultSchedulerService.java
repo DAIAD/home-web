@@ -288,6 +288,32 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         return info;
     }
 
+    /**
+     * Returns the job next scheduled execution.
+     *
+     * @param jobName the job name.
+     * @return a {@link DateTime} instance or null if the job is not scheduled.
+     */
+    @Override
+    public DateTime getJobNextExecutionDateTime(String jobName) {
+        ScheduledJobEntity job = schedulerRepository.getJobByName(jobName);
+        if (job == null) {
+            return null;
+        }
+
+        JobSchedulingProperties entry = scheduledJobs.get(job.getId());
+        if (entry != null) {
+            long delay = entry.getFuture().getDelay(TimeUnit.MILLISECONDS);
+            DateTime nextExecution = DateTime.now();
+            if (delay > 0) {
+                nextExecution = nextExecution.plus(delay);
+            }
+            return nextExecution.toDateTime(DateTimeZone.forID(serverTimeZone));
+        }
+
+        return null;
+    }
+
     @Override
     public ExecutionQueryResult getJobExecutions(ExecutionQuery query) {
         return schedulerRepository.getExecutions(query);

@@ -4,21 +4,11 @@ import java.util.ArrayList;
 
 import eu.daiad.web.model.query.SpatialFilter;
 
-public class SavingScenarioParameters {
+public class SavingsConsumerSelectionFilter {
 
-    private SavingsTimeFilter time;
+    protected ArrayList<SavingsPopulationFilter> population = new ArrayList<SavingsPopulationFilter>();
 
-    private ArrayList<SavingsPopulationFilter> population = new ArrayList<SavingsPopulationFilter>();
-
-    private ArrayList<SpatialFilter> spatial = new ArrayList<SpatialFilter>();
-
-    public SavingsTimeFilter getTime() {
-        return time;
-    }
-
-    public void setTime(SavingsTimeFilter time) {
-        this.time = time;
-    }
+    protected ArrayList<SpatialFilter> spatial = new ArrayList<SpatialFilter>();
 
     public ArrayList<SavingsPopulationFilter> getPopulation() {
         return population;
@@ -35,4 +25,5 @@ public class SavingScenarioParameters {
     public void setSpatial(ArrayList<SpatialFilter> spatial) {
         this.spatial = spatial;
     }
+
 }

@@ -35,8 +35,10 @@ public enum EnumPhase {
                 return AMPHIRO_ON_MOBILE_ON_SOCIAL_ON;
             case MOBILE_ON_SOCIAL_ON_AMPHIRO_ON:
                 return AMPHIRO_ON_MOBILE_ON_SOCIAL_ON;
-            default:
+            case EMPTY:
                 return EMPTY;
+            default:
+                throw new RuntimeException(String.format("Phase [%s] is not supported.", this));
         }
     }
 }

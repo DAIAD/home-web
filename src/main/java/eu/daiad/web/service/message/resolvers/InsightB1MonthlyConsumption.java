@@ -47,6 +47,9 @@ import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
 
+import static eu.daiad.web.model.query.Point.betweenTime;
+
+
 @MessageGenerator(period = "P1M", dayOfMonth = 2, maxPerMonth = 1)
 @Component
 @Scope("prototype")
@@ -156,7 +159,7 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
         final DateTime targetDate = refDate.minusMonths(1) // target previous month 
             .withDayOfMonth(1)
             .withTimeAtStartOfDay();
-        
+
         final double threshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.MONTH);
         
         // Build a common part of a data-service query
@@ -164,7 +167,8 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
         DataQuery query;
         DataQueryResponse queryResponse;
         SeriesFacade series;
-
+        Interval interval;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
@@ -174,12 +178,14 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
         // Compute for target period
 
         query = queryBuilder
-            .sliding(targetDate, +1, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+            .sliding(targetDate, +1, EnumTimeUnit.MONTH, EnumTimeAggregation.MONTH)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
+        interval = query.getTime().asInterval();
         Double targetValue = (series != null)? 
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+            series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
+            null;
         if (targetValue == null || targetValue < threshold)
             return Collections.emptyList(); // nothing to compare to
 
@@ -190,12 +196,14 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
         for (int i = 0; i < N; i++) {
             start = start.minusMonths(1);
             query = queryBuilder
-                .sliding(start, +1, EnumTimeUnit.MONTH, EnumTimeAggregation.ALL)
+                .sliding(start, +1, EnumTimeUnit.MONTH, EnumTimeAggregation.MONTH)
                 .build();
             queryResponse = dataService.execute(query);
             series = queryResponse.getFacade(deviceType);
+            interval = query.getTime().asInterval();
             Double val = (series != null)? 
-                series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+                series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
+                null;
             if (val != null)
                 summary.addValue(val);
         }
@@ -209,8 +217,10 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
             return Collections.emptyList(); // not reliable, consumption is too low
 
         double sd = Math.sqrt(summary.getPopulationVariance());
-        double normValue = (sd > 0)? ((targetValue - averageValue) / sd) : Double.POSITIVE_INFINITY;
-        double score = (sd > 0)? (Math.abs(normValue) / (2 * K)) : Double.POSITIVE_INFINITY;
+        double normValue = 
+            (sd > 0)? ((targetValue - averageValue) / sd) : Double.POSITIVE_INFINITY;
+        double score = 
+            (sd > 0)? (Math.abs(normValue) / (2 * K)) : Double.POSITIVE_INFINITY;
 
         debug(
             "%s/%s: Computed consumption for period %s to %s: " +

@@ -68,7 +68,10 @@
     "Weather",
 
     "Reporting",
+    "YearReportStatus",
+    "CurrentUserReportStatus",
     "CurrentUserReport",
+    "UserReportStatus",
     "UserReport",
 
     "Spatial",
@@ -82,7 +85,18 @@
     "SavingsFind",
     "SavingsQuery",
     "SavingsExplore",
-    "SavingsDelete"
+    "SavingsDelete",
+
+    "Budget",
+    "BudgetCreate",
+    "BudgetDelete",
+    "BudgetActivate",
+    "BudgetDeactivate",
+    "BudgetSchedule",
+    "BudgetFind",
+    "BudgetQuery",
+    "BudgetExploreCluster",
+    "BudgetExploreConsumer"
   ],
   "template": {
     "withCompare": false,

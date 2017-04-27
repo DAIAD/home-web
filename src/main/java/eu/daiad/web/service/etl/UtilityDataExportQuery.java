@@ -59,6 +59,11 @@ public class UtilityDataExportQuery extends DataExportQuery {
     private boolean comporessed;
 
     /**
+     * If true, social phases are set manually.
+     */
+    private boolean exportFinalTrialData = false;
+
+    /**
      * A short description of the exported data
      */
     private String description;
@@ -144,6 +149,14 @@ public class UtilityDataExportQuery extends DataExportQuery {
         } else {
             this.serials = serials;
         }
+    }
+
+    public boolean isExportFinalTrialData() {
+        return exportFinalTrialData;
+    }
+
+    public void setExportFinalTrialData(boolean exportFinalTrialData) {
+        this.exportFinalTrialData = exportFinalTrialData;
     }
 
     public enum EnumExportMode {

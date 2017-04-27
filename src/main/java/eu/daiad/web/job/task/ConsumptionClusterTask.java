@@ -56,12 +56,6 @@ import eu.daiad.web.service.IDataService;
 @Component
 public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet {
 
-
-    /**
-     * Parameter name for setting the reference timestamp.
-     */
-    private final String PARAMETER_REF_TIMESTAMP = "reference.timestamp";
-
     /**
      * User counter name.
      */
@@ -115,9 +109,11 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
             Map<String, String> parameters = getStepParameters(chunkContext.getStepContext());
 
             // Get cluster name
+            String clusterKey = (String) parameters.get(EnumInParameter.CLUSTER_KEY.getValue());
             String clusterName = (String) parameters.get(EnumInParameter.CLUSTER_NAME.getValue());
 
             // Get segment names
+            String[] segmentKeys = StringUtils.split((String) parameters.get(EnumInParameter.SEGMENT_KEYS.getValue()), ";");
             String[] segmentNames = StringUtils.split((String) parameters.get(EnumInParameter.SEGMENT_NAMES.getValue()), ";");
 
             if ((segmentNames == null) || (segmentNames.length == 0)) {
@@ -151,7 +147,9 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
 
                 context.utilityKey = utility.getKey();
                 context.timezone = DateTimeZone.forID(utility.getTimezone());
+                context.clusterKey = clusterKey;
                 context.clusterName = clusterName;
+                context.segmentKeys = segmentKeys;
                 context.labels = segmentNames;
 
                 // Get utility counters. The job computes segments only
@@ -167,8 +165,8 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                         // Get current date and time that will be used as a
                         // reference point in time for computing all other dates
                         // required by the step execution
-                        if (parameters.get(PARAMETER_REF_TIMESTAMP) != null) {
-                            context.reference = new DateTime(Long.parseLong((String) parameters.get(PARAMETER_REF_TIMESTAMP)),
+                        if (parameters.get(EnumInParameter.REFERENCE_TIMESTAMP.getValue()) != null) {
+                            context.reference = new DateTime(Long.parseLong((String) parameters.get(EnumInParameter.REFERENCE_TIMESTAMP.getValue())),
                                                              context.timezone);
                         } else {
                             context.reference = new DateTime(context.timezone);
@@ -234,13 +232,16 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     private void computeRanking(ExecutionContext context) {
         DataQuery query = DataQueryBuilder.create()
                                           .timezone(context.timezone)
-                                          .absolute(context.start, context.end, EnumTimeAggregation.ALL)
+                                          .absolute(context.start, context.end, EnumTimeAggregation.MONTH)
                                           .utilityTop("Utility", context.utilityKey, EnumMetric.SUM, Integer.MAX_VALUE)
                                           .meter()
                                           .build();
 
         DataQueryResponse result = dataService.execute(query);
 
+        if ((!result.getMeters().isEmpty()) && (result.getMeters().size() != 1)) {
+            throw new RuntimeException("Expected a single value for the ranking.");
+        }
         if ((!result.getMeters().isEmpty()) &&
             (!result.getMeters().get(0).getPoints().isEmpty())) {
             context.ranking = (RankingDataPoint) result.getMeters().get(0).getPoints().get(0);
@@ -309,15 +310,15 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
         Cluster cluster = new Cluster();
 
         cluster.setName(context.clusterName);
-        cluster.setKey(UUID.randomUUID());
+        cluster.setKey(UUID.fromString(context.clusterKey));
         cluster.setSize(context.ranking.getUsers().size());
         cluster.setUtilityKey(context.utilityKey);
 
-        for (String name : context.labels) {
+        for (int index = 0, count = context.labels.length; index < count; index++) {
             Segment segment = new Segment();
 
-            segment.setKey(UUID.randomUUID());
-            segment.setName(name);
+            segment.setKey(UUID.fromString(context.segmentKeys[index]));
+            segment.setName(context.labels[index]);
             segment.setUtilityKey(context.utilityKey);
 
             cluster.getSegments().add(segment);
@@ -373,7 +374,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
 
             DataQuery lastMonthQuery = DataQueryBuilder.create()
                                                        .timezone(context.timezone)
-                                                       .absolute(context.start, context.end, EnumTimeAggregation.ALL)
+                                                       .absolute(context.start, context.end, EnumTimeAggregation.MONTH)
                                                        .user("self", user.getKey())
                                                        .users("similar", user.getSimilarUsers())
                                                        .users("nearest", user.getNearestUsers())
@@ -385,6 +386,12 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
             DataQueryResponse result = dataService.execute(lastMonthQuery);
 
             if (result.getSuccess()) {
+                for (GroupDataSeries series : result.getMeters()) {
+                    if ((!series.getPoints().isEmpty()) && (series.getPoints().size() != 1)) {
+                        throw new RuntimeException("Expected a single value for the series.");
+                    }
+                }
+
                 for (GroupDataSeries series : result.getMeters()) {
                     switch (series.getLabel()) {
                         case "self":
@@ -571,9 +578,19 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
         DateTime end;
 
         /**
+         * The cluster key.
+         */
+        String clusterKey;
+
+        /**
          * The cluster name
          */
         String clusterName;
+
+        /**
+         * Segment keys.
+         */
+        String[] segmentKeys;
 
         /**
          * Segment names used as waterIQ values.
@@ -606,9 +623,17 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
          */
         CLUSTER_NAME("cluster.name"),
         /**
+         * Cluster key.
+         */
+        CLUSTER_KEY("cluster.key"),
+        /**
          * Segment names separated with (;).
          */
         SEGMENT_NAMES("cluster.segments"),
+        /**
+         * Segment keys separated with (;).
+         */
+        SEGMENT_KEYS("cluster.segments.keys"),
         /**
          * Distance in meters for computing nearest consumers.
          */

@@ -13,6 +13,7 @@ import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -174,7 +175,8 @@ public class AlertWaterSaver extends AbstractAlertResolver
     {
         Assert.state(deviceType == EnumDeviceType.METER);
         
-        final Period period = Period.months(1); 
+        final Period period = Period.months(1);
+        final EnumTimeAggregation granularity = EnumTimeAggregation.MONTH;
         final EnumMeasurementField measurementField = EnumMeasurementField.METER_VOLUME;
         
         DateTime end = refDate.withDayOfMonth(1)
@@ -189,7 +191,8 @@ public class AlertWaterSaver extends AbstractAlertResolver
         DataQuery query = null;
         DataQueryResponse queryResponse = null;
         SeriesFacade series = null;
-
+        Interval interval = null;
+        
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
@@ -198,23 +201,25 @@ public class AlertWaterSaver extends AbstractAlertResolver
 
         DateTime t1 = end.minus(period);
   
-        query = queryBuilder
-            .absolute(t1, end, EnumTimeAggregation.ALL)
+        query = queryBuilder.absolute(t1, end, granularity)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(EnumDeviceType.METER);
+        interval = query.getTime().asInterval();
         Double c0 = (series != null)? 
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+            series.get(EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval)):
+            null;
         if (c0 == null)
             return Collections.emptyList();
         
-        query = queryBuilder
-            .absolute(t1.minus(period), t1, EnumTimeAggregation.ALL)
+        query = queryBuilder.absolute(t1.minus(period), t1, granularity)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(EnumDeviceType.METER);
+        interval = query.getTime().asInterval();
         Double c1 = (series != null)? 
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+            series.get(EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval)):
+            null;
         if (c1 == null)
             return Collections.emptyList();
 

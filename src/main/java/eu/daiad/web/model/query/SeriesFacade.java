@@ -41,9 +41,21 @@ public interface SeriesFacade
     Double get(EnumDataField field, EnumMetric metric);
     
     /**
+     * Get a scalar value (a number) from the single point that satisfies a predicate.
+     * 
+     * @return a number when such a point is found, or null otherwise.
+     */
+    Double get(EnumDataField field, EnumMetric metric, Predicate<Point> pred);
+    
+    /**
      * Aggregate values over points and produce a scalar result.
      */
     Double aggregate(EnumDataField field, EnumMetric metric, StorelessUnivariateStatistic a);
+    
+    /**
+     * Aggregate values over a subset of points (satisfying a predicate) and produce a scalar result.
+     */
+    Double aggregate(EnumDataField field, EnumMetric metric, Predicate<Point> pred, StorelessUnivariateStatistic a);
     
     /**
      * Count points satisfying a predicate

@@ -3,6 +3,7 @@ package eu.daiad.web.service.etl.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
@@ -18,6 +19,11 @@ public class Phase {
 
     private EnumPhase phase;
 
+    /**
+     * Label value that overrides phase name
+     */
+    private String label;
+
     private long startTimestamp;
 
     private long endTimestamp;
@@ -30,9 +36,9 @@ public class Phase {
 
     private Phase next = null;
 
-    private EnumSessionSelectionMode LeftBoundMode;
+    private EnumSessionSelectionMode leftBoundMode;
 
-    private EnumSessionSelectionMode RightBoundMode;
+    private EnumSessionSelectionMode rightBoundMode;
 
     public static Phase Empty = new Phase();
 
@@ -77,6 +83,17 @@ public class Phase {
         return phase;
     }
 
+    public void setPhaseLabel(String label) {
+        this.label = label;
+    }
+
+    public String getPhaseLabel() {
+        if(StringUtils.isBlank(label)) {
+            return phase.merge().toString();
+        }
+        return label;
+    }
+
     public long getStartTimestamp() {
         return startTimestamp;
     }
@@ -117,23 +134,23 @@ public class Phase {
     }
 
     public EnumSessionSelectionMode getLeftBoundSelection() {
-        return LeftBoundMode;
+        return leftBoundMode;
     }
 
     public EnumSessionSelectionMode getRightBoundSelection() {
-        return RightBoundMode;
+        return rightBoundMode;
     }
 
     private void setSelectionModes() {
         if (previous == null) {
-            LeftBoundMode = EnumSessionSelectionMode.MIN;
+            leftBoundMode = EnumSessionSelectionMode.MIN;
         } else {
-            LeftBoundMode = resolveSelectionMode(previous.getPhase(), phase);
+            leftBoundMode = resolveSelectionMode(previous.getPhase(), phase);
         }
         if (next == null) {
-            RightBoundMode = EnumSessionSelectionMode.MAX;
+            rightBoundMode = EnumSessionSelectionMode.MAX;
         } else {
-            RightBoundMode = resolveSelectionMode(phase, next.getPhase());
+            rightBoundMode = resolveSelectionMode(phase, next.getPhase());
         }
     }
 
@@ -150,6 +167,18 @@ public class Phase {
         }
 
         return mode;
+    }
+
+    public void setInterval(String label, long startTimestamp, long endTimestamp, EnumSessionSelectionMode leftBoundMode, EnumSessionSelectionMode rightBoundMode) {
+        this.label = label;
+        this.startTimestamp = startTimestamp;
+        this.endTimestamp = endTimestamp;
+        this.leftBoundMode = leftBoundMode;
+        this.rightBoundMode = rightBoundMode;
+    }
+
+    public void setInterval(long startTimestamp, long endTimestamp, EnumSessionSelectionMode leftBoundMode, EnumSessionSelectionMode rightBoundMode) {
+        this.setInterval(null, startTimestamp, endTimestamp, leftBoundMode, rightBoundMode);
     }
 
     private static final Map<EnumPhase, EnumSessionSelectionMode> Modes;

@@ -18,12 +18,10 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.ibm.icu.text.MessageFormat;
 import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
-import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -115,18 +113,6 @@ public class DataService extends BaseService implements IDataService {
     @Autowired
     IFavouriteRepository favouriteRepository;
 
-    protected String getMessage(ErrorCode error) {
-        return messageSource.getMessage(error.getMessageKey(), null, error.getMessageKey(), null);
-    }
-
-    private String getMessage(ErrorCode error, Map<String, Object> properties) {
-        String message = messageSource.getMessage(error.getMessageKey(), null, error.getMessageKey(), null);
-
-        MessageFormat msgFmt = new MessageFormat(message);
-
-        return msgFmt.format(properties);
-    }
-
     protected Error getError(ErrorCode error) {
         return new Error(error.getMessageKey(), this.getMessage(error));
     }
@@ -141,10 +127,6 @@ public class DataService extends BaseService implements IDataService {
             response.add(this.getError(QueryErrorCode.TIME_FILTER_NOT_SET));
         } else {
             // Granularity
-            if((query.isUsingPreAggregation()) && (query.getTime().getGranularity() == EnumTimeAggregation.ALL)) {
-                response.add(this.getError(QueryErrorCode.GRANULARITY_NOT_SUPPORTED));
-            }
-
             switch (query.getTime().getType()) {
                 case ABSOLUTE:
                     if (query.getTime().getEnd() == null) {

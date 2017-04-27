@@ -17,14 +17,12 @@ import java.util.UUID;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
-
-import com.ibm.icu.text.MessageFormat;
 
 import eu.daiad.web.domain.application.SurveyEntity;
 import eu.daiad.web.model.amphiro.AmphiroAbstractSession;
@@ -41,7 +39,6 @@ import eu.daiad.web.model.device.Device;
 import eu.daiad.web.model.device.DeviceRegistrationQuery;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.error.ApplicationException;
-import eu.daiad.web.model.error.ErrorCode;
 import eu.daiad.web.model.error.ExportErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
@@ -66,77 +63,6 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
      */
     @Autowired
     private IAmphiroIndexOrderedRepository amphiroIndexOrderedRepository;
-
-    /**
-     * Resolves application messages and supports internationalization.
-     */
-    @Autowired
-    protected MessageSource messageSource;
-
-    /**
-     * Returns a localized message based on the error code.
-     *
-     * @param code the error code.
-     * @return the localized message.
-     */
-    protected String getMessage(String code) {
-        return messageSource.getMessage(code, null, code, null);
-    }
-
-    /**
-     * Creates a localized message based on the error code and formats the
-     * message using the given set of properties.
-     *
-     * @param code the error code.
-     * @param properties the properties for formatting the message.
-     * @return the localized message.
-     */
-    protected String getMessage(String code, Map<String, Object> properties) {
-        String message = messageSource.getMessage(code, null, code, null);
-
-        MessageFormat msgFmt = new MessageFormat(message);
-
-        return msgFmt.format(properties);
-    }
-
-    /**
-     * Returns a localized message based on an {@link ErrorCode}.
-     *
-     * @param error the error code.
-     * @return the localized message.
-     */
-    protected String getMessage(ErrorCode error) {
-        return getMessage(error.getMessageKey());
-    }
-
-    /**
-     *
-     * Returns a localized message based on an {@link ErrorCode}.
-     *
-     * @param error the error code.
-     * @param keyValuePairs the properties for formatting the message expressed as key value pairs.
-     * @return the localized message.
-     */
-    protected String getMessage(ErrorCode error, String... keyValuePairs) {
-        Map<String, Object> properties = new HashMap<String, Object>();
-
-        for (int i = 0, count = keyValuePairs.length; i < count; i += 2) {
-            properties.put(keyValuePairs[i], keyValuePairs[i + 1]);
-        }
-        return getMessage(error, properties);
-    }
-
-    /**
-     * Creates a localized message based on the {@link ErrorCode} and formats
-     * the message using the given set of properties.
-     *
-     * @param error the error code.
-     * @param properties the properties for formatting the message.
-     * @return the localized message.
-     */
-    protected String getMessage(ErrorCode error, Map<String, Object> properties) {
-        return getMessage(error.getMessageKey(), properties);
-    }
 
     /**
      * Exports amphiro data for a single utility to a file. Any exported data file is replaced.
@@ -175,11 +101,12 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
 
             // Export phases
             exportPhaseTimestamps(query, result);
-            exportPhaseSessionIndexes(query, result);
+            Map<UUID, Long> deviceMaxShowerId = new HashMap<UUID, Long>();
+            exportPhaseSessionIndexes(query, result, deviceMaxShowerId);
 
             // Export sessions and measurements
-            exportAmphiroSessionData(query, result);
-            exportAmphiroTimeSeries(query, result);
+            exportAmphiroSessionData(query, result, deviceMaxShowerId);
+            exportAmphiroTimeSeries(query, result, deviceMaxShowerId);
 
             // Export errors
             exportMessages(query, result);
@@ -251,7 +178,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
      * @param interpolationError true if an error has occurred during the interpolation or shower index values.
      */
     private void createPhaseRowWithShowers(List<String> row, Phase phase, DateTimeFormatter formatter, boolean interpolationError) {
-        row.add(phase.getPhase().merge().toString());
+        row.add(phase.getPhaseLabel());
         if(phase.getMinSessionId() != null) {
             row.add(phase.getMinSessionId().toString());
         } else {
@@ -361,10 +288,11 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
      *
      * @param query the query that selects the data to export.
      * @param result export result.
+     * @param deviceMaxShowerId a map with the max shower id for each device key.
      * @return total rows exported.
      * @throws IOException if file creation fails.
      */
-    private void exportAmphiroSessionData(UtilityDataExportQuery query, ExportResult result) throws IOException {
+    private void exportAmphiroSessionData(UtilityDataExportQuery query, ExportResult result, Map<UUID, Long> deviceMaxShowerId) throws IOException {
         long totalRows = 0;
         long totalValidRows = 0;
         long totalRemovedRows = 0;
@@ -473,6 +401,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 // Process showers for every device
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
                     int total = device.getSessions().size();
+                    Long maxId = deviceMaxShowerId.get(device.getDeviceKey());
 
                     List<AmphiroAbstractSession> sessions = device.getSessions();
                     List<AmphiroSession> removedSessions = new ArrayList<AmphiroSession>();
@@ -481,6 +410,11 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                     // Remove sessions based on volume, duration and flow
                     for (int i = sessions.size() - 1; i >= 0; i--) {
                         AmphiroSession session = (AmphiroSession) sessions.get(i);
+                        if ((maxId != null) && (session.getId() > maxId)) {
+                            sessions.remove(session);
+                            total--;
+                            continue;
+                        }
 
                         // Always export session to a file that contains all the
                         // session data
@@ -605,10 +539,11 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
      *
      * @param query the query that selects the data to export.
      * @param result export result.
+     * @param deviceMaxShowerId a map with the max shower id for each device key.
      * @return total rows exported.
      * @throws IOException if file creation fails.
      */
-    private void exportAmphiroTimeSeries(UtilityDataExportQuery query, ExportResult result) throws IOException {
+    private void exportAmphiroTimeSeries(UtilityDataExportQuery query, ExportResult result, Map<UUID, Long> deviceMaxShowerId) throws IOException {
         long totalRows = 0;
 
         String dataFilename = createTemporaryFilename(query.getWorkingDirectory());
@@ -672,8 +607,13 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
 
                 // Process showers for every device and extract time series for real time ones.
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
+                    Long maxId = deviceMaxShowerId.get(device.getDeviceKey());
+
                     for (AmphiroAbstractSession session : device.getSessions()) {
                         AmphiroSession amphiroSession = (AmphiroSession) session;
+                        if ((maxId != null) && (amphiroSession.getId() > maxId)) {
+                            continue;
+                        }
 
                         if(!amphiroSession.isHistory()) {
                             AmphiroSessionIndexIntervalQuery sessionQuery =
@@ -750,16 +690,16 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
         result.getFiles().add(new FileLabelPair(new File(filename), "error.csv", result.getMessages().size()));
     }
 
-
     /**
      * Exports phase start/end session index for amphiro b1.
      *
      * @param query the query that selects the data to export.
      * @param result export result.
+     * @param deviceMaxShowerId a map with the max shower id for each device key.
      * @return total rows exported.
      * @throws IOException if file creation fails.
      */
-    private void exportPhaseSessionIndexes(UtilityDataExportQuery query, ExportResult result) throws IOException {
+    private void exportPhaseSessionIndexes(UtilityDataExportQuery query, ExportResult result, Map<UUID, Long> deviceMaxShowerId) throws IOException {
         long totalRows = 0;
 
         String filename = createTemporaryFilename(query.getWorkingDirectory());
@@ -797,6 +737,12 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
         row.add("Phase 3");
         row.add("Phase 3 start");
         row.add("Phase 3 end");
+
+        if (query.isExportFinalTrialData()) {
+            row.add("Phase 4");
+            row.add("Phase 4 start");
+            row.add("Phase 4 end");
+        }
 
         printer.printRecord(row);
 
@@ -846,6 +792,9 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
 
                         // Get timeline
                         PhaseTimeline timeline = constructAmphiroPhaseTimeline(user.getKey(), device.getDeviceKey());
+                        if(query.isExportFinalTrialData()) {
+                            timeline.overrideDates(DateTimeZone.forID(query.getTimezone()));
+                        }
 
                         boolean interpolationError = false;
                         for (int i = 0, total = timeline.size(); i < total; i++) {
@@ -902,7 +851,13 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                             if(!interpolationError) {
                                 switch(phase.getRightBoundSelection()) {
                                     case NEAREST:
-                                        AmphiroSession nearest = sessions.getNearestSession(phase.getNext().getStartTimestamp());
+                                        AmphiroSession nearest;
+                                        if ((phase.getNext() == null) && (i == 3) && (query.isExportFinalTrialData())) {
+                                            // Handle special case next phase does not exist
+                                            nearest= sessions.getNearestSession((new DateTime(2017, 2, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis());
+                                        } else {
+                                            nearest= sessions.getNearestSession(phase.getNext().getStartTimestamp());
+                                        }
 
                                         if (nearest == null) {
                                             throw new RuntimeException(String.format("Failed to find the session index associated with phase [%s]. Total sessions [%d]. Timeline : %s",
@@ -974,6 +929,9 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                                 row.add("");
                             } else {
                                 createPhaseRowWithShowers(row, phase, formatter, interpolationError);
+                                if(query.isExportFinalTrialData()) {
+                                    deviceMaxShowerId.put(device.getDeviceKey(), phase.getMaxSessionId());
+                                }
                             }
                         }
                         // Add empty entries
@@ -981,6 +939,33 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                             row.add("");
                             row.add("");
                             row.add("");
+                        }
+                        // Add extra phase
+                        if(query.isExportFinalTrialData()) {
+                            if((interpolationError) || (timeline.size() != 4)) {
+                                row.add("");
+                                row.add("");
+                                row.add("");
+                            } else {
+                                long startTimestamp = (new DateTime(2017, 2, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis();
+                                long endTimestamp = (new DateTime(2017, 3, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis();
+
+                                AmphiroSession left = sessions.getNearestSession(startTimestamp);
+                                AmphiroSession right = sessions.getNearestSession(endTimestamp);
+
+                                row.add("AMPHIRO_ON_MOBILE_ON_SOCIAL_ON");
+                                if ((left != null) && (right!=null)) {
+                                    row.add(Long.toString(left.getId()));
+                                    row.add(Long.toString(right.getId()));
+
+                                    if(query.isExportFinalTrialData()) {
+                                        deviceMaxShowerId.put(device.getDeviceKey(), right.getId());
+                                    }
+                                } else {
+                                    row.add("");
+                                    row.add("");
+                                }
+                            }
                         }
                         totalRows++;
 

@@ -17,7 +17,7 @@ public class ExpandedDataQuery {
 
     private long endDateTime;
 
-    private EnumTimeAggregation granularity = EnumTimeAggregation.ALL;
+    private EnumTimeAggregation granularity;
 
     private ArrayList<ExpandedPopulationFilter> groups = new ArrayList<ExpandedPopulationFilter>();
 

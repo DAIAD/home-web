@@ -11,8 +11,10 @@ import java.util.UUID;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -162,11 +164,10 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
     {
         Assert.state(deviceType == EnumDeviceType.METER);
         
-        final Period period = Period.months(1); 
+        final Period period = Period.months(1);
+        final EnumTimeAggregation granularity = EnumTimeAggregation.MONTH;
         final EnumMeasurementField measurementField = EnumMeasurementField.METER_VOLUME;
-            
-        DateTime end = refDate.withDayOfMonth(1)
-            .withTimeAtStartOfDay();
+        final DateTime end = refDate.withDayOfMonth(1).withTimeAtStartOfDay();
         
         Double monthlyAverage = statisticsService.getNumber(
                 end, period, measurementField, EnumStatistic.AVERAGE_PER_USER)
@@ -182,7 +183,7 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
         
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
-            .absolute(end.minus(period), end, EnumTimeAggregation.ALL)
+            .absolute(end.minus(period), end, granularity)
             .user("user", accountKey)
             .meter()
             .sum();
@@ -191,8 +192,11 @@ public class AlertWaterEfficiencyLeader extends AbstractAlertResolver
         DataQueryResponse queryResponse = dataService.execute(query);
         SeriesFacade series = queryResponse.getFacade(EnumDeviceType.METER);
         
+        Interval interval = query.getTime().asInterval();
         Double consumption = (series != null)? 
-            series.get(EnumDataField.VOLUME, EnumMetric.SUM) : null;
+            series.aggregate(
+                EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval), new Sum()):
+            null;
         if (consumption == null || consumption < monthlyThreshold)
             return Collections.emptyList();
 
