@@ -11,8 +11,8 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
@@ -24,8 +24,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.DataQueryEntity;
-import eu.daiad.web.domain.application.FavouriteEntity;
 import eu.daiad.web.domain.application.FavouriteAccountEntity;
+import eu.daiad.web.domain.application.FavouriteEntity;
 import eu.daiad.web.domain.application.FavouriteGroupEntity;
 import eu.daiad.web.domain.application.GroupEntity;
 import eu.daiad.web.domain.application.GroupSegmentEntity;
@@ -33,11 +33,7 @@ import eu.daiad.web.model.error.FavouriteErrorCode;
 import eu.daiad.web.model.error.GroupErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.error.UserErrorCode;
-import eu.daiad.web.model.favourite.CandidateFavouriteAccountInfo;
-import eu.daiad.web.model.favourite.CandidateFavouriteGroupInfo;
 import eu.daiad.web.model.favourite.EnumFavouriteType;
-import eu.daiad.web.model.favourite.FavouriteAccountInfo;
-import eu.daiad.web.model.favourite.FavouriteGroupInfo;
 import eu.daiad.web.model.favourite.FavouriteInfo;
 import eu.daiad.web.model.favourite.UpsertFavouriteRequest;
 import eu.daiad.web.model.group.EnumGroupType;
@@ -49,10 +45,10 @@ import eu.daiad.web.repository.BaseRepository;
 @Repository
 @Transactional("applicationTransactionManager")
 public class JpaFavouriteRepository extends BaseRepository implements IFavouriteRepository {
-    
+
     @Autowired
     private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
-    
+
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
@@ -85,118 +81,6 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
-    }
-
-    @Override
-    public FavouriteAccountInfo checkFavouriteAccount(UUID key) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-
-            FavouriteAccountInfo favouriteAccountInfo = null;
-
-            // Retrieve admin's account
-            TypedQuery<AccountEntity> adminAccountQuery = entityManager.createQuery(
-                            "SELECT a FROM account a WHERE a.key = :key", AccountEntity.class).setFirstResult(0)
-                            .setMaxResults(1);
-            adminAccountQuery.setParameter("key", user.getKey());
-
-            AccountEntity adminAccount = adminAccountQuery.getSingleResult();
-
-            TypedQuery<FavouriteEntity> favouriteQuery = entityManager.createQuery(
-                            "SELECT f FROM favourite f WHERE f.owner = :owner", FavouriteEntity.class).setFirstResult(0);
-            favouriteQuery.setParameter("owner", adminAccount);
-
-            List<FavouriteEntity> favourites = favouriteQuery.getResultList();
-
-            for (FavouriteEntity favourite : favourites) {
-                if (favourite.getType() == EnumFavouriteType.ACCOUNT) {
-                    FavouriteAccountEntity favouriteAccount = (FavouriteAccountEntity) favourite;
-                    if (favouriteAccount.getAccount().getKey().equals(key)) {
-                        favouriteAccountInfo = new FavouriteAccountInfo(favouriteAccount);
-                    }
-                }
-            }
-
-            // If the given account does not match with any existing favourite
-            // we try to retrieve it
-            // in order to send a CandidateFavouriteAccountInfo Object
-            if (favouriteAccountInfo == null) {
-                try {
-                    TypedQuery<AccountEntity> accountQuery = entityManager.createQuery(
-                                    "SELECT a FROM account a WHERE a.key = :key", AccountEntity.class).setFirstResult(0)
-                                    .setMaxResults(1);
-                    accountQuery.setParameter("key", key);
-
-                    AccountEntity account = accountQuery.getSingleResult();
-
-                    return new CandidateFavouriteAccountInfo(account);
-
-                } catch (NoResultException ex) {
-                    throw wrapApplicationException(ex, UserErrorCode.USER_KEY_NOT_FOUND).set("key", key);
-                }
-            }
-
-            return favouriteAccountInfo;
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-        }
-    }
-
-    @Override
-    public FavouriteGroupInfo checkFavouriteGroup(UUID group_id) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
-
-            FavouriteGroupInfo favouriteGroupInfo = null;
-
-            // Retrieve admin's account
-            TypedQuery<AccountEntity> accountQuery = entityManager.createQuery("SELECT a FROM account a WHERE a.key = :key",
-                            AccountEntity.class).setFirstResult(0).setMaxResults(1);
-            accountQuery.setParameter("key", user.getKey());
-
-            AccountEntity adminAccount = accountQuery.getSingleResult();
-
-            TypedQuery<FavouriteEntity> favouriteQuery = entityManager.createQuery(
-                            "SELECT f FROM favourite f WHERE f.owner = :owner", FavouriteEntity.class).setFirstResult(0);
-            favouriteQuery.setParameter("owner", adminAccount);
-
-            List<FavouriteEntity> favourites = favouriteQuery.getResultList();
-
-            for (FavouriteEntity favourite : favourites) {
-                if (favourite.getType() == EnumFavouriteType.GROUP) {
-                    FavouriteGroupEntity favouriteGroup = (FavouriteGroupEntity) favourite;
-                    if (favouriteGroup.getGroup().getKey().equals(group_id)) {
-                        favouriteGroupInfo = new FavouriteGroupInfo(favouriteGroup);
-                    }
-                }
-            }
-
-            // If the given group does not match with any existing favourite we
-            // try to retrieve it
-            // in order to send a CandidateFavouriteGroupInfo Object
-            if (favouriteGroupInfo == null) {
-                try {
-                    TypedQuery<GroupEntity> groupQuery = entityManager.createQuery(
-                                    "SELECT g FROM group g WHERE g.key = :key", GroupEntity.class).setFirstResult(0)
-                                    .setMaxResults(1);
-                    groupQuery.setParameter("key", group_id);
-
-                    GroupEntity group = groupQuery.getSingleResult();
-
-                    return new CandidateFavouriteGroupInfo(group);
-
-                } catch (NoResultException ex) {
-                    throw wrapApplicationException(ex, GroupErrorCode.GROUP_DOES_NOT_EXIST).set("groupId", group_id);
-                }
-            }
-
-            return favouriteGroupInfo;
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
-        }
-
     }
 
     @Override
@@ -268,7 +152,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
                     selectedFavourite.setAccount(account);
                 }
 
-                this.entityManager.persist(selectedFavourite);
+                entityManager.persist(selectedFavourite);
             } else {
                 // checking if the Group exists at all
                 GroupEntity group = null;
@@ -319,7 +203,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
                     selectedFavourite.setGroup(group);
                 }
 
-                this.entityManager.persist(selectedFavourite);
+                entityManager.persist(selectedFavourite);
             }
 
         } catch (Exception ex) {
@@ -356,7 +240,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
                 AccountEntity adminAccount = adminAccountQuery.getSingleResult();
 
                 if (favourite.getOwner() == adminAccount) {
-                    this.entityManager.remove(favourite);
+                    entityManager.remove(favourite);
 
                 } else {
                     throw createApplicationException(FavouriteErrorCode.FAVOURITE_ACCESS_RESTRICTED).set("favouriteId",
@@ -494,8 +378,6 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void insertFavouriteQuery(NamedDataQuery namedDataQuery, AccountEntity account) {
-        
-
 
         try {
 
@@ -530,7 +412,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             dataQueryEntity.setOwner(account);
             dataQueryEntity.setUpdatedOn(DateTime.now());
 
-            this.entityManager.persist(dataQueryEntity);
+            entityManager.persist(dataQueryEntity);
 
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
@@ -577,7 +459,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             dataQueryEntity.setField(namedDataQuery.getField());
             dataQueryEntity.setOverlap(namedDataQuery.getOverlap());
 
-            this.entityManager.persist(dataQueryEntity);
+            entityManager.persist(dataQueryEntity);
 
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
@@ -597,13 +479,58 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
             DataQueryEntity dataQueryEntity = query.getSingleResult();
 
-            this.entityManager.remove(dataQueryEntity);
+            entityManager.remove(dataQueryEntity);
 
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
     }
 
+    @Override
+    public void pinFavouriteQuery(long id, AccountEntity account) {
+
+        try {
+            TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
+                            "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.id = :id",
+                            eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
+
+            query.setParameter("id", id);
+            query.setParameter("accountId", account.getId());
+
+            DataQueryEntity dataQueryEntity = query.getSingleResult();
+            dataQueryEntity.setPinned(true);
+            
+            entityManager.persist(dataQueryEntity);
+
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }
+
+    @Override
+    public void unpinFavouriteQuery(long id, AccountEntity account) {
+
+        try {
+            TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> query = entityManager.createQuery(
+                            "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.id = :id",
+                            eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
+
+            query.setParameter("id", id);
+            query.setParameter("accountId", account.getId());
+
+            List<DataQueryEntity> dataQueryEntities = query.getResultList();
+            
+            if(!dataQueryEntities.isEmpty()){
+                DataQueryEntity dataQueryEntity = dataQueryEntities.get(0);
+                dataQueryEntity.setPinned(false);
+                entityManager.persist(dataQueryEntity);
+            }
+
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        }
+    }
+    
     @Override
     public List<NamedDataQuery> getFavouriteQueriesForOwner(int accountId)
             throws JsonMappingException, JsonParseException, IOException{
@@ -627,6 +554,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             namedDataQuery.setLevel(queryEntity.getLevel());
             namedDataQuery.setField(queryEntity.getField());
             namedDataQuery.setOverlap(queryEntity.getOverlap());
+            namedDataQuery.setPinned(queryEntity.isPinned());
             namedDataQuery.setQueries(queryEntity.toDataQuery());
             namedDataQuery.setCreatedOn(queryEntity.getUpdatedOn());
 

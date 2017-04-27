@@ -6,6 +6,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -62,14 +64,9 @@ public class RunJar {
 
         try {
             // Construct invocation arguments
-            String hdfsWorkDir = properties.get(EnumFlinkParameter.WORKING_DIRECTORY.getValue());
+            String command = getCommand(properties);
 
-            List<String> arguments = new ArrayList<String>();
-
-            arguments.add(properties.get(EnumFlinkParameter.JOB_SCRIPT.getValue()));
-            arguments.add(hdfsWorkDir);
-
-            CommandExecutor commandExecutor = new CommandExecutor(StringUtils.join(arguments, " "),
+            CommandExecutor commandExecutor = new CommandExecutor(command,
                                                                   DEFAULT_TIMEOUT,
                                                                   workDir.getAbsolutePath());
 
@@ -160,6 +157,44 @@ public class RunJar {
         if ((!file.exists()) || (file.isDirectory())) {
             throw new IOException(String.format("File %s does not exists or it is a directory", filename));
         }
+    }
+
+    /**
+     * Replaces all command line arguments with job parameters. Arguments names
+     * are enclosed in curly brackets e.g. {parameter}.
+     *
+     * @param command the command.
+     * @param properties the job parameters.
+     * @return the command with all arguments set.
+     */
+    private String getCommand(Map<String, String> properties) {
+        String command = properties.get(EnumFlinkParameter.JOB_SCRIPT.getValue());
+        String arguments = properties.get(EnumFlinkParameter.JOB_SCRIPT_ARGS.getValue());
+
+        if (!StringUtils.isBlank(arguments)) {
+            command = command + " " + arguments;
+            // Get all parameter names
+            List<String> matches = new ArrayList<String>();
+            Matcher matcher = Pattern.compile("(\\{[^\\{]*\\})").matcher(command);
+            while (matcher.find()) {
+                matches.add(matcher.group());
+            }
+            // Replace every parameter placeholder with job parameter value
+            for (String match : matches) {
+                if (match.length() == 2) {
+                    throw new IllegalArgumentException(String.format("Empty parameter found in command [%s].", command));
+                }
+                String key = match.substring(1, match.length() - 1);
+                if (StringUtils.isBlank(key)) {
+                    throw new IllegalArgumentException(String.format("Invalid parameter name found in command [%s].", command));
+                }
+                if (!properties.containsKey(key)) {
+                    throw new IllegalArgumentException(String.format("Parameter [%s] does not exist.", key));
+                }
+                command = command.replace(match, properties.get(key));
+            }
+        }
+        return command;
     }
 
 }

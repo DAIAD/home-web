@@ -9,8 +9,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
-public enum EnumTimeAggregation {
-	HOUR(1), DAY(2), WEEK(3), MONTH(4), YEAR(5), ALL(6);
+public enum EnumTimeAggregation
+{
+	HOUR(1),
+	DAY(2),
+	WEEK(3),
+	MONTH(4),
+	YEAR(5);
 
 	private final int value;
 
@@ -19,7 +24,7 @@ public enum EnumTimeAggregation {
 	}
 
 	public int getValue() {
-		return this.value;
+		return value;
 	}
 
 	private static final Map<Integer, EnumTimeAggregation> intToTypeMap = new HashMap<Integer, EnumTimeAggregation>();
@@ -48,8 +53,7 @@ public enum EnumTimeAggregation {
 	public static class Deserializer extends JsonDeserializer<EnumTimeAggregation> {
 
 		@Override
-		public EnumTimeAggregation deserialize(JsonParser parser, DeserializationContext context) throws IOException,
-						JsonProcessingException {
+		public EnumTimeAggregation deserialize(JsonParser parser, DeserializationContext context) throws IOException, JsonProcessingException {
 			return EnumTimeAggregation.fromString(parser.getValueAsString());
 		}
 	}

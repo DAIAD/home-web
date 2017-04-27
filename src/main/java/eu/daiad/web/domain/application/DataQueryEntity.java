@@ -65,6 +65,9 @@ public class DataQueryEntity {
     
     @Column(name = "overlap")
     private String overlap;     
+
+    @Column(name = "pinned")
+    private boolean pinned; 
     
     @Enumerated(EnumType.STRING)
     private EnumQueryFavouriteType type;
@@ -167,5 +170,13 @@ public class DataQueryEntity {
 
     public void setOverlap(String overlap) {
         this.overlap = overlap;
+    }
+
+    public boolean isPinned() {
+        return pinned;
+    }
+
+    public void setPinned(boolean pinned) {
+        this.pinned = pinned;
     }
 }

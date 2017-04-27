@@ -1,11 +1,12 @@
 package eu.daiad.web.model.query;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class UserPopulationFilter extends PopulationFilter {
 
-	private ArrayList<UUID> users = new ArrayList<UUID>();
+	private List<UUID> users = new ArrayList<UUID>();
 
 	public UserPopulationFilter() {
 		super();
@@ -42,7 +43,7 @@ public class UserPopulationFilter extends PopulationFilter {
 		}
 	}
 
-	public ArrayList<UUID> getUsers() {
+	public List<UUID> getUsers() {
 		return users;
 	}
 

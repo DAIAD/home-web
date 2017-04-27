@@ -10,68 +10,78 @@ import eu.daiad.web.model.AuthenticatedRequest;
 
 public class AmphiroSessionCollectionIndexIntervalQuery extends AuthenticatedRequest {
 
-	@JsonIgnore
-	private UUID userKey;
+    @JsonIgnore
+    private UUID userKey;
 
-	@JsonDeserialize(using = EnumIndexIntervalQuery.Deserializer.class)
-	private EnumIndexIntervalQuery type = EnumIndexIntervalQuery.ABSOLUTE;
+    @JsonDeserialize(using = EnumIndexIntervalQuery.Deserializer.class)
+    private EnumIndexIntervalQuery type = EnumIndexIntervalQuery.ABSOLUTE;
 
-	private UUID deviceKey[];
+    private UUID deviceKey[];
 
-	private Long startIndex;
+    private Long startIndex;
 
-	private Long endIndex;
+    private Long endIndex;
 
-	private Integer length;
+    private Integer length;
 
-	@JsonIgnore
-	public UUID getUserKey() {
-		return userKey;
-	}
+    private int[] members;
 
-	@JsonProperty
-	public void setUserKey(UUID userKey) {
-		this.userKey = userKey;
-	}
+    @JsonIgnore
+    public UUID getUserKey() {
+        return userKey;
+    }
 
-	public EnumIndexIntervalQuery getType() {
-		return type;
-	}
+    @JsonProperty
+    public void setUserKey(UUID userKey) {
+        this.userKey = userKey;
+    }
 
-	public void setType(EnumIndexIntervalQuery type) {
-		this.type = type;
-	}
+    public EnumIndexIntervalQuery getType() {
+        return type;
+    }
 
-	public UUID[] getDeviceKey() {
-		return deviceKey;
-	}
+    public void setType(EnumIndexIntervalQuery type) {
+        this.type = type;
+    }
 
-	public void setDeviceKey(UUID[] deviceKey) {
-		this.deviceKey = deviceKey;
-	}
+    public UUID[] getDeviceKey() {
+        return deviceKey;
+    }
 
-	public Long getStartIndex() {
-		return startIndex;
-	}
+    public void setDeviceKey(UUID[] deviceKey) {
+        this.deviceKey = deviceKey;
+    }
 
-	public void setStartIndex(Long startIndex) {
-		this.startIndex = startIndex;
-	}
+    public Long getStartIndex() {
+        return startIndex;
+    }
 
-	public Long getEndIndex() {
-		return endIndex;
-	}
+    public void setStartIndex(Long startIndex) {
+        this.startIndex = startIndex;
+    }
 
-	public void setEndIndex(Long endIndex) {
-		this.endIndex = endIndex;
-	}
+    public Long getEndIndex() {
+        return endIndex;
+    }
 
-	public Integer getLength() {
-		return length;
-	}
+    public void setEndIndex(Long endIndex) {
+        this.endIndex = endIndex;
+    }
 
-	public void setLength(Integer length) {
-		this.length = length;
-	}
+    public Integer getLength() {
+        return length;
+    }
+
+    public void setLength(Integer length) {
+        this.length = length;
+    }
+
+    public int[] getMembers() {
+        return members;
+    }
+
+    public void setMembers(int[] members) {
+        this.members = members;
+    }
 
 }

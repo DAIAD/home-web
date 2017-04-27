@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.collections4.Predicate;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
@@ -20,7 +21,7 @@ public class GroupDataSeries
 
     private int population;
 
-    ArrayList<DataPoint> points = new ArrayList<DataPoint>();
+    List<DataPoint> points = new ArrayList<DataPoint>();
 
     public GroupDataSeries(String label, int population, Long areaId) {
         this.label = label;
@@ -32,7 +33,7 @@ public class GroupDataSeries
         return label;
     }
 
-    public ArrayList<DataPoint> getPoints() {
+    public List<DataPoint> getPoints() {
         return points;
     }
 
@@ -80,14 +81,16 @@ public class GroupDataSeries
         }
     }
 
-    private DataPoint getDataPoint(EnumTimeAggregation granularity, long timestamp, List<EnumMetric> metrics,
-                    DataPoint.EnumDataPointType type, DateTimeZone timezone) {
+    private DataPoint getDataPoint(EnumTimeAggregation granularity,
+                                   long timestamp,
+                                   List<EnumMetric> metrics,
+                                   DataPoint.EnumDataPointType type,
+                                   DateTimeZone timezone) {
         DateTime date = new DateTime(timestamp, timezone);
 
         switch (granularity) {
             case HOUR:
-                date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), date.getHourOfDay(),
-                                0, 0, timezone);
+                date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), date.getHourOfDay(), 0, 0, timezone);
                 break;
             case DAY:
                 date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), 0, 0, 0, timezone);
@@ -95,8 +98,7 @@ public class GroupDataSeries
             case WEEK:
                 DateTime sunday = date.withDayOfWeek(DateTimeConstants.SUNDAY);
 
-                date = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 0, 0, 0,
-                                timezone);
+                date = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 0, 0, 0, timezone);
                 break;
             case MONTH:
                 date = new DateTime(date.getYear(), date.getMonthOfYear(), 1, 0, 0, 0, timezone);
@@ -104,42 +106,38 @@ public class GroupDataSeries
             case YEAR:
                 date = new DateTime(date.getYear(), 1, 1, 0, 0, 0, timezone);
                 break;
-            case ALL:
-                break;
             default:
                 throw new IllegalArgumentException("Granularity level not supported.");
         }
 
         DataPoint p = null;
+        timestamp = date.getMillis();
 
-        if (granularity == EnumTimeAggregation.ALL) {
-            if (points.size() == 0) {
-                p = createDataPoint(metrics, type, null);
-            } else {
-                p = points.get(0);
-            }
-        } else {
-            timestamp = date.getMillis();
+        for (int i = 0, count = points.size(); i < count; i++) {
+            if (timestamp == points.get(i).getTimestamp()) {
+                p = points.get(i);
 
-            for (int i = 0, count = points.size(); i < count; i++) {
-                if (timestamp == points.get(i).getTimestamp()) {
-                    p = points.get(i);
-
-                    break;
-                }
-            }
-
-            if (p == null) {
-                p = createDataPoint(metrics, type, timestamp);
+                break;
             }
         }
+
+        if (p == null) {
+            p = createDataPoint(metrics, type, timestamp);
+        }
+
         return p;
     }
 
-    public void addAmhiroDataPoint(EnumTimeAggregation granularity, long timestamp, double volume, double energy,
-                    double duration, double temperature, double flow, List<EnumMetric> metrics, DateTimeZone timezone) {
-        AmphiroDataPoint point = (AmphiroDataPoint) getDataPoint(granularity, timestamp, metrics,
-                        DataPoint.EnumDataPointType.AMPHIRO, timezone);
+    public void addAmhiroDataPoint(EnumTimeAggregation granularity,
+                                   long timestamp,
+                                   double volume,
+                                   double energy,
+                                   double duration,
+                                   double temperature,
+                                   double flow,
+                                   List<EnumMetric> metrics,
+                                   DateTimeZone timezone) {
+        AmphiroDataPoint point = (AmphiroDataPoint) getDataPoint(granularity, timestamp, metrics, DataPoint.EnumDataPointType.AMPHIRO, timezone);
 
         boolean avg = false;
         for (EnumMetric m : metrics) {
@@ -216,10 +214,21 @@ public class GroupDataSeries
         }
     }
 
-    public void addMeterRankingDataPoint(EnumTimeAggregation granularity, UUID key, String label, long timestamp,
-                    double difference, double volume, List<EnumMetric> metrics, DateTimeZone timezone) {
-        MeterUserDataPoint point = (MeterUserDataPoint) getUserDataPoint(granularity, key, label, timestamp,
-                        metrics, DataPoint.EnumDataPointType.METER, timezone);
+    public void addMeterRankingDataPoint(EnumTimeAggregation granularity,
+                                         UUID key,
+                                         String label,
+                                         long timestamp,
+                                         double difference,
+                                         double volume,
+                                         List<EnumMetric> metrics,
+                                         DateTimeZone timezone) {
+        MeterUserDataPoint point = (MeterUserDataPoint) getUserDataPoint(granularity,
+                                                                         key,
+                                                                         label,
+                                                                         timestamp,
+                                                                         metrics,
+                                                                         DataPoint.EnumDataPointType.METER,
+                                                                         timezone);
 
         for (EnumMetric m : metrics) {
             switch (m) {
@@ -245,11 +254,24 @@ public class GroupDataSeries
         }
     }
 
-    public void addAmphiroRankingDataPoint(EnumTimeAggregation granularity, UUID key, String label, long timestamp,
-                    double volume, double energy, double duration, double temperature, double flow,
-                    List<EnumMetric> metrics, DateTimeZone timezone) {
-        AmphiroUserDataPoint point = (AmphiroUserDataPoint) getUserDataPoint(granularity, key, label, timestamp,
-                        metrics, DataPoint.EnumDataPointType.AMPHIRO, timezone);
+    public void addAmphiroRankingDataPoint(EnumTimeAggregation granularity,
+                                           UUID key,
+                                           String label,
+                                           long timestamp,
+                                           double volume,
+                                           double energy,
+                                           double duration,
+                                           double temperature,
+                                           double flow,
+                                           List<EnumMetric> metrics,
+                                           DateTimeZone timezone) {
+        AmphiroUserDataPoint point = (AmphiroUserDataPoint) getUserDataPoint(granularity,
+                                                                             key,
+                                                                             label,
+                                                                             timestamp,
+                                                                             metrics,
+                                                                             DataPoint.EnumDataPointType.AMPHIRO,
+                                                                             timezone);
 
         boolean avg = false;
         for (EnumMetric m : metrics) {
@@ -331,8 +353,7 @@ public class GroupDataSeries
 
         switch (granularity) {
             case HOUR:
-                date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), date.getHourOfDay(),
-                                0, 0, timezone);
+                date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), date.getHourOfDay(), 0, 0, timezone);
                 break;
             case DAY:
                 date = new DateTime(date.getYear(), date.getMonthOfYear(), date.getDayOfMonth(), 0, 0, 0, timezone);
@@ -340,8 +361,7 @@ public class GroupDataSeries
             case WEEK:
                 DateTime sunday = date.withDayOfWeek(DateTimeConstants.SUNDAY);
 
-                date = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 0, 0, 0,
-                                timezone);
+                date = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 0, 0, 0, timezone);
                 break;
             case MONTH:
                 date = new DateTime(date.getYear(), date.getMonthOfYear(), 1, 0, 0, 0, timezone);
@@ -349,36 +369,32 @@ public class GroupDataSeries
             case YEAR:
                 date = new DateTime(date.getYear(), 1, 1, 0, 0, 0, timezone);
                 break;
-            case ALL:
-                break;
             default:
                 throw new IllegalArgumentException("Granularity level not supported.");
         }
 
-        if (granularity == EnumTimeAggregation.ALL) {
-            if (points.size() == 0) {
-                points.add(new RankingDataPoint());
+        timestamp = date.getMillis();
+
+        for (int i = 0, count = points.size(); i < count; i++) {
+            if (timestamp == points.get(i).getTimestamp()) {
+                return (RankingDataPoint) points.get(i);
             }
-
-            return (RankingDataPoint) points.get(0);
-        } else {
-            timestamp = date.getMillis();
-
-            for (int i = 0, count = points.size(); i < count; i++) {
-                if (timestamp == points.get(i).getTimestamp()) {
-                    return (RankingDataPoint) points.get(i);
-                }
-            }
-
-            RankingDataPoint point = new RankingDataPoint(timestamp);
-            points.add(point);
-
-            return point;
         }
+
+        RankingDataPoint point = new RankingDataPoint(timestamp);
+        points.add(point);
+
+        return point;
+
     }
 
-    private UserDataPoint getUserDataPoint(EnumTimeAggregation granularity, UUID key, String label, long timestamp,
-                    List<EnumMetric> metrics, DataPoint.EnumDataPointType type, DateTimeZone timezone) {
+    private UserDataPoint getUserDataPoint(EnumTimeAggregation granularity,
+                                           UUID key,
+                                           String label,
+                                           long timestamp,
+                                           List<EnumMetric> metrics,
+                                           DataPoint.EnumDataPointType type,
+                                           DateTimeZone timezone) {
         RankingDataPoint ranking = getRankingDataPoint(granularity, timestamp, timezone);
 
         for (UserDataPoint point : ranking.getUsers()) {
@@ -464,13 +480,40 @@ public class GroupDataSeries
             return m != null? m.get(metric) : null;
         }
 
+        @Override
+        public Double get(EnumDataField field, EnumMetric metric, Predicate<Point> pred)
+        {
+            Double result = null;
+            for (DataPoint datapoint: points) {
+                Map<EnumMetric, Double> f = datapoint.field(field);
+                if (f == null)
+                    continue; // the field is not present
+                Long t = datapoint.getTimestamp();
+                if (t == null)
+                    continue; // not paired with a timestamp
+                Point point = Point.of(t, f.get(metric));
+                if (pred.evaluate(point)) {
+                    // A suitable point is found; check is a single one
+                    if (result == null)
+                        // this is the 1st time we encounter a suitable point
+                        result = point.getValue();
+                    else {
+                        // found a duplicate: do not accept as a result
+                        result = null;
+                        break;
+                    }
+                }
+            }
+            return result;
+        }
+
         /**
          * Get an iterable of (time, value) pairs from this series
          */
         @Override
         public Iterable<Point> iterPoints(EnumDataField field, EnumMetric metric)
         {
-            return GroupDataSeries.this.new PointIterator(field, metric);
+            return GroupDataSeries.this.new PointIterable(field, metric);
         }
 
         @Override
@@ -484,19 +527,31 @@ public class GroupDataSeries
         {
             return points.isEmpty();
         }
+
+        @Override
+        public int getPopulationCount()
+        {
+            return population;
+        }
+
+        @Override
+        public String getLabel()
+        {
+            return label;
+        }
     }
 
     /**
      * An iterable on points of (timestamp, value) for a given (field, metric).
      */
-    private class PointIterator implements Iterable<Point>
+    private class PointIterable implements Iterable<Point>
     {
         private final EnumDataField field;
         private final EnumMetric metric;
 
         private final int endIndex;
 
-        public PointIterator(EnumDataField field, EnumMetric metric)
+        public PointIterable(EnumDataField field, EnumMetric metric)
         {
             this.field = field;
             this.metric = metric;
@@ -538,7 +593,9 @@ public class GroupDataSeries
             {
                 DataPoint p = points.get(currIndex);
                 currIndex++;
-                return Point.of(p.getTimestamp(), p.field(field).get(metric));
+
+                Map<EnumMetric, Double> f = p.field(field);
+                return Point.of(p.getTimestamp(), f.get(metric));
             }
         }
     }

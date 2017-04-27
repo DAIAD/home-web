@@ -16,12 +16,11 @@ public class AmphiroDataPoint extends DataPoint {
 	private Map<EnumMetric, Double> flow = new EnumMap<EnumMetric, Double>(EnumMetric.class);
 
 	public AmphiroDataPoint() {
-		this.type = EnumDataPointType.AMPHIRO;
+	    super(EnumDataPointType.AMPHIRO);
 	}
 
 	public AmphiroDataPoint(long timestamp) {
-		super(timestamp);
-		this.type = EnumDataPointType.AMPHIRO;
+		super(EnumDataPointType.AMPHIRO, timestamp);
 	}
 
 	public Map<EnumMetric, Double> getDuration() {
@@ -46,7 +45,7 @@ public class AmphiroDataPoint extends DataPoint {
 
 	@Override
 	public Map<EnumMetric, Double> field(EnumDataField field)
-	{	    
+	{
 	    Map<EnumMetric, Double> m = null;
 	    switch (field) {
 	    case VOLUME:

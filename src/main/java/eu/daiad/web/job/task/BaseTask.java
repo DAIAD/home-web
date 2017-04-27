@@ -13,6 +13,7 @@ import org.springframework.context.MessageSource;
 
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.ErrorCode;
+import eu.daiad.web.model.error.SchedulerErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 
 /**
@@ -175,15 +176,90 @@ public abstract class BaseTask {
     /**
      * Creates a directory.
      *
-     * @param dir
-     *            the directory to create.
-     * @throws IOException
-     *             if an I/O exception occurs.
+     * @param dir the directory to create.
+     * @throws IOException if an I/O exception occurs.
      */
     protected void ensureDirectory(File dir) throws IOException {
         if (!dir.mkdirs() && !dir.isDirectory()) {
-            throw new IOException("Mkdirs failed to create " + dir.toString());
+            throw new IOException("Failed to create " + dir.toString());
         }
+    }
+
+    /**
+     * Ensures access to a file.
+     *
+     * @param filename the filename.
+     * @throws IOException if an I/O error occurs.
+     */
+    protected void ensureFile(String filename) throws IOException {
+        File file = new File(filename);
+        if (file.exists()) {
+            file.delete();
+        }
+
+        file.createNewFile();
+        file.delete();
+    }
+
+    /**
+     * Checks if a parameter exists.
+     *
+     * @param parameters a map with all job parameters.
+     * @param key the key of the parameter to check.
+     * @throws ApplicationException if parameter does not exist.
+     */
+    protected void ensureParameter(Map<String, String> parameters, String key) throws ApplicationException {
+        if(!parameters.containsKey(key)) {
+            throw createApplicationException(SchedulerErrorCode.SCHEDULER_MISSING_PARAMETER).set("parameter", key);
+        }
+        if(StringUtils.isBlank(parameters.get(key))) {
+            throw createApplicationException(SchedulerErrorCode.SCHEDULER_INVALID_PARAMETER).set("parameter", key)
+                                                                                            .set("value", (String) parameters.get(key));
+        }
+    }
+
+    /**
+     * Finds a parameter and parses its value as an integer.
+     *
+     * @param parameters a map with all job parameters.
+     * @param key the key of the parameter to check.
+     * @return the value of the parameter as integer.
+     *
+     * @throws ApplicationException if either the parameter does not exist or the parameter value is not an integer.
+     */
+    protected int getInteger(Map<String, String> parameters, String key) throws ApplicationException {
+        return this.getInteger(parameters, key, true);
+    }
+
+    /**
+     * Finds a parameter and parses its value as an integer.
+     *
+     * @param parameters a map with all job parameters.
+     * @param key the key of the parameter to check.
+     * @param throwException if true and the value is not a valid integer expression, an exception is thrown.
+     * @return the value of the parameter as integer.
+     *
+     * @throws ApplicationException if the {@code throwException} is {@code true} and either the
+     *                              parameter does not exist or the parameter value is not an integer.
+     */
+    protected Integer getInteger(Map<String, String> parameters, String key, boolean throwException) throws ApplicationException {
+        if((throwException) && (!parameters.containsKey(key))) {
+            throw createApplicationException(SchedulerErrorCode.SCHEDULER_MISSING_PARAMETER).set("parameter", key);
+        }
+        if((throwException) && (StringUtils.isBlank(parameters.get(key)))) {
+            throw createApplicationException(SchedulerErrorCode.SCHEDULER_INVALID_PARAMETER).set("parameter", key)
+                                                                                            .set("value", (String) parameters.get(key));
+        }
+        try {
+            return Integer.parseInt(parameters.get(key));
+        } catch(NumberFormatException ex) {
+            if(throwException) {
+                throw createApplicationException(SchedulerErrorCode.SCHEDULER_INVALID_PARAMETER).set("parameter", key)
+                                                                                                .set("value", (String) parameters.get(key));
+            }
+        }
+
+        return null;
     }
 
 }

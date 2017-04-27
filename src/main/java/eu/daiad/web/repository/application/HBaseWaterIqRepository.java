@@ -20,6 +20,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.hbase.EnumHBaseColumnFamily;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.ComparisonRanking;
@@ -118,7 +119,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
 
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] userKeyHash = md.digest(userKey.toString().getBytes("UTF-8"));
 
@@ -235,7 +236,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
 
             MessageDigest md = MessageDigest.getInstance("MD5");
 
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] userKeyHash = md.digest(userKey.toString().getBytes("UTF-8"));
 
@@ -303,6 +304,19 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
             }
         }
 
+    }
+
+
+    /**
+     * Returns the Water IQ as computed by the savings potential algorithm.
+     *
+     * @param month the month.
+     * @param serial the meter serial number.
+     * @return a value from A to F or null if not savings potential data exist.
+     */
+    @Override
+    public String getWaterIqFromSavingsPotential(int month, String serial) {
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 
 }

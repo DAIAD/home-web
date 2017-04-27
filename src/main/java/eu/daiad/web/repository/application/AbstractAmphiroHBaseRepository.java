@@ -14,7 +14,7 @@ public abstract class AbstractAmphiroHBaseRepository extends AbstractHBaseReposi
     /**
      * Enforces more strict validation rules for amphiro b1 data.
      */
-    @Value("${daiad.amphiro.validation-string:true}")
+    @Value("${daiad.amphiro.validation-strict:true}")
     protected boolean strictAmphiroValidation;
 
     /**
@@ -36,6 +36,12 @@ public abstract class AbstractAmphiroHBaseRepository extends AbstractHBaseReposi
      * Logger for logging ignored sessions (sessions that are not showers).
      */
     protected static final Log sessionIgnoreLogger = LogFactory.getLog(LOGGER_IGNORE);
+
+    /**
+     * Logger for logging historical showers that have been converted to
+     * real-time ones manually by the user.
+     */
+    protected static final Log sessionRealTimeLogger = LogFactory.getLog(LOGGER_REAL_TIME);
 
     /**
      * Returns the current API version.

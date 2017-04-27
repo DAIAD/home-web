@@ -19,7 +19,7 @@ import eu.daiad.web.model.profile.UpdateProfileRequest;
 
 public interface IProfileRepository {
 
-    Profile getProfileByUsername(EnumApplication application) throws ApplicationException;
+    Profile getProfileByUserKey(UUID userKey, EnumApplication application) throws ApplicationException;
 
     List<ProfileModes> getProfileModes(ProfileModesRequest filters) throws ApplicationException;
 
@@ -31,7 +31,7 @@ public interface IProfileRepository {
 
     void setProfileModes(ProfileModesSubmitChangesRequest modeChanges);
 
-    void deactivateProfile(ProfileDeactivateRequest userDeactId);
+    void deactivateProfile(ProfileDeactivateRequest request);
 
     void saveHousehold(UpdateHouseholdRequest updates);
 

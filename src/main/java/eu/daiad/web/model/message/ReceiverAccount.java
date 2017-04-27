@@ -1,19 +1,52 @@
 package eu.daiad.web.model.message;
 
-import org.joda.time.DateTime;
+import java.util.UUID;
 
-public class ReceiverAccount{
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    private int accountId;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ReceiverAccount
+{
+    @JsonProperty
+    private Integer id;
+
+    @JsonProperty
+    private UUID key;
+    
+    @JsonProperty
     private String username;
-    private DateTime acknowledgedOn;
 
-    public int getAccountId() {
-        return accountId;
+    public ReceiverAccount() {}
+
+    public ReceiverAccount(int accountId, String username)
+    {
+        this.id = accountId;
+        this.username = username;
     }
 
-    public void setAccountId(int accountId) {
-        this.accountId = accountId;
+    public ReceiverAccount(UUID accountKey, String username)
+    {
+        this.key = accountKey;
+        this.username = username;
+    }
+    
+    public static ReceiverAccount of(int accountId, String username)
+    {
+        return new ReceiverAccount(accountId, username);
+    }
+    
+    public static ReceiverAccount of(UUID accountKey, String username)
+    {
+        return new ReceiverAccount(accountKey, username);
+    }
+    
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer accountId) {
+        this.id = accountId;
     }
 
     public String getUsername() {
@@ -24,12 +57,27 @@ public class ReceiverAccount{
         this.username = username;
     }
 
-    public DateTime getAcknowledgedOn() {
-        return acknowledgedOn;
+    public UUID getKey()
+    {
+        return key;
     }
 
-    public void setAcknowledgedOn(DateTime acknowledgedOn) {
-        this.acknowledgedOn = acknowledgedOn;
+    public void setKey(UUID key)
+    {
+        this.key = key;
     }
-
+    
+    // Backwards compatibility
+     
+    @JsonProperty("accountId")
+    public Integer getAccountId()
+    {
+        return id;
+    }
+    
+    @JsonProperty("accountId")
+    public void setAccountId(Integer id)
+    {
+        this.id = id;
+    }
 }

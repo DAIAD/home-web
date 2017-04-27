@@ -19,7 +19,7 @@ public enum EnumApplication {
 	}
 
 	public int getValue() {
-		return this.value;
+		return value;
 	}
 
 	private static final Map<Integer, EnumApplication> intToTypeMap = new HashMap<Integer, EnumApplication>();
@@ -51,8 +51,7 @@ public enum EnumApplication {
 	public static class Deserializer extends JsonDeserializer<EnumApplication> {
 
 		@Override
-		public EnumApplication deserialize(JsonParser parser, DeserializationContext context) throws IOException,
-						JsonProcessingException {
+		public EnumApplication deserialize(JsonParser parser, DeserializationContext context) throws IOException, JsonProcessingException {
 			return EnumApplication.fromString(parser.getValueAsString());
 		}
 	}

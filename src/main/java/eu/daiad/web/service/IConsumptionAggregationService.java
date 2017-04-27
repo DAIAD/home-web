@@ -1,21 +1,22 @@
 package eu.daiad.web.service;
 
-import org.joda.time.LocalDateTime;
+import java.util.UUID;
 
-import eu.daiad.web.model.ConsumptionStats;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
+import org.joda.time.Period;
+
+import eu.daiad.web.model.ComputedNumber;
+import eu.daiad.web.model.EnumStatistic;
+import eu.daiad.web.model.query.EnumMeasurementField;
 import eu.daiad.web.model.utility.UtilityInfo;
 
-public interface IConsumptionAggregationService {
-
-	/**
-	 * Computes a set of aggregate values about the average user water consumption for a utility. This information
-	 * is used for generating messages for a single user.
-	 * 
-	 * @param utility
-	 * @param refDate a reference date for statistics to be computed. 
-	 *    If null is supplied, assume the current date.
-	 * @return utility-wide statistics
-	 */
-	public ConsumptionStats compute(UtilityInfo utility, LocalDateTime refDate);
-
+public interface IConsumptionAggregationService 
+{
+	public ComputedNumber compute(
+	    UUID utilityKey, LocalDateTime refDate, Period period, EnumMeasurementField field, EnumStatistic statistic);
+	
+	public ComputedNumber compute(
+        UUID utilityKey, DateTime refDate, Period period, EnumMeasurementField field, EnumStatistic statistic);
+	
 }

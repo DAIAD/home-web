@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import eu.daiad.web.hbase.EnumHBaseColumnFamily;
+import eu.daiad.web.hbase.EnumHBaseTable;
 import eu.daiad.web.hbase.HBaseConnectionManager;
 import eu.daiad.web.model.error.SharedErrorCode;
 
@@ -29,11 +31,6 @@ public abstract class AbstractHBaseRepository extends BaseRepository {
      * Logger instance for writing events using the configured logging API.
      */
     private static final Log logger = LogFactory.getLog(AbstractHBaseRepository.class);
-
-    /**
-     * HBase table with counter columns
-     */
-    protected static final String HBASE_COUNTER_TABLE = "daiad:counters";
 
     /**
      * Logger for amphiro b1 sessions.
@@ -56,6 +53,11 @@ public abstract class AbstractHBaseRepository extends BaseRepository {
     protected static final String LOGGER_IGNORE = "AmphiroSessionIgnoreLogger";
 
     /**
+     * Logger for amphiro b1 for writing historical showers that are converted to real-time.
+     */
+    protected static final String LOGGER_REAL_TIME = "AmphiroSessionRealTimeLogger";
+
+    /**
      * HBase connection.
      */
     @Autowired
@@ -73,11 +75,6 @@ public abstract class AbstractHBaseRepository extends BaseRepository {
      */
     @Value("${scanner.cache.size}")
     protected int scanCacheSize = 1;
-
-    /**
-     * Default column family name.
-     */
-    protected final String DEFAULT_COLUMN_FAMILY = "cf";
 
     /**
      * Provides methods for serializing Java objects to JSON strings.
@@ -219,10 +216,10 @@ public abstract class AbstractHBaseRepository extends BaseRepository {
         Table table = null;
 
         try {
-            table = connection.getTable(HBASE_COUNTER_TABLE);
+            table = connection.getTable(EnumHBaseTable.COUNTERS.getValue());
 
             return table.incrementColumnValue(Bytes.toBytes(row),
-                                              Bytes.toBytes(DEFAULT_COLUMN_FAMILY),
+                                              Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue()),
                                               Bytes.toBytes(column),
                                               1);
         } finally {

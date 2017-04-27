@@ -5,18 +5,17 @@ import java.util.List;
 
 public class RankingDataPoint extends DataPoint {
 
-	private ArrayList<UserDataPoint> users = new ArrayList<UserDataPoint>();
+	private List<UserDataPoint> users = new ArrayList<UserDataPoint>();
 
-	public RankingDataPoint() {
-		type = EnumDataPointType.RANKING;
-	}
+    public RankingDataPoint() {
+        super(EnumDataPointType.RANKING);
+    }
 
-	public RankingDataPoint(long timestamp) {
-		super(timestamp);
-		type = EnumDataPointType.RANKING;
-	}
+    public RankingDataPoint(long timestamp) {
+        super(EnumDataPointType.RANKING, timestamp);
+    }
 
-	public ArrayList<UserDataPoint> getUsers() {
+	public List<UserDataPoint> getUsers() {
 		return users;
 	}
 
@@ -48,16 +47,14 @@ public class RankingDataPoint extends DataPoint {
 								p.getVolume().put(m, p.getVolume().get(m) + meterUser.getVolume().get(m));
 								break;
 							case MIN:
-								diff = meterUser.getVolume().get(EnumMetric.MAX)
-												- meterUser.getVolume().get(EnumMetric.MIN);
+								diff = meterUser.getVolume().get(EnumMetric.MAX) - meterUser.getVolume().get(EnumMetric.MIN);
 
 								if (diff < p.getVolume().get(m)) {
 									p.getVolume().put(m, diff);
 								}
 								break;
 							case MAX:
-								diff = meterUser.getVolume().get(EnumMetric.MAX)
-												- meterUser.getVolume().get(EnumMetric.MIN);
+								diff = meterUser.getVolume().get(EnumMetric.MAX) - meterUser.getVolume().get(EnumMetric.MIN);
 
 								if (diff > p.getVolume().get(m)) {
 									p.getVolume().put(m, diff);
@@ -65,6 +62,7 @@ public class RankingDataPoint extends DataPoint {
 								break;
 							case AVERAGE:
 								average = true;
+								break;
 							default:
 								// Ignore
 						}

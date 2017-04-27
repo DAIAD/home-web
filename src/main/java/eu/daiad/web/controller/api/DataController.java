@@ -18,6 +18,7 @@ import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.model.DeviceMeasurementCollection;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.amphiro.AmphiroMeasurementCollection;
+import eu.daiad.web.model.amphiro.HistoricalToRealTimeRequest;
 import eu.daiad.web.model.amphiro.IgnoreShowerRequest;
 import eu.daiad.web.model.amphiro.MemberAssignmentRequest;
 import eu.daiad.web.model.device.AmphiroDevice;
@@ -38,7 +39,7 @@ import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IAmphiroTimeOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
-import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.repository.application.IMeterDataRepository;
 import eu.daiad.web.service.IDataService;
 
 /**
@@ -75,7 +76,7 @@ public class DataController extends BaseRestController {
      * Repository for accessing smart water meter data.
      */
     @Autowired
-    private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+    private IMeterDataRepository waterMeterMeasurementRepository;
 
     /**
      * Repository for accessing device data.
@@ -100,8 +101,7 @@ public class DataController extends BaseRestController {
     @RequestMapping(value = "/api/v1/data/query", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse query(@RequestBody DataQueryRequest data) {
         try {
-            AuthenticatedUser user = authenticate(data.getCredentials(),
-                                                  EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            AuthenticatedUser user = authenticate(data.getCredentials(), EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             DataQuery query = data.getQuery();
             if (query == null) {
@@ -185,8 +185,7 @@ public class DataController extends BaseRestController {
     @RequestMapping(value = "/api/v1/data/meter/forecast", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
     public RestResponse forecast(@RequestBody ForecastQueryRequest data) {
         try {
-            AuthenticatedUser user = authenticate(data.getCredentials(),
-                                                  EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
+            AuthenticatedUser user = authenticate(data.getCredentials(), EnumRole.ROLE_USER, EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN);
 
             ForecastQuery query = data.getQuery();
             if (query == null) {
@@ -240,8 +239,7 @@ public class DataController extends BaseRestController {
                                             data.getType().toString());
                         }
 
-                        amphiroTimeOrderedRepository.storeData(authenticatedUser, (AmphiroDevice) device,
-                                        (AmphiroMeasurementCollection) data);
+                        amphiroTimeOrderedRepository.storeData(authenticatedUser, (AmphiroDevice) device, (AmphiroMeasurementCollection) data);
                     }
                     break;
                 case METER:
@@ -260,8 +258,7 @@ public class DataController extends BaseRestController {
                                             data.getType().toString());
                         }
 
-                        waterMeterMeasurementRepository.store(((WaterMeterDevice) device).getSerial(),
-                                        (WaterMeterMeasurementCollection) data);
+                        waterMeterMeasurementRepository.store(((WaterMeterDevice) device).getSerial(), (WaterMeterMeasurementCollection) data);
                     }
                     break;
                 default:
@@ -313,8 +310,7 @@ public class DataController extends BaseRestController {
                             throw createApplicationException(DeviceErrorCode.NOT_SUPPORTED).set("type",
                                             data.getType().toString());
                         }
-                        response = amphiroIndexOrderedRepository.store(authenticatedUser, (AmphiroDevice) device,
-                                        (AmphiroMeasurementCollection) data);
+                        response = amphiroIndexOrderedRepository.store(authenticatedUser, (AmphiroDevice) device, (AmphiroMeasurementCollection) data);
                     }
                     break;
                 case METER:
@@ -333,8 +329,7 @@ public class DataController extends BaseRestController {
                                             data.getType().toString());
                         }
 
-                        waterMeterMeasurementRepository.store(((WaterMeterDevice) device).getSerial(),
-                                        (WaterMeterMeasurementCollection) data);
+                        waterMeterMeasurementRepository.store(((WaterMeterDevice) device).getSerial(), (WaterMeterMeasurementCollection) data);
                     }
                     break;
                 default:
@@ -396,11 +391,10 @@ public class DataController extends BaseRestController {
         }
     }
 
-
     /**
-     * Assigns household members to amphiro b1 sessions.
+     * Marks an amphiro b1 message as not being a shower.
      *
-     * @param request member assignment data
+     * @param request shower data.
      * @return the controller's response.
      */
     @RequestMapping(value = "/api/v2/data/session/ignore", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -421,4 +415,34 @@ public class DataController extends BaseRestController {
 
         return response;
     }
+
+    /**
+     * Updates the date time of a historical shower and converts it to a real-time one.
+     *
+     * @param request the shower data including its unique id and timestamp.
+     * @return an instance of {@link RestResponse}.
+     */
+    @RequestMapping(value = "/api/v2/data/session/date", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
+    public RestResponse convertHistoricalToRealTimeShower(@RequestBody HistoricalToRealTimeRequest request) {
+        RestResponse response = new RestResponse();
+
+        AuthenticatedUser authenticatedUser = null;
+
+        try {
+            authenticatedUser = authenticate(request.getCredentials(), EnumRole.ROLE_USER);
+
+            AmphiroDevice device = deviceRepository.getUserAmphiroByKey(authenticatedUser.getKey(), request.getDeviceKey());
+            if(device == null) {
+                throw createApplicationException(DeviceErrorCode.NOT_FOUND).set("key", request.getDeviceKey());
+            }
+            amphiroIndexOrderedRepository.toRealTime(authenticatedUser, device, request.getSessionId(), request.getTimestamp());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            response.add(this.getError(ex));
+        }
+
+        return response;
+    }
+
 }

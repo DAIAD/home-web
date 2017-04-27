@@ -1,13 +1,21 @@
 package eu.daiad.web.controller;
 
+import java.util.ArrayList;
+import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import eu.daiad.web.model.AuthenticatedRequest;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -24,6 +32,13 @@ public class BaseRestController extends BaseController {
      */
     @Autowired
     private AuthenticationProvider authenticationProvider;
+
+    /**
+     * A bean validator that can be used to validate received input.
+     */
+    @Autowired
+    @Qualifier("defaultBeanValidator")
+    private Validator validator;
 
     /**
      * Authenticates a user and optionally, if authentication is successful,
@@ -45,7 +60,7 @@ public class BaseRestController extends BaseController {
                 throw createApplicationException(SharedErrorCode.AUTHENTICATION_NO_CREDENTIALS);
             }
 
-            UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) this.authenticationProvider
+            UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) authenticationProvider
                             .authenticate(new UsernamePasswordAuthenticationToken(credentials.getUsername(), credentials.getPassword()));
 
             if (authentication == null) {
@@ -75,5 +90,28 @@ public class BaseRestController extends BaseController {
         } catch (BadCredentialsException ex) {
             throw wrapApplicationException(ex, SharedErrorCode.AUTHENTICATION_USERNAME).set("username", credentials.getUsername());
         }
+    }
+
+    /**
+     * Validate a REST request using default bean validator.
+     *
+     * @return a list of validation errors
+     */
+    protected <R extends AuthenticatedRequest> ArrayList<eu.daiad.web.model.error.Error> validate(R request)
+    {
+        ArrayList<eu.daiad.web.model.error.Error> errors = new ArrayList<>();
+        Set<ConstraintViolation<R>> constraintViolations = validator.validate(request);
+
+        if (constraintViolations.isEmpty())
+            return errors;
+
+        // The request is invalid: turn constraint violations into error DTO objects
+        for (ConstraintViolation<R> c: constraintViolations) {
+            eu.daiad.web.model.error.Error error = new eu.daiad.web.model.error.Error(
+                SharedErrorCode.INVALID_FIELD.name(),
+                "The field `" + c.getPropertyPath() + "` is invalid: " + c.getMessage());
+            errors.add(error);
+        }
+        return errors;
     }
 }

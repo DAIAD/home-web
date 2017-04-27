@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.joda.time.DateTime;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vividsolutions.jts.geom.Geometry;
 
 public abstract class Group {
@@ -14,12 +17,15 @@ public abstract class Group {
 
     private String name;
 
-    private long createdOn;
+    private DateTime createdOn;
+
+    private DateTime updatedOn;
 
     private Geometry geometry;
 
     private Integer size;
 
+    @JsonIgnore
     private List<UUID> members = new ArrayList<UUID>();
 
     private boolean favorite;
@@ -52,12 +58,20 @@ public abstract class Group {
         this.name = name;
     }
 
-    public long getCreatedOn() {
+    public DateTime getCreatedOn() {
         return createdOn;
     }
 
-    public void setCreatedOn(long createdOn) {
+    public void setCreatedOn(DateTime createdOn) {
         this.createdOn = createdOn;
+    }
+
+    public DateTime getUpdatedOn() {
+        return updatedOn;
+    }
+
+    public void setUpdatedOn(DateTime updatedOn) {
+        this.updatedOn = updatedOn;
     }
 
     public Geometry getGeometry() {

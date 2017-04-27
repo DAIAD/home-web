@@ -2,52 +2,54 @@ package eu.daiad.web.model.loader;
 
 public class FileProcessingStatus {
 
-    private int totalRows = 0;
+    private String filename;
 
-    private int processedRows = 0;
+    private long totalRows = 0;
 
-    private int skippedRows = 0;
+    private long processedRows = 0;
+
+    private long skippedRows = 0;
 
     private Long minTimestamp;
 
     private Long maxTimestamp;
 
-    private int negativeDifference = 0;
+    private long negativeDifference = 0;
 
-    public int getNegativeDifference() {
+    public long getNegativeDifference() {
         return negativeDifference;
     }
 
-    public int getTotalRows() {
+    public long getTotalRows() {
         return totalRows;
     }
 
-    public void setTotalRows(int totalRows) {
+    public void setTotalRows(long totalRows) {
         this.totalRows = totalRows;
     }
 
-    public int getProcessedRows() {
+    public long getProcessedRows() {
         return processedRows;
     }
 
-    public void setProcessedRows(int processedRows) {
+    public void setProcessedRows(long processedRows) {
         this.processedRows = processedRows;
     }
 
-    public int getSkippedRows() {
+    public long getSkippedRows() {
         return skippedRows;
     }
 
-    public void setSkippedRows(int skippedRows) {
+    public void setSkippedRows(long skippedRows) {
         this.skippedRows = skippedRows;
     }
 
     public void processRow() {
-        this.processedRows++;
+        processedRows++;
     }
 
     public void skipRow() {
-        this.skippedRows++;
+        skippedRows++;
     }
 
     public Long getMinTimestamp() {
@@ -67,6 +69,15 @@ public class FileProcessingStatus {
     }
 
     public void increaseNegativeDifference() {
-        this.negativeDifference++;
+        negativeDifference++;
     }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
+
 }

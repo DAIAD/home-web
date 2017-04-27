@@ -82,6 +82,8 @@ public class ErrorRestControllerAdvice {
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	@ResponseBody
 	public ResponseEntity<RestResponse> handleException(HttpMessageNotReadableException ex) {
+	    logger.warn("HTTP message is not readable.", ex);
+
 		Throwable mostSpecificCause = ex.getMostSpecificCause();
 
 		HttpHeaders headers = new HttpHeaders();
@@ -109,6 +111,8 @@ public class ErrorRestControllerAdvice {
 	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
 	@ResponseBody
 	public ResponseEntity<RestResponse> handleException(HttpRequestMethodNotSupportedException ex) {
+	    logger.warn("HTTP method not supported.", ex);
+
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 

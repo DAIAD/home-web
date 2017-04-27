@@ -1,9 +1,26 @@
 package eu.daiad.web.job.task;
 
+import java.io.File;
+import java.rmi.server.ExportException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
@@ -11,9 +28,9 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import eu.daiad.web.connector.SftpProperties;
-import eu.daiad.web.job.builder.WaterMeterDataSecureFileTransferJobBuilder;
-import eu.daiad.web.model.loader.DataTransferConfiguration;
+import eu.daiad.web.domain.admin.UploadEntity;
+import eu.daiad.web.model.loader.EnumUploadFileType;
+import eu.daiad.web.model.loader.FileProcessingStatus;
 import eu.daiad.web.service.IWaterMeterDataLoaderService;
 
 /**
@@ -25,41 +42,167 @@ public class ImportMeterDataTask extends BaseTask implements StoppableTasklet {
     /**
      * Logger instance for writing events using the configured logging API.
      */
-    private static final Log logger = LogFactory.getLog(WaterMeterDataSecureFileTransferJobBuilder.class);
+    private static final Log logger = LogFactory.getLog(ImportMeterDataTask.class);
+
+    /**
+     * Entity manager for persisting upload meta data.
+     */
+    @PersistenceContext(unitName = "management")
+    EntityManager entityManager;
 
     /**
      * Service for downloading, parsing and importing smart water meter data to HBase.
      */
     @Autowired
-    private IWaterMeterDataLoaderService loader;
+    private IWaterMeterDataLoaderService waterMeterDataLoaderService;
+
+    /**
+     * Returns a set of all files in the given path.
+     *
+     * @param localPath the local path.
+     * @return a set of files.
+     * @throws IllegalArgumentException if {@code localPath} does not exist.
+     */
+    private List<File> collectFilesFromLocalDir(String localPath) throws IllegalArgumentException {
+        File path = new File(localPath);
+
+        if (!path.exists()) {
+            throw new IllegalArgumentException(String.format("Path %s does not exist.", localPath));
+        }
+
+        if (!path.isDirectory()) {
+            throw new IllegalArgumentException(String.format("Path points to file, not directory: %s", localPath));
+        }
+
+        List<File> files = new ArrayList<File>();
+        for (File file : path.listFiles()) {
+            if (file.exists() && !file.isDirectory()) {
+                files.add(file);
+            }
+        }
+        return files;
+    }
 
     @Override
-    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
+    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception{
         try {
             Map<String, String> parameters = getStepParameters(chunkContext.getStepContext());
 
-            // Initialize configuration
-            DataTransferConfiguration config = new DataTransferConfiguration();
+            // Check source/target directories
+            String sourceDir = parameters.get(EnumInParameter.WORKING_DIRECTORY.getValue());
+            String targetDir = parameters.get(EnumInParameter.STORAGE_DIRECTORY.getValue());
 
-            // File properties
-            config.setLocalFolder(parameters.get(EnumParameter.FOLDER_LOCAL.getValue()));
-            config.setRemoteFolder(parameters.get(EnumParameter.FOLDER_REMOTE.getValue()));
-            config.setTimezone(parameters.get(EnumParameter.TIMEZONE.getValue()));
+            if (StringUtils.isBlank(sourceDir)) {
+                throw new ExportException("Source directory is not set.");
+            }
+            if (StringUtils.isBlank(targetDir)) {
+                throw new ExportException("Target directory is not set.");
+            }
+            if (sourceDir.equals(targetDir)) {
+                throw new ExportException("Source and target directories cannot be the same.");
+            }
 
-            // Filter properties
-            config.setFilterRegEx(parameters.get(EnumParameter.FILENAME_REGEX_FILTER.getValue()));
+            // Create target folder
+            FileUtils.forceMkdir(new File(targetDir));
 
-            // SFTP properties
-            String host = parameters.get(EnumParameter.SFTP_HOST.getValue());
-            int port = Integer.parseInt(parameters.get(EnumParameter.SFTP_PORT.getValue()));
-            String username = parameters.get(EnumParameter.SFTP_USERNAME.getValue());
-            String password = parameters.get(EnumParameter.SFTP_PASSWORD.getValue());
+            // Set time zone
+            String timezone = parameters.get(EnumInParameter.TIMEZONE.getValue());
+            if (StringUtils.isBlank(timezone)) {
+                throw new ExportException("Time zone is not set.");
+            }
+            Set<String> zones = DateTimeZone.getAvailableIDs();
+            if (!zones.contains(timezone)) {
+                throw new ExportException(String.format("Time zone [%s] is not supported.", timezone));
+            }
 
-            config.setSftpProperties(new SftpProperties(host, port, username, password));
+            // Import every file in the working directory and store it permanently.
+            List<File> files = collectFilesFromLocalDir(sourceDir);
+            Collections.sort(files, new Comparator<File>() {
 
-            loader.load(config);
+                @Override
+                public int compare(File f1, File f2) {
+                    long result = f1.lastModified() - f2.lastModified();
+
+                    if (result < 0 ) {
+                        return -1;
+                    } else if (result > 0) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }
+            });
+
+            for (File tempFile : files) {
+                // Check if a file with the same path and name has already been imported
+                String sqlString = "select      u " +
+                                   "from        upload u " +
+                                   "where       u.localFolder = :localFolder and " +
+                                   "            u.localFilename = :localFilename " +
+                                   "order by    u.id desc";
+
+                TypedQuery<UploadEntity> uploadQuery = entityManager.createQuery(sqlString, UploadEntity.class).setFirstResult(0).setMaxResults(1);
+
+                uploadQuery.setParameter("localFolder", tempFile.getParent());
+                uploadQuery.setParameter("localFilename", tempFile.getName());
+
+                List<UploadEntity> uploads = uploadQuery.getResultList();
+
+                UploadEntity existingUpload = null;
+                if (uploads.size() != 0) {
+                    existingUpload = uploads.get(0);
+                }
+
+                if ((existingUpload == null) ||
+                    (existingUpload.getProccessedRows() == 0) ||
+                    ((existingUpload.getSkippedRows() + existingUpload.getProccessedRows()) != existingUpload.getTotalRows())) {
+
+                    // Create record if not one already exists
+                    UploadEntity upload = null;
+                    if (existingUpload == null) {
+                        upload =  new UploadEntity();
+                    } else {
+                        upload = existingUpload;
+                    }
+
+                    // Copy filename
+                    upload.setLocalFolder(targetDir);
+                    upload.setLocalFilename(UUID.randomUUID().toString() + "." + FilenameUtils.getExtension(tempFile.getName()));
+
+                    String target = FilenameUtils.concat(upload.getLocalFolder(), upload.getLocalFilename());
+                    File targetFile = new File(target);
+
+                    FileUtils.copyFile(tempFile, targetFile);
+
+                    if (existingUpload == null) {
+                        upload.setModifiedOn(new DateTime(targetFile.lastModified()));
+                        upload.setSize(targetFile.length());
+                    }
+
+
+                    // Process data and import records to HBASE
+                    upload.setProcessingStartedOn(new DateTime());
+
+                    FileProcessingStatus status = waterMeterDataLoaderService.parse(target, timezone, EnumUploadFileType.METER_DATA, null);
+
+                    upload.setTotalRows(status.getTotalRows());
+                    upload.setProccessedRows(status.getProcessedRows());
+                    upload.setSkippedRows(status.getSkippedRows());
+                    upload.setNegativeDifferenceRows(status.getNegativeDifference());
+                    upload.setProcessingCompletedOn(new DateTime());
+                    if (!StringUtils.isBlank(status.getFilename())) {
+                        upload.setLocalFilename(status.getFilename());
+                    }
+
+                    // Save record if this is a new file (not an uploaded file)
+                    if (existingUpload == null) {
+                        entityManager.persist(upload);
+                    }
+                    entityManager.flush();
+                }
+            }
         } catch (Exception ex) {
-            logger.fatal("Failed to load meter data from SFTP server.", ex);
+            logger.fatal("Failed to import meter data to HBASE.", ex);
 
             throw ex;
         }
@@ -72,45 +215,21 @@ public class ImportMeterDataTask extends BaseTask implements StoppableTasklet {
     }
 
     /**
-     * Enumeration of job parameters.
+     * Enumeration of task input parameters.
      */
-    public static enum EnumParameter {
+    public static enum EnumInParameter {
         /**
-         * Empty parameter
+         * Working directory path
          */
-        EMPTY(null),
+        WORKING_DIRECTORY("working.dir"),
         /**
-         * SFTP server name
+         * Local folder for storing imported files
          */
-        SFTP_HOST("sftp.host"),
-        /**
-         * SFTP server port
-         */
-        SFTP_PORT("sftp.port"),
-        /**
-         * SFTP server user name
-         */
-        SFTP_USERNAME("sftp.username"),
-        /**
-         * SFTP server password
-         */
-        SFTP_PASSWORD("sftp.password"),
-        /**
-         * Local folder for storing files
-         */
-        FOLDER_LOCAL("folder.local"),
-        /**
-         * SFTP remote folder
-         */
-        FOLDER_REMOTE("folder.remote"),
+        STORAGE_DIRECTORY("folder.local"),
         /**
          * Data time zone
          */
-        TIMEZONE("timezone"),
-        /**
-         * Regular expression for filtering file names
-         */
-        FILENAME_REGEX_FILTER("filter.regex");
+        TIMEZONE("timezone");
 
         private final String value;
 
@@ -118,17 +237,9 @@ public class ImportMeterDataTask extends BaseTask implements StoppableTasklet {
             return value;
         }
 
-        private EnumParameter(String value) {
+        private EnumInParameter(String value) {
             this.value = value;
         }
-
-        public static EnumParameter fromString(String value) {
-            for (EnumParameter item : EnumParameter.values()) {
-                if (item.name().equalsIgnoreCase(value)) {
-                    return item;
-                }
-            }
-            return EMPTY;
-        }
     }
+
 }

@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.job.builder.CommandExecutor;
-import eu.daiad.web.job.builder.ReportGenerationJobBuilder;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IUserRepository;
@@ -37,7 +36,7 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
     /**
      * Logger instance for writing events using the configured logging API.
      */
-    private static final Log logger = LogFactory.getLog(ReportGenerationJobBuilder.class);
+    private static final Log logger = LogFactory.getLog(ReportCreationTask.class);
 
     /**
      * Repository for accessing utility data.
@@ -105,15 +104,30 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
                     try {
                         String filename = Paths.get(outputDirectory, user.getUsername() + "-" + from + "-" + to + ".pdf").toString();
 
-                        String command = String.format("%s %s %s %s %s %s:%s %s %s %s %s",
+                        /*
+                            Script    Shell script that executes the report generation process
+                            WorkDir   Working directory for the script execution
+
+                            URL       The NODE server URL
+                            API       The API endpoint
+                            locale    The locale for page rendering (one of en, el, es)
+                            username  User name for API authentication
+                            password  User password for API authentication
+                            userKey   The user UUID key for which to create report
+                            from      The beginning of the period date in ISO-8061 form (YYYYMMDD)
+                            to        The end of the period date in ISO-8061 form (YYYYMMDD)
+                            output    The output filename (the extension can be one of pdf, png)
+                        */
+
+                        String command = String.format("%s %s %s %s %s %s %s %s %s %s %s",
                                                        schellScript,
                                                        workingDirectory,
                                                        endpointReport,
                                                        endpointApi,
                                                        resolveLocale(user.getLocale(), utility.getLocale()),
                                                        utilityUsername[index],
-                                                       user.getUsername(),
                                                        utilityPassword[index],
+                                                       user.getKey().toString(),
                                                        from,
                                                        to,
                                                        filename);
@@ -121,12 +135,13 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
                         CommandExecutor commandExecutor = new CommandExecutor(command, timeout, workingDirectory);
 
                         boolean success = false;
+                        String[] lines = null;
                         String errorMessage = "";
 
                         if (commandExecutor.execute() == ExitStatus.COMPLETED) {
-                            String[] lines = commandExecutor.getOutput();
+                            lines = commandExecutor.getOutput();
                             if (lines.length > 0) {
-                                if (lines[lines.length - 1].equals(successMessage)) {
+                                if (lines[lines.length - 1].equalsIgnoreCase(successMessage)) {
                                     success = true;
                                 } else {
                                     errorMessage = lines[lines.length - 1];
@@ -139,8 +154,8 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
                                                           user.getUsername()));
                             } else {
                                 logger.warn(String.format("Failed to generated report for user [%s]. Reason : %s",
-                                                          errorMessage,
-                                                          user.getUsername()));
+                                                          user.getUsername(),
+                                                          errorMessage));
                             }
                         }
                     } catch (Exception ex) {
@@ -186,9 +201,9 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
      */
     public static enum EnumParameter {
         /**
-         * Empty parameter.
+         * Not supported parameter.
          */
-        EMPTY(null),
+        NOT_SUPPORTED(""),
         /**
          * Array of utility identifiers for which the reports are created.
          */
@@ -243,11 +258,11 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
 
         public static EnumParameter fromString(String value) {
             for (EnumParameter item : EnumParameter.values()) {
-                if (item.name().equalsIgnoreCase(value)) {
+                if (item.getValue().equalsIgnoreCase(value)) {
                     return item;
                 }
             }
-            return EMPTY;
+            return NOT_SUPPORTED;
         }
     }
 

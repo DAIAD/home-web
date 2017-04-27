@@ -40,7 +40,7 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
-import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
+import eu.daiad.web.repository.application.IMeterDataRepository;
 
 /**
  * Service for exporting data for a single user.
@@ -75,7 +75,7 @@ public class UserDataExportService extends AbstractDataExportService {
      * Repository for accessing smart water meter readings.
      */
     @Autowired
-    private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
+    private IMeterDataRepository waterMeterMeasurementRepository;
 
     /**
      * Exports data for a single user to a temporary file.

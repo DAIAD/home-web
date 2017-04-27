@@ -10,9 +10,9 @@ public class RecommendationStatistics
     public static class ByType
     {
         private final EnumRecommendationType type;
-        private final long count;
+        private final int count;
 
-        public ByType(EnumRecommendationType type, long count)
+        public ByType(EnumRecommendationType type, int count)
         {
             this.type = type;
             this.count = count;
@@ -29,21 +29,22 @@ public class RecommendationStatistics
         }
     }
 
-    private Map<EnumRecommendationType, Long> countByType = new EnumMap<>(EnumRecommendationType.class);
+    private Map<EnumRecommendationType, Integer> countByType = new EnumMap<>(EnumRecommendationType.class);
 
     public RecommendationStatistics() {}
 
-    public Map<EnumRecommendationType, Long> getCountByType()
+    public Map<EnumRecommendationType, Integer> getCountByType()
     {
         return countByType;
     }
 
-    public Long getCountByType(EnumRecommendationType type)
+    public int getCountByType(EnumRecommendationType type)
     {
-        return countByType.get(type);
+        Integer n = countByType.get(type);
+        return (n != null)? n.intValue() : 0;
     }
 
-    public RecommendationStatistics setCountByType(Map<EnumRecommendationType, Long> countByType)
+    public RecommendationStatistics setCountByType(Map<EnumRecommendationType, Integer> countByType)
     {
         this.countByType.putAll(countByType);
         return this;
@@ -53,7 +54,7 @@ public class RecommendationStatistics
     {
         List<ByType> r = new ArrayList<>();
 
-        for (Map.Entry<EnumRecommendationType, Long> e: countByType.entrySet())
+        for (Map.Entry<EnumRecommendationType, Integer> e: countByType.entrySet())
             r.add(new ByType(e.getKey(), e.getValue()));
 
         return r;

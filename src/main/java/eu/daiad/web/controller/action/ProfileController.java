@@ -2,14 +2,17 @@ package eu.daiad.web.controller.action;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -22,6 +25,7 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.profile.ComparisonRankingResponse;
 import eu.daiad.web.model.profile.ProfileDeactivateRequest;
 import eu.daiad.web.model.profile.ProfileModesFilterOptionsResponse;
 import eu.daiad.web.model.profile.ProfileModesRequest;
@@ -34,6 +38,8 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.model.security.RoleConstant;
 import eu.daiad.web.repository.application.IProfileRepository;
+import eu.daiad.web.repository.application.IUserRepository;
+import eu.daiad.web.repository.application.IWaterIqRepository;
 import eu.daiad.web.util.ValidationUtils;
 
 /**
@@ -48,10 +54,23 @@ public class ProfileController extends BaseController {
     private static final Log logger = LogFactory.getLog(ProfileController.class);
 
     /**
+     * Repository for accessing user data.
+     */
+    @Autowired
+    private IUserRepository userRepository;
+
+    /**
      * Repository for accessing user profile data.
      */
     @Autowired
     private IProfileRepository profileRepository;
+
+    /**
+     * Repository for accessing water IQ data.
+     */
+    @Autowired
+    @Qualifier("jpaWaterIqRepository")
+    private IWaterIqRepository waterIqRepository;
 
     /**
      * Loads user profile data.
@@ -65,12 +84,12 @@ public class ProfileController extends BaseController {
         try {
             if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
                 return new ProfileResponse(getRuntime(),
-                                           profileRepository.getProfileByUsername(EnumApplication.UTILITY),
+                                           profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.UTILITY),
                                            user.roleToStringArray());
             }
 
             return new ProfileResponse(getRuntime(),
-                                       profileRepository.getProfileByUsername(EnumApplication.HOME),
+                                       profileRepository.getProfileByUserKey(user.getKey(), EnumApplication.HOME),
                                        user.roleToStringArray());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -237,6 +256,68 @@ public class ProfileController extends BaseController {
         }
 
         return response;
+    }
+
+    /**
+     * Loads comparison and ranking data for a user.
+     *
+     * @param year reference year.
+     * @param month reference month.
+     * @return the user profile.
+     */
+    @RequestMapping(value = "/action/comparison/{year}/{month}", method = RequestMethod.GET, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_USER })
+    public RestResponse getComparisonRanking(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable int year, @PathVariable int month) {
+        try {
+            ComparisonRankingResponse response = new ComparisonRankingResponse();
+
+            response.setComparison(waterIqRepository.getWaterIqByUserKey(user.getKey(), year, month));
+
+            return response;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
+    }
+
+    /**
+     * Loads comparison and ranking data for a user.
+     *
+     * @param year reference year.
+     * @param month reference month.
+     * @return the user profile.
+     */
+    @RequestMapping(value = "/action/comparison/{year}/{month}/{userKey}", method = RequestMethod.GET, consumes = "application/json", produces = "application/json")
+    @Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getComparisonRankingForUser(@AuthenticationPrincipal AuthenticatedUser user,
+                                                    @PathVariable int year, @PathVariable int month,
+                                                    @PathVariable UUID userKey) {
+        try {
+            // If user has not administrative permissions and requests data for another user, throw an exception
+            if ((!user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) && (!user.getKey().equals(userKey))) {
+                throw createApplicationException(SharedErrorCode.AUTHORIZATION);
+            }
+
+            // Check utility access
+            if (!user.getKey().equals(userKey)) {
+                AuthenticatedUser dataOwner = userRepository.getUserByKey(userKey);
+
+                if (!user.getUtilities().contains(dataOwner.getUtilityId())) {
+                    throw createApplicationException(SharedErrorCode.AUTHORIZATION_UTILITY_ACCESS_DENIED);
+                }
+            }
+
+            ComparisonRankingResponse response = new ComparisonRankingResponse();
+
+            response.setComparison(waterIqRepository.getWaterIqByUserKey(userKey, year, month));
+
+            return response;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+
+            return new RestResponse(getError(ex));
+        }
     }
 
 }

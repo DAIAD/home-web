@@ -45,21 +45,21 @@ public class AccountEntity {
     @Column(name = "row_version")
     private long rowVersion;
 
-    @ManyToOne(cascade = { CascadeType.ALL })
+    @ManyToOne()
     @JoinColumn(name = "utility_id", nullable = false)
     private UtilityEntity utility;
 
-    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
-    private Set<AccountRoleEntity> roles = new HashSet<AccountRoleEntity>();
-
-    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
-    @JoinColumn(name = "account_id")
-    private Set<AccountUtilityEntity> utilities = new HashSet<AccountUtilityEntity>();
+    private Set<AccountRoleEntity> roles = new HashSet<>();
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
-    private Set<DeviceEntity> devices = new HashSet<DeviceEntity>();
+    private Set<AccountUtilityEntity> utilities = new HashSet<>();
+
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id")
+    private Set<DeviceEntity> devices = new HashSet<>();
 
     @OneToOne(mappedBy = "account")
     @JoinColumn(name = "account_id")
@@ -71,9 +71,9 @@ public class AccountEntity {
     @OneToOne(mappedBy = "account")
     private HouseholdEntity household;
 
-    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
-    private Set<WaterIqHistoryEntity> waterIqHistory = new HashSet<WaterIqHistoryEntity>();
+    private Set<WaterIqHistoryEntity> waterIqHistory = new HashSet<>();
 
     @Basic(fetch = FetchType.LAZY)
     @Type(type = "org.hibernate.type.BinaryType")
@@ -159,6 +159,10 @@ public class AccountEntity {
 
     public UtilityEntity getUtility() {
         return utility;
+    }
+
+    public UUID getUtilityKey() {
+        return utility.getKey();
     }
 
     public void setUtility(UtilityEntity utility) {

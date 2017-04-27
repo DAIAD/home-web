@@ -31,9 +31,18 @@ module.exports = function(grunt) {
       },
     },
     apidoc: {
-      utility: {
-        src: "apidoc/src",
-        dest: "apidoc/docs",
+      'utility-api': {
+        src: "apidoc/src/api",
+        dest: "apidoc/docs/api",
+        template: "apidoc/template",
+        options: {
+          debug: false,
+          includeFilters: [".*\\.js$"]
+        }
+      },
+      'utility-action': {
+        src: "apidoc/src/action",
+        dest: "apidoc/docs/action",
         template: "apidoc/template",
         options: {
           debug: false,
@@ -44,7 +53,7 @@ module.exports = function(grunt) {
     jsdoc: {
       home: {
         src: [
-          'src/main/resources/public/assets/js/src/home/**/*.js',
+          'src/main/resources/public/assets/js/src/home/actions/*.js',
           'src/main/resources/public/assets/js/src/home/README.md'
         ],
         options: {
@@ -64,7 +73,9 @@ module.exports = function(grunt) {
       },
       'home-build': {
         src: [
-          'src/main/resources/public/assets/js/src/home/**/*.js'
+          'src/main/resources/public/assets/js/src/home/**/*.js',
+          '!src/main/resources/public/assets/js/src/home/node_modules/**',
+          '!src/main/resources/public/assets/js/src/home/lib/**'
         ],
         options: {
           configFile: '.eslintrc.build.json'
@@ -81,7 +92,9 @@ module.exports = function(grunt) {
       },
       'home-dev': {
         src: [
-          'src/main/resources/public/assets/js/src/home/**/*.js'
+          'src/main/resources/public/assets/js/src/home/**/*.js',
+          '!src/main/resources/public/assets/js/src/home/node_modules/**',
+          '!src/main/resources/public/assets/js/src/home/lib/**'
         ],
         options: {
           configFile: '.eslintrc.home.dev.json'
@@ -530,7 +543,7 @@ module.exports = function(grunt) {
           expand: true,
           cwd: 'apidoc/docs/',
           src: ['**/*'],
-          dest: 'src/main/resources/public/docs/api/',
+          dest: 'src/main/resources/public/docs/',
           filter: 'isFile'
         }, {
           expand: true,
@@ -652,6 +665,6 @@ module.exports = function(grunt) {
     'browserify:utilityLive'
   ]);
 
-  grunt.registerTask('docs', ['apidoc:utility', 'jsdoc:home']);
+  grunt.registerTask('docs', ['apidoc:utility-api', 'apidoc:utility-action', 'jsdoc:home']);
 
 };

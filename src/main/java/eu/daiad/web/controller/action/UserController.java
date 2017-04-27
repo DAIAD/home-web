@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,9 +56,9 @@ import eu.daiad.web.model.user.UserQueryResult;
 import eu.daiad.web.repository.application.IAmphiroIndexOrderedRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IFavouriteRepository;
-import eu.daiad.web.repository.application.IUserGroupRepository;
+import eu.daiad.web.repository.application.IGroupRepository;
+import eu.daiad.web.repository.application.IMeterDataRepository;
 import eu.daiad.web.repository.application.IUserRepository;
-import eu.daiad.web.repository.application.IWaterMeterMeasurementRepository;
 import eu.daiad.web.service.IUserService;
 
 /**
@@ -89,6 +91,12 @@ public class UserController extends BaseController {
     private IUserRepository userRepository;
 
     /**
+     * Repository for accessing user data.
+     */
+    @Autowired
+    private IGroupRepository groupRepository;
+
+    /**
      * Repository for accessing device data.
      */
     @Autowired
@@ -104,13 +112,7 @@ public class UserController extends BaseController {
      * Repository for accessing smart water meter data.
      */
     @Autowired
-    private IWaterMeterMeasurementRepository waterMeterMeasurementRepository;
-
-    /**
-     * Repository for accessing user defined group data.
-     */
-    @Autowired
-    private IUserGroupRepository userGroupRepository;
+    private IMeterDataRepository waterMeterMeasurementRepository;
 
     /**
      * Repository for accessing favourite data.
@@ -238,7 +240,7 @@ public class UserController extends BaseController {
             UserInfoResponse response = new UserInfoResponse();
 
             response.setUser(userRepository.getUserInfoByKey(key));
-            response.setGroups(userGroupRepository.getGroupsByMember(key));
+            response.setGroups(groupRepository.getMemberGroups(key));
             response.setFavorite(favouriteRepository.isUserFavorite(user.getKey(), response.getUser().getId()));
 
             List<Device> amphiroDevices = getAmphiroDevices(key);
@@ -378,24 +380,28 @@ public class UserController extends BaseController {
     /**
      * Changes a user's password.
      *
+     * @param httpRequest the HTTP request.
      * @param user the currently authenticated user.
-     * @param data the new password and optionally a user name for changing the password of a different user.
+     * @param request the new password and optionally a user name for changing the password of a different user.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/user/password/change", method = RequestMethod.POST, produces = "application/json")
     @Secured({ RoleConstant.ROLE_USER, RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse changePassword(@AuthenticationPrincipal AuthenticatedUser user,
-                                       @RequestBody PasswordChangeRequest data) {
+    public RestResponse changePassword(HttpServletRequest httpRequest,
+                                       @AuthenticationPrincipal AuthenticatedUser user,
+                                       @RequestBody PasswordChangeRequest request) {
         try {
+            String remoteAddress = getRemoteAddress(httpRequest);
+
             if (user.hasRole(EnumRole.ROLE_SYSTEM_ADMIN, EnumRole.ROLE_UTILITY_ADMIN)) {
-                if(StringUtils.isBlank(data.getUsername())) {
-                    userService.changePassword(user.getUsername(), data.getPassword());
+                if(StringUtils.isBlank(request.getUsername())) {
+                    userService.changePassword(remoteAddress, request.getCaptcha(), user.getUsername(), request.getPassword());
                 } else {
-                    userService.changePassword(data.getUsername(), data.getPassword());
+                    userService.changePassword(remoteAddress, request.getCaptcha(), request.getUsername(), request.getPassword());
                 }
             } else if(user.hasRole(EnumRole.ROLE_USER)){
-                if(StringUtils.isBlank(data.getUsername())) {
-                    userService.changePassword(user.getUsername(), data.getPassword());
+                if(StringUtils.isBlank(request.getUsername())) {
+                    userService.changePassword(remoteAddress, request.getCaptcha(), user.getUsername(), request.getPassword());
                 } else {
                     throw createApplicationException(SharedErrorCode.AUTHORIZATION);
                 }
@@ -414,13 +420,11 @@ public class UserController extends BaseController {
     /**
      * Requests a token for resetting a user's password.
      *
-     * @param user the currently authenticated user.
      * @param request the name of the user.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/user/password/reset/token/create", method = RequestMethod.POST, produces = "application/json")
-    public RestResponse resetPasswordCreateToken(@AuthenticationPrincipal AuthenticatedUser user,
-                                                 @RequestBody PasswordResetTokenCreateRequest request) {
+    public RestResponse resetPasswordCreateToken(@RequestBody PasswordResetTokenCreateRequest request) {
         try {
             userService.resetPasswordCreateToken(request.getUsername(), request.getApplication());
         } catch (Exception ex) {
@@ -436,13 +440,16 @@ public class UserController extends BaseController {
     /**
      * Resets a user's password given a valid token and password.
      *
+     * @param httpRequest the HTTP request.
      * @param request the token and new password values.
      * @return the controller's response.
      */
     @RequestMapping(value = "/action/user/password/reset/token/redeem", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-    public RestResponse resetPasswordRedeemToken(@RequestBody PasswordResetTokenRedeemRequest request) {
+    public RestResponse resetPasswordRedeemToken(HttpServletRequest httpRequest, @RequestBody PasswordResetTokenRedeemRequest request) {
         try {
-            userService.resetPasswordRedeemToken(request.getToken(), request.getPin(), request.getPassword());
+            String remoteAddress = getRemoteAddress(httpRequest);
+
+            userService.resetPasswordRedeemToken(remoteAddress, request.getCaptcha(), request.getToken(), request.getPin(), request.getPassword());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
 
@@ -450,6 +457,20 @@ public class UserController extends BaseController {
         }
 
         return new RestResponse();
+    }
+
+    /**
+     * Returns the remote address for the given {@link HttpServletRequest} request.
+     * @param httpRequest the request.
+     * @return the remote address.
+     */
+    private String getRemoteAddress(HttpServletRequest httpRequest) {
+        String remoteAddress = httpRequest.getHeader("X-FORWARDED-FOR");
+        if (StringUtils.isBlank(remoteAddress)) {
+            remoteAddress = httpRequest.getRemoteAddr();
+        }
+
+        return remoteAddress;
     }
 
 }

@@ -87,6 +87,9 @@ public class UtilityEntity {
     @Column(name = "default_social_mode")
     private boolean defaultSocialEnabled;
 
+    @Column(name = "message_generation_enabled")
+    private boolean messageGenerationEnabled;
+
     public int getId() {
         return id;
     }
@@ -184,6 +187,14 @@ public class UtilityEntity {
 
     public void setDefaultSocialEnabled(boolean defaultSocialEnabled) {
         this.defaultSocialEnabled = defaultSocialEnabled;
+    }
+
+    public boolean isMessageGenerationEnabled() {
+        return messageGenerationEnabled;
+    }
+
+    public void setMessageGenerationEnabled(boolean messageGenerationEnabled) {
+        this.messageGenerationEnabled = messageGenerationEnabled;
     }
 
 }

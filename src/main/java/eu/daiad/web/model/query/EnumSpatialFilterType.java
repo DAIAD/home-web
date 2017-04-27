@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 public enum EnumSpatialFilterType {
-    UNDEFINED(0), CUSTOM(1), AREA(2), GROUP(3), CONSTRAINT(4);
+    UNDEFINED(0), AREA(1), GROUP(2), CONSTRAINT(3);
 
     private final int value;
 
@@ -19,7 +19,7 @@ public enum EnumSpatialFilterType {
     }
 
     public int getValue() {
-        return this.value;
+        return value;
     }
 
     private static final Map<Integer, EnumSpatialFilterType> intToTypeMap = new HashMap<Integer, EnumSpatialFilterType>();

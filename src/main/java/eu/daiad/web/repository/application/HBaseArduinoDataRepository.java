@@ -18,6 +18,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.hbase.EnumHBaseColumnFamily;
 import eu.daiad.web.model.arduino.ArduinoIntervalQuery;
 import eu.daiad.web.model.arduino.ArduinoIntervalQueryResult;
 import eu.daiad.web.model.arduino.ArduinoMeasurement;
@@ -42,7 +43,7 @@ public class HBaseArduinoDataRepository extends AbstractHBaseRepository implemen
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(arduinoTableMeasurements);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] deviceKeyBytes = deviceKey.getBytes("UTF-8");
             byte[] deviceKeyHash = md.digest(deviceKeyBytes);
@@ -132,7 +133,7 @@ public class HBaseArduinoDataRepository extends AbstractHBaseRepository implemen
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             table = connection.getTable(arduinoTableMeasurements);
-            byte[] columnFamily = Bytes.toBytes(DEFAULT_COLUMN_FAMILY);
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
             byte[] deviceKeyBytes = query.getDeviceKey().getBytes("UTF-8");
             byte[] deviceKeyHash = md.digest(deviceKeyBytes);

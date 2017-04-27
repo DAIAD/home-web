@@ -212,6 +212,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         info.setDescription(scheduledJob.getDescription());
 
         info.setEnabled(scheduledJob.isEnabled());
+        info.setVisible(scheduledJob.isVisible());
 
         ScheduledJobExecutionEntity lastExecution = schedulerRepository.getLastExecution(scheduledJob.getName());
         if (lastExecution != null) {
@@ -285,6 +286,32 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         }
 
         return info;
+    }
+
+    /**
+     * Returns the job next scheduled execution.
+     *
+     * @param jobName the job name.
+     * @return a {@link DateTime} instance or null if the job is not scheduled.
+     */
+    @Override
+    public DateTime getJobNextExecutionDateTime(String jobName) {
+        ScheduledJobEntity job = schedulerRepository.getJobByName(jobName);
+        if (job == null) {
+            return null;
+        }
+
+        JobSchedulingProperties entry = scheduledJobs.get(job.getId());
+        if (entry != null) {
+            long delay = entry.getFuture().getDelay(TimeUnit.MILLISECONDS);
+            DateTime nextExecution = DateTime.now();
+            if (delay > 0) {
+                nextExecution = nextExecution.plus(delay);
+            }
+            return nextExecution.toDateTime(DateTimeZone.forID(serverTimeZone));
+        }
+
+        return null;
     }
 
     @Override
@@ -456,26 +483,26 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     }
 
     @Override
-    public void launch(String jobName) throws ApplicationException {
+    public Long launch(String jobName) throws ApplicationException {
         ScheduledJobEntity job = schedulerRepository.getJobByName(jobName);
 
-        this.launch(job.getId(), null);
+        return this.launch(job.getId(), null);
     }
 
     @Override
-    public void launch(String jobName, Map<String, String> parameters) throws ApplicationException {
+    public Long launch(String jobName, Map<String, String> parameters) throws ApplicationException {
         ScheduledJobEntity job = schedulerRepository.getJobByName(jobName);
 
-        this.launch(job.getId(), parameters);
+        return this.launch(job.getId(), parameters);
     }
 
     @Override
-    public void launch(long jobId) throws ApplicationException {
-        this.launch(jobId, null);
+    public Long launch(long jobId) throws ApplicationException {
+        return this.launch(jobId, null);
     }
 
     @Override
-    public void launch(long jobId, Map<String, String> parameters) throws ApplicationException {
+    public Long launch(long jobId, Map<String, String> parameters) throws ApplicationException {
         try {
             refreshActiveExecutions();
 
@@ -484,7 +511,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
             for (JobExecution activeExecution : activeExecutions) {
                 if (activeExecution.getJobInstance().getJobName().equals(scheduledJob.getName())) {
                     logger.info(String.format("Launching job [%s] failed. Job is already running.", scheduledJob.getName()));
-                    return;
+                    return null;
                 }
             }
 
@@ -506,10 +533,47 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
             if (jobExecution.isRunning()) {
                 activeExecutions.add(jobExecution);
             }
+
+            return jobExecution.getJobInstance().getInstanceId();
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SchedulerErrorCode.SCHEDULER_JOB_LAUNCH_FAILED).set("job", jobId);
         }
     }
+
+    @Override
+    public Long launch(IJobBuilder jobBuilder, String jobName, Map<String, String> parameters) throws ApplicationException {
+        try {
+            refreshActiveExecutions();
+
+            for (JobExecution activeExecution : activeExecutions) {
+                if (activeExecution.getJobInstance().getJobName().equals(jobName)) {
+                    logger.info(String.format("Launching job [%s] failed. Job is already running.", jobName));
+                    return null;
+                }
+            }
+
+            Job job = jobBuilder.build(jobName, jobParametersIncrementer);
+
+            // Register job thus making it accessible to JobOperator
+            if (!jobRegistry.getJobNames().contains(jobName)) {
+                jobRegistry.register(new ReferenceJobFactory(job));
+            }
+
+            // Initialize job parameters
+            JobParameters jobParameters = initializeJobParameters(parameters);
+
+            JobExecution jobExecution = jobLauncher.run(job, job.getJobParametersIncrementer().getNext(jobParameters));
+
+            if (jobExecution.isRunning()) {
+                activeExecutions.add(jobExecution);
+            }
+
+            return jobExecution.getJobInstance().getInstanceId();
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SchedulerErrorCode.SCHEDULER_JOB_LAUNCH_FAILED).set("job", jobName);
+        }
+    }
+
 
     @Override
     public boolean stop(Long executionId) {
@@ -641,6 +705,25 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
         }
 
         // Override parameters
+        if (parameters != null) {
+            for (Entry<String, String> entry : parameters.entrySet()) {
+                parameterBuilder.addString(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return parameterBuilder.toJobParameters();
+    }
+
+    /**
+     * Initializes job parameters.
+     *
+     * @param parameters any external parameters for overriding the values in the
+     *                   database.
+     * @return a valid {@link JobParameters} object.
+     */
+    private JobParameters initializeJobParameters(Map<String, String> parameters) {
+        JobParametersBuilder parameterBuilder = new JobParametersBuilder();
+
         if (parameters != null) {
             for (Entry<String, String> entry : parameters.entrySet()) {
                 parameterBuilder.addString(entry.getKey(), entry.getValue());

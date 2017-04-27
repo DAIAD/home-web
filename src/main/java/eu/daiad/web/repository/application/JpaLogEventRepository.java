@@ -27,9 +27,8 @@ public class JpaLogEventRepository extends BaseRepository implements ILogEventRe
 	/**
 	 * Returns logged events. Optionally filters result based on the given
 	 * query.
-	 * 
-	 * @param query
-	 *            the query.
+	 *
+	 * @param query the query.
 	 * @return the logged events.
 	 */
 	@Override

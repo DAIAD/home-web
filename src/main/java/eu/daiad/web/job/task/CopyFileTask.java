@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -35,10 +36,16 @@ public class CopyFileTask extends BaseTask implements StoppableTasklet {
             String source = parameters.get(EnumInParameter.SOURCE_PATH.getValue());
             String target = parameters.get(EnumInParameter.TARGET_PATH.getValue());
 
+            String regex = parameters.get(EnumInParameter.FILTER_REGEX.getValue());
+            Pattern pattern = null;
+            if (!StringUtils.isBlank(regex)) {
+                pattern = Pattern.compile(regex);
+            }
+
             if (StringUtils.isBlank(parameters.get(EnumInParameter.HDFS_PATH.getValue()))) {
-                copyFilesToLocalFilesystem(parameters, source, target);
+                copyFilesToLocalFilesystem(parameters, source, target, pattern);
             } else {
-                copyFilesToHdfs(parameters, source, target);
+                copyFilesToHdfs(parameters, source, target, pattern);
             }
 
 
@@ -59,10 +66,11 @@ public class CopyFileTask extends BaseTask implements StoppableTasklet {
      * Returns a set of all files in the given path.
      *
      * @param localPath the local path.
+     * @param pattern regular expression pattern for filtering filenames.
      * @return a set of files.
      * @throws IllegalArgumentException if {@code localPath} does not exist.
      */
-    private Set<File> collectFilesFromLocalDir(String localPath) throws IllegalArgumentException {
+    private Set<File> collectFilesFromLocalDir(String localPath, Pattern pattern) throws IllegalArgumentException {
         File path = new File(localPath);
 
         if (!path.isDirectory()) {
@@ -71,6 +79,9 @@ public class CopyFileTask extends BaseTask implements StoppableTasklet {
 
         Set<File> files = new HashSet<File>();
         for (File file : path.listFiles()) {
+            if ((pattern != null) && (!pattern.matcher(file.getName()).matches())) {
+                continue;
+            }
             if (file.exists() && !file.isDirectory()) {
                 files.add(file);
             }
@@ -86,11 +97,12 @@ public class CopyFileTask extends BaseTask implements StoppableTasklet {
      * @param parameters the job parameters.
      * @param source the source directory.
      * @param target the target directory.
+     * @param pattern regular expression pattern for filtering filenames.
      * @throws IOException if an I/O exception occurs.
      */
-    private void copyFilesToHdfs(Map<String, String> parameters, String source, String target) throws IOException {
+    private void copyFilesToHdfs(Map<String, String> parameters, String source, String target, Pattern pattern) throws IOException {
         if (!StringUtils.isBlank(source)) {
-            Set<File> files = collectFilesFromLocalDir(source);
+            Set<File> files = collectFilesFromLocalDir(source, pattern);
 
             if (!files.isEmpty()) {
                 System.err.println(String.format("Copying [%d] files from local dir [%s] to HDFS dir [%s] at [%s]",
@@ -120,11 +132,12 @@ public class CopyFileTask extends BaseTask implements StoppableTasklet {
      * @param parameters the job parameters.
      * @param source the source directory.
      * @param target the target directory.
+     * @param pattern regular expression pattern for filtering filenames.
      * @throws IOException if an I/O exception occurs.
      */
-    private void copyFilesToLocalFilesystem(Map<String, String> parameters, String source, String target) throws IOException {
+    private void copyFilesToLocalFilesystem(Map<String, String> parameters, String source, String target, Pattern pattern) throws IOException {
         if (!StringUtils.isBlank(source)) {
-            Set<File> files = collectFilesFromLocalDir(source);
+            Set<File> files = collectFilesFromLocalDir(source, pattern);
 
             if (!files.isEmpty()) {
                 System.err.println(String.format("Copying [%d] files from local dir [%s] to dir [%s]",
@@ -144,6 +157,10 @@ public class CopyFileTask extends BaseTask implements StoppableTasklet {
      * Enumeration of job input parameters.
      */
     public static enum EnumInParameter {
+        /**
+         * Optional regular expression filter for selecting files to copy.
+         */
+        FILTER_REGEX("filter.regex"),
         /**
          * Source directory.
          */
