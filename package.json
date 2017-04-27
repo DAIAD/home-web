@@ -40,12 +40,16 @@
     "react-select": "~1.0.0-beta9",
     "react-wiz": "git+https://github.com/DAIAD/react-wizard.git#master",
     "react-leaflet-wrapper": "https://github.com/DAIAD/react-leaflet-wrapper.git",
+    "chroma-js": "1.2.1",
+    "leaflet": "1.0.2",
+    "leaflet-draw": "0.4.4",
+    "leaflet.heat": "0.2.0",
     "redux": "~3.3.1",
     "redux-thunk": "~1.0.3",
     "redux-logger": "^2.5.2",
     "sprintf": "^0.1.5",
     "font-awesome": "~4.6.3",
-    "react-dropzone": "^3.3.4",    
+    "react-dropzone": "^3.3.4",
     "react-infinite-scroller": "1.0.4"
   },
   "scripts": {
