@@ -13,6 +13,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,7 +104,10 @@ public class DefaultDataExportService extends BaseService implements IDataExport
     @Override
     public void export(UtilityDataExportQuery query) throws ApplicationException {
         ExportResult result = null;
-
+        if(query.isExportFinalTrialData()) {
+            query.setStartTimstamp((new DateTime(2016, 3, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis());
+            query.setEndTimestamp((new DateTime(2017, 3, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis());
+        }
         try {
             switch (query.getSource()) {
                 case AMPHIRO:

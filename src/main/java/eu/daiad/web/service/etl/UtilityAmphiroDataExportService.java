@@ -9,7 +9,9 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.csv.CSVFormat;
@@ -99,11 +101,12 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
 
             // Export phases
             exportPhaseTimestamps(query, result);
-            exportPhaseSessionIndexes(query, result);
+            Map<UUID, Long> deviceMaxShowerId = new HashMap<UUID, Long>();
+            exportPhaseSessionIndexes(query, result, deviceMaxShowerId);
 
             // Export sessions and measurements
-            exportAmphiroSessionData(query, result);
-            exportAmphiroTimeSeries(query, result);
+            exportAmphiroSessionData(query, result, deviceMaxShowerId);
+            exportAmphiroTimeSeries(query, result, deviceMaxShowerId);
 
             // Export errors
             exportMessages(query, result);
@@ -285,10 +288,11 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
      *
      * @param query the query that selects the data to export.
      * @param result export result.
+     * @param deviceMaxShowerId a map with the max shower id for each device key.
      * @return total rows exported.
      * @throws IOException if file creation fails.
      */
-    private void exportAmphiroSessionData(UtilityDataExportQuery query, ExportResult result) throws IOException {
+    private void exportAmphiroSessionData(UtilityDataExportQuery query, ExportResult result, Map<UUID, Long> deviceMaxShowerId) throws IOException {
         long totalRows = 0;
         long totalValidRows = 0;
         long totalRemovedRows = 0;
@@ -397,6 +401,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                 // Process showers for every device
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
                     int total = device.getSessions().size();
+                    Long maxId = deviceMaxShowerId.get(device.getDeviceKey());
 
                     List<AmphiroAbstractSession> sessions = device.getSessions();
                     List<AmphiroSession> removedSessions = new ArrayList<AmphiroSession>();
@@ -405,6 +410,11 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                     // Remove sessions based on volume, duration and flow
                     for (int i = sessions.size() - 1; i >= 0; i--) {
                         AmphiroSession session = (AmphiroSession) sessions.get(i);
+                        if ((maxId != null) && (session.getId() > maxId)) {
+                            sessions.remove(session);
+                            total--;
+                            continue;
+                        }
 
                         // Always export session to a file that contains all the
                         // session data
@@ -529,10 +539,11 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
      *
      * @param query the query that selects the data to export.
      * @param result export result.
+     * @param deviceMaxShowerId a map with the max shower id for each device key.
      * @return total rows exported.
      * @throws IOException if file creation fails.
      */
-    private void exportAmphiroTimeSeries(UtilityDataExportQuery query, ExportResult result) throws IOException {
+    private void exportAmphiroTimeSeries(UtilityDataExportQuery query, ExportResult result, Map<UUID, Long> deviceMaxShowerId) throws IOException {
         long totalRows = 0;
 
         String dataFilename = createTemporaryFilename(query.getWorkingDirectory());
@@ -596,8 +607,13 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
 
                 // Process showers for every device and extract time series for real time ones.
                 for (AmphiroSessionCollection device : amphiroCollection.getDevices()) {
+                    Long maxId = deviceMaxShowerId.get(device.getDeviceKey());
+
                     for (AmphiroAbstractSession session : device.getSessions()) {
                         AmphiroSession amphiroSession = (AmphiroSession) session;
+                        if ((maxId != null) && (amphiroSession.getId() > maxId)) {
+                            continue;
+                        }
 
                         if(!amphiroSession.isHistory()) {
                             AmphiroSessionIndexIntervalQuery sessionQuery =
@@ -679,10 +695,11 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
      *
      * @param query the query that selects the data to export.
      * @param result export result.
+     * @param deviceMaxShowerId a map with the max shower id for each device key.
      * @return total rows exported.
      * @throws IOException if file creation fails.
      */
-    private void exportPhaseSessionIndexes(UtilityDataExportQuery query, ExportResult result) throws IOException {
+    private void exportPhaseSessionIndexes(UtilityDataExportQuery query, ExportResult result, Map<UUID, Long> deviceMaxShowerId) throws IOException {
         long totalRows = 0;
 
         String filename = createTemporaryFilename(query.getWorkingDirectory());
@@ -912,6 +929,9 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                                 row.add("");
                             } else {
                                 createPhaseRowWithShowers(row, phase, formatter, interpolationError);
+                                if(query.isExportFinalTrialData()) {
+                                    deviceMaxShowerId.put(device.getDeviceKey(), phase.getMaxSessionId());
+                                }
                             }
                         }
                         // Add empty entries
@@ -937,6 +957,10 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                                 if ((left != null) && (right!=null)) {
                                     row.add(Long.toString(left.getId()));
                                     row.add(Long.toString(right.getId()));
+
+                                    if(query.isExportFinalTrialData()) {
+                                        deviceMaxShowerId.put(device.getDeviceKey(), right.getId());
+                                    }
                                 } else {
                                     row.add("");
                                     row.add("");
