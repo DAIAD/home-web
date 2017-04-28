@@ -224,6 +224,7 @@ module.exports = function(grunt) {
             'leaflet',
             'leaflet.heat',
             'leaflet-draw',
+            'chroma-js',
             // globals
             'echarts',
           ],
@@ -277,6 +278,7 @@ module.exports = function(grunt) {
             'leaflet',
             'leaflet.heat',
             'leaflet-draw',
+            'chroma-js',
             // globals
             'echarts',
           ],
@@ -377,7 +379,8 @@ module.exports = function(grunt) {
           require: [
             'leaflet',
             'leaflet.heat',
-            'leaflet-draw'
+            'leaflet-draw',
+            'chroma-js',
           ],
         },
         files: {

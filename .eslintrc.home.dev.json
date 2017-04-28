@@ -41,7 +41,8 @@
     "react/no-multi-comp": "warn",
     "prefer-rest-params": "warn",
     "prefer-template": "warn",
-    "import/no-extraneous-dependencies": "warn"
+    "import/no-extraneous-dependencies": "warn",
+    "global-require": "off"
   },
   "globals": {
     "properties": true,
