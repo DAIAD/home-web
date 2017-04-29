@@ -942,10 +942,10 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                         }
                         // Add extra phase
                         if(query.isExportFinalTrialData()) {
+                            row.add("AMPHIRO_ON_MOBILE_ON_SOCIAL_ON");
                             if((interpolationError) || (timeline.size() != 4)) {
-                                row.add("");
-                                row.add("");
-                                row.add("");
+                                row.add("N/A");
+                                row.add("N/A");
                             } else {
                                 long startTimestamp = (new DateTime(2017, 2, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis();
                                 long endTimestamp = (new DateTime(2017, 3, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis();
@@ -953,8 +953,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                                 AmphiroSession left = sessions.getNearestSession(startTimestamp);
                                 AmphiroSession right = sessions.getNearestSession(endTimestamp);
 
-                                row.add("AMPHIRO_ON_MOBILE_ON_SOCIAL_ON");
-                                if ((left != null) && (right!=null)) {
+                                if ((left != null) && (right != null) && (left.getId() <= right.getId())) {
                                     row.add(Long.toString(left.getId()));
                                     row.add(Long.toString(right.getId()));
 
@@ -962,8 +961,8 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                                         deviceMaxShowerId.put(device.getDeviceKey(), right.getId());
                                     }
                                 } else {
-                                    row.add("");
-                                    row.add("");
+                                    row.add("N/A");
+                                    row.add("N/A");
                                 }
                             }
                         }

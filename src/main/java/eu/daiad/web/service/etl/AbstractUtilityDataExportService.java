@@ -266,11 +266,11 @@ public abstract class AbstractUtilityDataExportService extends AbstractDataExpor
 
         if (device.getType() == EnumDeviceType.AMPHIRO) {
             timeline = constructAmphiroPhaseTimeline(user.getKey(), device.getKey());
-            if(query.isExportFinalTrialData()) {
-                timeline.overrideDates(DateTimeZone.forID(query.getTimezone()));
-            }
         } else {
             timeline = constructMeterPhaseTimeline(user.getKey());
+        }
+        if(query.isExportFinalTrialData()) {
+            timeline.overrideDates(DateTimeZone.forID(query.getTimezone()));
         }
 
         row.add(user.getKey().toString());
