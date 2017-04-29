@@ -245,6 +245,21 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     }
 
     @Override
+    public ClusterEntity getClusterByUtilityAndName(int utilityId, String name) {
+        String queryString = "select c from cluster c join fetch c.groups where c.name = :name and c.utility.id = :utilityId";
+
+        List<ClusterEntity> clusters = entityManager.createQuery(queryString, ClusterEntity.class)
+                                                    .setParameter("utilityId", utilityId)
+                                                    .setParameter("name", name)
+                                                    .getResultList();
+        if (clusters.isEmpty()) {
+            return null;
+        }
+
+        return clusters.get(0);
+    }
+
+    @Override
     public List<Group> getClusterSegmentsByKey(UUID clusterKey) {
         TypedQuery<GroupSegmentEntity> query = entityManager.createQuery("select g from group_segment g  "
                         + "where g.utility.id = :utility_id and g.cluster.key = :key", GroupSegmentEntity.class);
@@ -404,12 +419,16 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
     }
 
     @Override
-    public void deleteAllClusterByName(String name) {
-        TypedQuery<ClusterEntity> query = entityManager.createQuery("select c from cluster c where c.name = :name", ClusterEntity.class);
+    public void deleteClusterByUtilityAndName(int utilityId, String name) {
+        String queryString = "select c from cluster c where c.name = :name and c.utility.id = :utilityId";
 
-        query.setParameter("name", name);
+        List<ClusterEntity> clusters = entityManager.createQuery(queryString, ClusterEntity.class)
+                                                    .setParameter("utilityId", utilityId)
+                                                    .setParameter("name", name)
+                                                    .getResultList();
 
-        for (ClusterEntity cluster : query.getResultList()) {
+        if(!clusters.isEmpty()) {
+            ClusterEntity cluster = clusters.get(0);
             for (GroupSegmentEntity segment : cluster.getGroups()) {
                 entityManager.remove(segment);
             }

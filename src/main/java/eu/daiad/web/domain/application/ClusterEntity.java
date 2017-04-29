@@ -101,4 +101,13 @@ public class ClusterEntity {
 		return groups;
 	}
 
+    public GroupSegmentEntity getSegmentByName(String name) {
+        for (GroupSegmentEntity segment : groups) {
+            if (segment.getName().equalsIgnoreCase(name)) {
+                return segment;
+            }
+        }
+        return null;
+    }
+
 }

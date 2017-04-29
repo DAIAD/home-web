@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.domain.application.AccountEntity;
+import eu.daiad.web.domain.application.ClusterEntity;
+import eu.daiad.web.domain.application.GroupSegmentEntity;
 import eu.daiad.web.domain.application.SurveyEntity;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.admin.Counter;
@@ -109,11 +111,9 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
             Map<String, String> parameters = getStepParameters(chunkContext.getStepContext());
 
             // Get cluster name
-            String clusterKey = (String) parameters.get(EnumInParameter.CLUSTER_KEY.getValue());
             String clusterName = (String) parameters.get(EnumInParameter.CLUSTER_NAME.getValue());
 
             // Get segment names
-            String[] segmentKeys = StringUtils.split((String) parameters.get(EnumInParameter.SEGMENT_KEYS.getValue()), ";");
             String[] segmentNames = StringUtils.split((String) parameters.get(EnumInParameter.SEGMENT_NAMES.getValue()), ";");
 
             if ((segmentNames == null) || (segmentNames.length == 0)) {
@@ -132,9 +132,6 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                         .set("value", (String) parameters.get(EnumInParameter.DISTANCE.getValue()));
             }
 
-            // Delete the existing cluster and its segments and members
-            groupRepository.deleteAllClusterByName(clusterName);
-
             // Delete stale water IQ data
             waterIqRepository.clean(365);
 
@@ -145,12 +142,16 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                 // Initialize context
                 ExecutionContext context = new ExecutionContext();
 
+                context.utilityId = utility.getId();
                 context.utilityKey = utility.getKey();
                 context.timezone = DateTimeZone.forID(utility.getTimezone());
-                context.clusterKey = clusterKey;
                 context.clusterName = clusterName;
-                context.segmentKeys = segmentKeys;
                 context.labels = segmentNames;
+
+                setClusterKeys(context);
+
+                // Delete the existing cluster and its segments and members
+                groupRepository.deleteClusterByUtilityAndName(context.utilityId, context.clusterName);
 
                 // Get utility counters. The job computes segments only
                 // for utilities that have at least a registered user
@@ -296,6 +297,37 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     }
 
     /**
+     * Sets cluster and segments keys, preserving existing values.
+     *
+     * @param context the execution context.
+     */
+    private void setClusterKeys(ExecutionContext context) {
+        ClusterEntity cluster = groupRepository.getClusterByUtilityAndName(context.utilityId, context.clusterName);
+        if (cluster == null) {
+            context.clusterKey = UUID.randomUUID();
+
+            List<UUID> segmentKeys = new ArrayList<UUID>();
+            for (int index = 0, count = context.labels.length; index < count; index++) {
+                segmentKeys.add(UUID.randomUUID());
+            }
+            context.segmentKeys = segmentKeys.toArray(new UUID[] {});
+        } else {
+            context.clusterKey = cluster.getKey();
+
+            List<UUID> segmentKeys = new ArrayList<UUID>();
+            for (int index = 0, count = context.labels.length; index < count; index++) {
+                GroupSegmentEntity segment = cluster.getSegmentByName(context.labels[index]);
+                if (segment == null) {
+                    segmentKeys.add(UUID.randomUUID());
+                } else {
+                    segmentKeys.add(segment.getKey());
+                }
+            }
+            context.segmentKeys = segmentKeys.toArray(new UUID[] {});
+        }
+    }
+
+    /**
      * Group users based on their monthly consumption
      *
      * @param context the execution context.
@@ -310,14 +342,14 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
         Cluster cluster = new Cluster();
 
         cluster.setName(context.clusterName);
-        cluster.setKey(UUID.fromString(context.clusterKey));
+        cluster.setKey(context.clusterKey);
         cluster.setSize(context.ranking.getUsers().size());
         cluster.setUtilityKey(context.utilityKey);
 
         for (int index = 0, count = context.labels.length; index < count; index++) {
             Segment segment = new Segment();
 
-            segment.setKey(UUID.fromString(context.segmentKeys[index]));
+            segment.setKey(context.segmentKeys[index]);
             segment.setName(context.labels[index]);
             segment.setUtilityKey(context.utilityKey);
 
@@ -553,6 +585,11 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     private static class ExecutionContext {
 
         /**
+         * Utility id.
+         */
+        int utilityId;
+
+        /**
          * Utility unique key.
          */
         UUID utilityKey;
@@ -580,7 +617,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
         /**
          * The cluster key.
          */
-        String clusterKey;
+        UUID clusterKey;
 
         /**
          * The cluster name
@@ -590,7 +627,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
         /**
          * Segment keys.
          */
-        String[] segmentKeys;
+        UUID[] segmentKeys;
 
         /**
          * Segment names used as waterIQ values.
@@ -623,17 +660,9 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
          */
         CLUSTER_NAME("cluster.name"),
         /**
-         * Cluster key.
-         */
-        CLUSTER_KEY("cluster.key"),
-        /**
          * Segment names separated with (;).
          */
         SEGMENT_NAMES("cluster.segments"),
-        /**
-         * Segment keys separated with (;).
-         */
-        SEGMENT_KEYS("cluster.segments.keys"),
         /**
          * Distance in meters for computing nearest consumers.
          */
