@@ -611,7 +611,6 @@ div[class^="section."]{
 }
 .header-left{
 	float: left;
-  margin-right: 10px;
 }
 
 .settings img{
@@ -1090,6 +1089,8 @@ div[class^="section.login"]{
   
 }
 
+/* Widget */
+
 .widget {
   display: flex;
   flex-direction: column;
@@ -1101,16 +1102,17 @@ div[class^="section.login"]{
 }
 .widget-header {
   flex-grow: 0;
-  padding: 8px 5px 5px 8px;
-  min-height: 37px;
+  padding: 5px;
   border-bottom: 1px #9fa1a2 solid;
 }
-.widget-header h4 {
+.widget-header h5 {
   margin: 0;
+  padding: 3px 0;
 }
-.widget-header span, .widget-header div, .widget-header a {
-  display: inline-block;
-  font-size: 0.95em;
+
+.widget-header-icon {
+  max-height: 25px;
+  margin-right: 5px;
 }
 
 .widget-body {
@@ -1139,7 +1141,9 @@ div[class^="section.login"]{
 }
 
 .widget-period {
+  font-size: 0.9em;
   color: #808284;
+  padding: 2px 3px;
 }
 
 .widget-period.active {
@@ -1150,6 +1154,47 @@ div[class^="section.login"]{
   font-size: 1.1em;
 }
 
+.stat-left {
+  float: left;
+  width: 30%;
+  padding: 10px;
+}
+
+.stat-right {
+  float: left;
+  width: 65%;
+  padding: 10px 0px;
+}
+
+
+.stat-line-img {
+  height: 25px;
+  margin-right: 5px;
+}
+
+/* Widget type-specific */
+
+.wateriq.stat .stat-left {
+  padding: 0;
+}
+
+.wateriq.stat .stat-highlight {
+  height: 100%;
+}
+
+.total.stat .stat-left {
+  width: 38%;
+}
+
+.total.stat .stat-right {
+  width: 60%;
+  text-align: center;
+}
+
+.tip-right {
+  padding: 5px;
+}
+/* Add widget */
 .add-widget-modal .modal-body {
   padding: 0;
 }
