@@ -108,7 +108,6 @@ public class DefaultMailService implements IMailService {
             MimeMessage mimeMessage = createMimeMessage(message);
 
             logMessage(mimeMessage);
-
             mailSender.send(mimeMessage);
         } catch (ApplicationException appEx) {
             throw appEx;
