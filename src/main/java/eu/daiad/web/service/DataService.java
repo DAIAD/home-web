@@ -259,9 +259,6 @@ public class DataService extends BaseService implements IDataService {
         if(query.getSource().equals(EnumMeasurementDataSource.NONE)) {
             response.add(this.getError(QueryErrorCode.SOURCE_INVALID));
         }
-        if ((query.isUsingPreAggregation()) && (query.getSource() != EnumMeasurementDataSource.METER)) {
-            response.add(this.getError(QueryErrorCode.SOURCE_INVALID));
-        }
     }
 
     private void validate(ForecastQuery query, ForecastQueryResponse response) {
@@ -420,6 +417,11 @@ public class DataService extends BaseService implements IDataService {
         this.validate(query, response);
 
         if (response.getSuccess()) {
+            // Amphiro data does not support aggregation
+            if (query.getSource() != EnumMeasurementDataSource.METER) {
+                query.setUsingPreAggregation(false);
+            }
+
             if(query.isUsingPreAggregation()){
                 executeWithPreAggregation(query, response);
             } else {
