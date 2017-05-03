@@ -20,6 +20,8 @@ public class GroupMember {
 
     private DateTime createdOn;
 
+    private boolean favourite;
+
     public GroupMember(AccountEntity account) {
         key = account.getKey();
         username = account.getUsername();
@@ -66,6 +68,14 @@ public class GroupMember {
 
     public void setCreatedOn(DateTime createdOn) {
         this.createdOn = createdOn;
+    }
+
+    public boolean isFavourite() {
+        return favourite;
+    }
+
+    public void setFavourite(boolean favourite) {
+        this.favourite = favourite;
     }
 
 }

@@ -53,34 +53,21 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
     EntityManager entityManager;
 
     @Override
-    public List<FavouriteInfo> getFavourites() {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthenticatedUser user = (AuthenticatedUser) auth.getPrincipal();
+    public List<FavouriteInfo> getFavourites(UUID userKey) {
+        String queryString = "SELECT f FROM favourite f WHERE f.owner.key = :userKey";
 
-            // Retrieve admin's account
-            TypedQuery<AccountEntity> accountQuery = entityManager.createQuery("SELECT a FROM account a WHERE a.key = :key",
-                            AccountEntity.class).setFirstResult(0).setMaxResults(1);
-            accountQuery.setParameter("key", user.getKey());
+        List<FavouriteEntity> favouriteEntities  = entityManager.createQuery(queryString, FavouriteEntity.class)
+                                                                .setParameter("userKey", userKey)
+                                                                .getResultList();
 
-            AccountEntity adminAccount = accountQuery.getSingleResult();
+        List<FavouriteInfo> favouritesInfo = new ArrayList<FavouriteInfo>();
 
-            TypedQuery<FavouriteEntity> favouriteQuery = entityManager.createQuery(
-                            "SELECT f FROM favourite f WHERE f.owner = :owner", FavouriteEntity.class).setFirstResult(0);
-            favouriteQuery.setParameter("owner", adminAccount);
-
-            List<FavouriteEntity> favourites = favouriteQuery.getResultList();
-            List<FavouriteInfo> favouritesInfo = new ArrayList<FavouriteInfo>();
-
-            for (FavouriteEntity favourite : favourites) {
-                FavouriteInfo favouriteInfo = new FavouriteInfo(favourite);
-                favouritesInfo.add(favouriteInfo);
-            }
-
-            return favouritesInfo;
-        } catch (Exception ex) {
-            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        for (FavouriteEntity favouriteEntity : favouriteEntities) {
+            FavouriteInfo favouriteInfo = new FavouriteInfo(favouriteEntity);
+            favouritesInfo.add(favouriteInfo);
         }
+
+        return favouritesInfo;
     }
 
     @Override
@@ -499,7 +486,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
             DataQueryEntity dataQueryEntity = query.getSingleResult();
             dataQueryEntity.setPinned(true);
-            
+
             entityManager.persist(dataQueryEntity);
 
         } catch (Exception ex) {
@@ -519,7 +506,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             query.setParameter("accountId", account.getId());
 
             List<DataQueryEntity> dataQueryEntities = query.getResultList();
-            
+
             if(!dataQueryEntities.isEmpty()){
                 DataQueryEntity dataQueryEntity = dataQueryEntities.get(0);
                 dataQueryEntity.setPinned(false);
@@ -530,7 +517,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
     }
-    
+
     @Override
     public List<NamedDataQuery> getFavouriteQueriesForOwner(int accountId)
             throws JsonMappingException, JsonParseException, IOException{

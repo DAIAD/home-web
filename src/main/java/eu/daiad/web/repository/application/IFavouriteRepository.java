@@ -14,7 +14,7 @@ import eu.daiad.web.model.query.NamedDataQuery;
 
 public interface IFavouriteRepository {
 
-    abstract List<FavouriteInfo> getFavourites();
+    abstract List<FavouriteInfo> getFavourites(UUID userKey);
 
     abstract void upsertFavourite(UpsertFavouriteRequest favouriteInfo);
 
@@ -42,9 +42,9 @@ public interface IFavouriteRepository {
             throws JsonMappingException, JsonParseException, IOException;
 
     abstract void pinFavouriteQuery(long id, AccountEntity account);
-    
-    abstract void unpinFavouriteQuery(long id, AccountEntity account);    
-    
+
+    abstract void unpinFavouriteQuery(long id, AccountEntity account);
+
     abstract List<NamedDataQuery> getAllFavouriteQueries();
 
 }

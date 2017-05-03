@@ -1,5 +1,6 @@
 package eu.daiad.web.controller.action;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
@@ -19,6 +20,8 @@ import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.model.RestResponse;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
+import eu.daiad.web.model.favourite.EnumFavouriteType;
+import eu.daiad.web.model.favourite.FavouriteInfo;
 import eu.daiad.web.model.group.EnumGroupType;
 import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.group.GroupInfoCollectionResponse;
@@ -178,21 +181,33 @@ public class GroupController extends BaseController {
     /**
      * Gets the members of a group.
      *
+     * @param user the authenticated user
      * @param key the group key.
      * @return a collection of {@link GroupMember}.
      */
     @RequestMapping(value = "/action/group/members/{key}", method = RequestMethod.GET, produces = "application/json")
     @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
-    public RestResponse getGroupMembers(@PathVariable UUID key) {
+    public RestResponse getGroupMembers(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID key) {
         try{
-            return new GroupMemberCollectionResponse(groupRepository.getGroupMembers(key));
+            List<GroupMember> members = groupRepository.getGroupMembers(key);
+            List<FavouriteInfo> favourites = favouriteRepository.getFavourites(user.getKey());
+
+            for (GroupMember m : members) {
+                for (FavouriteInfo f : favourites) {
+                    if ((f.getType() == EnumFavouriteType.ACCOUNT) && (f.getRefId().equals(m.getKey()))) {
+                        m.setFavourite(true);
+                        break;
+                    }
+                }
+            }
+
+            return new GroupMemberCollectionResponse(members);
         } catch (ApplicationException ex) {
             logger.error(ex.getMessage(), ex);
 
             return new RestResponse(getError(ex));
         }
     }
-
 
     /**
      * Deletes a group
