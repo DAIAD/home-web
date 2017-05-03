@@ -282,7 +282,7 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
         UtilityEntity utility = utilityQuery.getSingleResult();
 
         ClusterEntity clusterEntity = new ClusterEntity();
-
+        clusterEntity.setKey(cluster.getKey());
         clusterEntity.setName(cluster.getName());
         clusterEntity.setCreatedOn(now);
         clusterEntity.setUtility(utility);
@@ -292,7 +292,7 @@ public class JpaGroupRepository extends BaseRepository implements IGroupReposito
 
         for (Segment segment : cluster.getSegments()) {
             GroupSegmentEntity segmentEntity = new GroupSegmentEntity();
-
+            segmentEntity.setKey(segment.getKey());
             segmentEntity.setCluster(clusterEntity);
             segmentEntity.setCreatedOn(now);
             segmentEntity.setUpdatedOn(now);

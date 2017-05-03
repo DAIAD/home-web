@@ -28,78 +28,82 @@ import eu.daiad.web.model.group.EnumGroupType;
 @Table(schema = "public", name = "cluster")
 public class ClusterEntity {
 
-	@Id()
-	@Column(name = "id")
-	@SequenceGenerator(sequenceName = "cluster_id_seq", name = "cluster_id_seq", allocationSize = 1, initialValue = 1)
-	@GeneratedValue(generator = "cluster_id_seq", strategy = GenerationType.SEQUENCE)
-	private int id;
+    @Id()
+    @Column(name = "id")
+    @SequenceGenerator(sequenceName = "cluster_id_seq", name = "cluster_id_seq", allocationSize = 1, initialValue = 1)
+    @GeneratedValue(generator = "cluster_id_seq", strategy = GenerationType.SEQUENCE)
+    private int id;
 
-	@Column()
-	@Type(type = "pg-uuid")
-	private UUID key = UUID.randomUUID();
+    @Column()
+    @Type(type = "pg-uuid")
+    private UUID key;
 
-	@Version()
-	@Column(name = "row_version")
-	private long rowVersion;
+    @Version()
+    @Column(name = "row_version")
+    private long rowVersion;
 
-	@ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
-	@JoinColumn(name = "utility_id", nullable = false)
-	private UtilityEntity utility;
+    @ManyToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "utility_id", nullable = false)
+    private UtilityEntity utility;
 
-	@OneToMany(cascade = { CascadeType.ALL })
-	@JoinColumn(name = "cluster_id")
-	private Set<GroupSegmentEntity> groups = new HashSet<GroupSegmentEntity>();
+    @OneToMany(cascade = { CascadeType.ALL })
+    @JoinColumn(name = "cluster_id")
+    private Set<GroupSegmentEntity> groups = new HashSet<GroupSegmentEntity>();
 
-	@Basic()
-	private String name;
+    @Basic()
+    private String name;
 
-	@Column(name = "created_on")
-	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
-	private DateTime createdOn = new DateTime();
+    @Column(name = "created_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime createdOn = new DateTime();
 
-	public int getId() {
-		return id;
-	}
+    public int getId() {
+        return id;
+    }
 
-	public UtilityEntity getUtility() {
-		return utility;
-	}
+    public UtilityEntity getUtility() {
+        return utility;
+    }
 
-	public void setUtility(UtilityEntity utility) {
-		this.utility = utility;
-	}
+    public void setUtility(UtilityEntity utility) {
+        this.utility = utility;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public DateTime getCreatedOn() {
-		return createdOn;
-	}
+    public DateTime getCreatedOn() {
+        return createdOn;
+    }
 
-	public void setCreatedOn(DateTime createdOn) {
-		this.createdOn = createdOn;
-	}
+    public void setCreatedOn(DateTime createdOn) {
+        this.createdOn = createdOn;
+    }
 
-	public long getRowVersion() {
-		return rowVersion;
-	}
+    public long getRowVersion() {
+        return rowVersion;
+    }
 
-	public UUID getKey() {
-		return key;
-	}
+    public UUID getKey() {
+        return key;
+    }
 
-	public EnumGroupType getType() {
-		return EnumGroupType.UNDEFINED;
-	}
+    public void setKey(UUID key) {
+        this.key = key;
+    }
 
-	public Set<GroupSegmentEntity> getGroups() {
-		return groups;
-	}
+    public EnumGroupType getType() {
+        return EnumGroupType.UNDEFINED;
+    }
+
+    public Set<GroupSegmentEntity> getGroups() {
+        return groups;
+    }
 
     public GroupSegmentEntity getSegmentByName(String name) {
         for (GroupSegmentEntity segment : groups) {
