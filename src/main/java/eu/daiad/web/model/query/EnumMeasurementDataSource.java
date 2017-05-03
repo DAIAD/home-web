@@ -21,7 +21,7 @@ public enum EnumMeasurementDataSource {
     }
 
     public int getValue() {
-        return this.value;
+        return value;
     }
 
     private static final Map<Integer, EnumMeasurementDataSource> intToTypeMap = new HashMap<Integer, EnumMeasurementDataSource>();
@@ -63,7 +63,7 @@ public enum EnumMeasurementDataSource {
         }
         return s;
     }
-    
+
     public static EnumMeasurementDataSource fromString(String value) {
         for (EnumMeasurementDataSource item : EnumMeasurementDataSource.values()) {
             if (item.name().equalsIgnoreCase(value)) {
@@ -81,8 +81,7 @@ public enum EnumMeasurementDataSource {
     public static class Deserializer extends JsonDeserializer<EnumMeasurementDataSource> {
 
         @Override
-        public EnumMeasurementDataSource deserialize(JsonParser parser, DeserializationContext context)
-                        throws IOException, JsonProcessingException {
+        public EnumMeasurementDataSource deserialize(JsonParser parser, DeserializationContext context) throws IOException, JsonProcessingException {
             return EnumMeasurementDataSource.fromString(parser.getValueAsString());
         }
     }

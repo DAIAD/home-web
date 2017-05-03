@@ -12,21 +12,21 @@ import eu.daiad.web.model.group.EnumGroupType;
 @Table(schema = "public", name = "group_segment")
 public class GroupSegmentEntity extends GroupEntity {
 
-	@ManyToOne(fetch = FetchType.EAGER)
-	@JoinColumn(name = "cluster_id", nullable = false)
-	private ClusterEntity cluster;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "cluster_id", nullable = false)
+    private ClusterEntity cluster;
 
-	@Override
-	public EnumGroupType getType() {
-		return EnumGroupType.SEGMENT;
-	}
+    @Override
+    public EnumGroupType getType() {
+        return EnumGroupType.SEGMENT;
+    }
 
-	public ClusterEntity getCluster() {
-		return cluster;
-	}
+    public ClusterEntity getCluster() {
+        return cluster;
+    }
 
-	public void setCluster(ClusterEntity cluster) {
-		this.cluster = cluster;
-	}
+    public void setCluster(ClusterEntity cluster) {
+        this.cluster = cluster;
+    }
 
 }

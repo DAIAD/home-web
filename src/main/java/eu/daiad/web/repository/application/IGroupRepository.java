@@ -34,6 +34,8 @@ public interface IGroupRepository {
 
     ClusterEntity getClusterByKey(UUID key);
 
+    ClusterEntity getClusterByUtilityAndName(int utilityId, String name);
+
     List<Group> getClusterSegmentsByKey(UUID clusterKey);
 
     List<Group> getClusterSegmentsByName(String clusterName);
@@ -52,7 +54,7 @@ public interface IGroupRepository {
 
     List<UUID> getUtilityByKeyMemberKeys(UUID utilityKey);
 
-    void deleteAllClusterByName(String name);
+    void deleteClusterByUtilityAndName(int utilityId, String name);
 
     void createCluster(Cluster cluster);
 

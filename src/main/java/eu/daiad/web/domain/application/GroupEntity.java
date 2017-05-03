@@ -120,6 +120,10 @@ public class GroupEntity {
         return key;
     }
 
+    public void setKey(UUID key) {
+        this.key = key;
+    }
+
     public EnumGroupType getType() {
         return EnumGroupType.UNDEFINED;
     }
