@@ -30,6 +30,7 @@
     "react-dom": "~0.14.6",
     "react-echarts": "git+https://github.com/DAIAD/react-echarts.git#master",
     "react-google-recaptcha": "^0.5.4",
+    "react-ga": "^2.2.0",
     "react-grid-layout": "^0.13.9",
     "react-intl": "~2.0.0-rc-1",
     "react-redux": "~4.4.0",
