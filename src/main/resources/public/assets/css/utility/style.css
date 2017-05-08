@@ -77,7 +77,7 @@ search-plusCHARSET "UTF-8";
 }
 
 .Select-menu-outer {
-  z-index: 1000;
+  z-index: 2000;
 }
 
 .select-hide-arrow .Select-control { 
