@@ -600,7 +600,6 @@ public class SavingsPotentialJobBuilder extends BaseJobBuilder implements IJobBu
                                             if (!jobExecution.getExitStatus().getExitCode().equals("COMPLETED")) {
                                                 status = EnumSavingScenarioStatus.FAILED;
                                             }
-                                            // TODO: Update status when the application is restarted and job is abandoned
                                             savingsPotentialRepository.updateJobExecution(UUID.fromString(key),
                                                                                           status,
                                                                                           DateTime.now());
