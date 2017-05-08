@@ -27,15 +27,15 @@ import eu.daiad.web.model.query.savings.EnumSavingScenarioStatus;
 
 @Entity(name = "savings_potential_scenario")
 @Table(schema = "public", name = "savings_potential_scenario")
-@SqlResultSetMapping(name="ScenarioClusterSegmentResult", classes = {
+@SqlResultSetMapping(name = "ScenarioClusterSegmentResult", classes = {
     @ConstructorResult(targetClass = eu.daiad.web.domain.application.mappings.SavingScenarioSegmentEntity.class, columns = {
-        @ColumnResult(name="id"),
-        @ColumnResult(name="cluster_name"),
-        @ColumnResult(name="cluster_key", type = UUID.class),
-        @ColumnResult(name="segment_name"),
-        @ColumnResult(name="segment_key", type = UUID.class),
-        @ColumnResult(name="potential", type = Double.class),
-        @ColumnResult(name="consumption", type = Double.class)
+        @ColumnResult(name = "id"),
+        @ColumnResult(name = "cluster_name"),
+        @ColumnResult(name = "cluster_key", type = UUID.class),
+        @ColumnResult(name = "segment_name"),
+        @ColumnResult(name = "segment_key", type = UUID.class),
+        @ColumnResult(name = "potential", type = Double.class),
+        @ColumnResult(name = "consumption", type = Double.class)
     })
 })
 public class SavingsPotentialScenarioEntity {
@@ -94,6 +94,9 @@ public class SavingsPotentialScenarioEntity {
 
     @Enumerated(EnumType.STRING)
     private EnumSavingScenarioStatus status = EnumSavingScenarioStatus.PENDING;
+
+    @Column(name = "number_of_consumers")
+    private Integer numberOfConsumers;
 
     public Long getJobId() {
         return jobId;
@@ -201,6 +204,14 @@ public class SavingsPotentialScenarioEntity {
 
     public long getRowVersion() {
         return rowVersion;
+    }
+
+    public Integer getNumberOfConsumers() {
+        return numberOfConsumers;
+    }
+
+    public void setNumberOfConsumers(Integer numberOfConsumers) {
+        this.numberOfConsumers = numberOfConsumers;
     }
 
 }
