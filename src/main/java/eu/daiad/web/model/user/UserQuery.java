@@ -1,8 +1,12 @@
 package eu.daiad.web.model.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vividsolutions.jts.geom.Geometry;
 
 public class UserQuery {
+
+    @JsonIgnore
+    private int userId;
 
     private Integer index = 0;
 
@@ -13,6 +17,8 @@ public class UserQuery {
     private String serial;
 
     private Geometry geometry;
+
+    private boolean favorite;
 
     public Integer getIndex() {
         return index;
@@ -52,6 +58,22 @@ public class UserQuery {
 
     public void setGeometry(Geometry geometry) {
         this.geometry = geometry;
+    }
+
+    public boolean isFavorite() {
+        return favorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
 }

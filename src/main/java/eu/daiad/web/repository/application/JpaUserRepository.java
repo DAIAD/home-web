@@ -985,34 +985,47 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             geometry.setSRID(4326);
         }
 
+        // Get user role
+        RoleEntity userRole = getRole(EnumRole.ROLE_USER);
+
         // Load data
         String command = "";
 
         // Resolve filters
         List<String> filters = new ArrayList<>();
 
-        filters.add("(a.utility.id = :utility_id)");
+        filters.add("(table.utility.id = :utility_id)");
 
         if (!StringUtils.isBlank(query.getSerial())) {
-            filters.add("(a.id in (select m.account.id from device_meter m where m.serial like :serial))");
+            filters.add("(table.id in (select m.account.id from device_meter m where m.serial like :serial))");
 
             if (!StringUtils.isBlank(query.getText())) {
-                filters.add("(a.lastname like :text or a.username like :text)");
+                filters.add("(table.lastname like :text or table.username like :text)");
             }
         } else if (!StringUtils.isBlank(query.getText())) {
-            filters.add("(a.lastname like :text or a.username like :text)");
+            filters.add("(table.lastname like :text or table.username like :text)");
         }
         if (geometry != null) {
-            filters.add("(contains(:geometry, a.location) = true)");
+            filters.add("(contains(:geometry, table.location) = true)");
         }
 
-        command = "select count(a.id) from account a ";
+        if (query.isFavorite()) {
+            command = "select count(f.account.id) from favourite_account f " +
+                      "where f.owner.id = :userId and exists (select r from f.account.roles r where r.role = :role) ";
+        } else {
+            command = "select count(a.id) from account a where exists (select r from a.roles r where r.role = :role) ";
+        }
 
         // Count total number of records
         Integer totalUsers;
 
         if (!filters.isEmpty()) {
-            command += "where " + StringUtils.join(filters, " and ");
+            command += " and " + StringUtils.join(filters, " and ");
+        }
+        if(query.isFavorite()) {
+            command = command.replace("table", "f.account");
+        } else {
+            command = command.replace("table", "a");
         }
 
         TypedQuery<Number> countQuery = entityManager.createQuery(command, Number.class);
@@ -1026,28 +1039,40 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         if (geometry != null) {
             countQuery.setParameter("geometry", geometry);
         }
-
         countQuery.setParameter("utility_id", getCurrentUtilityId());
+        countQuery.setParameter("role", userRole);
+        if (query.isFavorite()) {
+            countQuery.setParameter("userId", query.getUserId());
+        }
 
         totalUsers = countQuery.getSingleResult().intValue();
 
         result.setTotal(totalUsers);
 
         // Load data
-        command = "select a from account a ";
+        if (query.isFavorite()) {
+            command = "select f.account from favourite_account f " +
+                      "where f.owner.id = :userId and exists (select r from f.account.roles r where r.role = :role) ";
+        } else {
+            command = "select a from account a where exists (select r from a.roles r where r.role = :role) ";
+        }
 
         if (!filters.isEmpty()) {
-            command += " where " + StringUtils.join(filters, " and ");
+            command += " and " + StringUtils.join(filters, " and ");
         }
 
         if (!StringUtils.isBlank(query.getSerial())) {
-            command += " order by a.lastname, a.firstname";
+            command += " order by table.lastname, table.firstname";
         } else {
-            command += " order by a.lastname, a.firstname";
+            command += " order by table.lastname, table.firstname";
+        }
+        if(query.isFavorite()) {
+            command = command.replace("table", "f.account");
+        } else {
+            command = command.replace("table", "a");
         }
 
-        TypedQuery<AccountEntity> entityQuery = entityManager.createQuery(command,
-                        AccountEntity.class);
+        TypedQuery<AccountEntity> entityQuery = entityManager.createQuery(command, AccountEntity.class);
 
         if (!StringUtils.isBlank(query.getText())) {
             entityQuery.setParameter("text", query.getText() + "%");
@@ -1058,8 +1083,11 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
         if (geometry != null) {
             entityQuery.setParameter("geometry", geometry);
         }
-
         entityQuery.setParameter("utility_id", getCurrentUtilityId());
+        entityQuery.setParameter("role", userRole);
+        if (query.isFavorite()) {
+            entityQuery.setParameter("userId", query.getUserId());
+        }
 
         entityQuery.setFirstResult(query.getIndex() * query.getSize());
         entityQuery.setMaxResults(query.getSize());
@@ -1405,5 +1433,13 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
             return null;
         }
         return accounts.get(0);
+    }
+
+    private RoleEntity getRole(EnumRole role) {
+        String queryString = "select r from role r where r.name = :name";
+
+        return entityManager.createQuery(queryString, RoleEntity.class)
+                            .setParameter("name", role.toString())
+                            .getSingleResult();
     }
 }

@@ -163,6 +163,7 @@ public class UserController extends BaseController {
             if (request.getQuery().getSize() == null) {
                 request.getQuery().setSize(10);
             }
+            request.getQuery().setUserId(user.getId());
 
             UserQueryResult result = userRepository.search(request.getQuery());
 

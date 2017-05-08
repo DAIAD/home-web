@@ -34,6 +34,12 @@ public class HomeController extends BaseController{
     private String googleReCAPTCHASiteKey;
 
     /**
+     * Google analytics UA code.
+     */
+    @Value("${daiad.home.ga.ua}")
+    private String googleAnalyticsUACode;
+
+    /**
      * Provides access to user data.
      */
     @Autowired
@@ -130,6 +136,7 @@ public class HomeController extends BaseController{
     private void setModelAttributes(Model model, boolean reload) {
         model.addAttribute("reload", reload);
         model.addAttribute("googleReCAPTCHASiteKey", googleReCAPTCHASiteKey);
+        model.addAttribute("googleAnalyticsUACode", googleAnalyticsUACode);
         model.addAttribute("dataApiUseAggregatedData", dataApiUseAggregatedData);
     }
 
