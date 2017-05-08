@@ -168,6 +168,7 @@ a:hover, a:focus {
   border: 1px #2D3580 solid;
   border-radius: 0;
   font-size: 0.9em;
+  overflow: hidden;
 }
 
 .btn:hover, .btn:active, .btn:focus {
@@ -373,10 +374,7 @@ label {
 	display: block;
 	position: fixed;
 	top: 35vh;
-  left: 50vw;
-	width: 80px;
-	height: 80px;
-  z-index: 100;
+  left: 45vw;
   font-size: 1.5em;
   z-index: 2000;
 }
@@ -391,6 +389,10 @@ label {
   padding:50px;
   z-index: 2000;
 }
+.error-display a {
+  color: #E8F5FD;
+}
+
 .error-display-x {
   position: absolute;
   right: 20px;
@@ -854,6 +856,11 @@ div[class^="section."]{
 
 /* Override Bootstrap styles */
 
+.modal-backdrop.in {
+  opacity: .8;
+  background: #c7e5f8;
+}
+
 .col-sm-1 {
   width: 10%;
 }
@@ -1224,7 +1231,7 @@ div[class^="section.login"]{
 }
 
 .add-widget-type {
-  display: inline-block;
+  //display: inline-block;
   float: left;
   width: 190px;
   margin: 5px;
@@ -1777,8 +1784,22 @@ div[class^="section.profile"]{
 }
 
 #form-change-password .modal-body {
-  max-width: 334px;
+  //max-width: 334px;
+  display: inline-block;
   text-align: left;
+}
+
+.password-change-modal {
+  margin-top: 20vh;
+}
+
+.password-modal-body-left {
+  float: left;
+  width: 304px;
+}
+
+.password-modal-body-right {
+  float: right;
 }
 
 /* Members */
