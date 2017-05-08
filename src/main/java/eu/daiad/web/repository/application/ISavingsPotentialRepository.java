@@ -87,8 +87,9 @@ public interface ISavingsPotentialRepository {
      * @param consumption consumption volume.
      * @param saved savings volume.
      * @param updatedOn update timestamp.
+     * @param numberOfCosnumers number of consumers.
      */
-    void updateSavings(UUID key, double consumption, double saved, DateTime updatedOn);
+    void updateSavingScenario(UUID key, double consumption, double saved, DateTime updatedOn, int numberOfCosnumers);
 
     /**
      * Updates scenario user savings values.
@@ -99,7 +100,7 @@ public interface ISavingsPotentialRepository {
      * @param saved savings volume.
      * @param updatedOn update timestamp.
      */
-    void updateSavings(UUID scenarioKey, UUID userKey, double consumption, double saved, DateTime updatedOn);
+    void updateSavingConsumer(UUID scenarioKey, UUID userKey, double consumption, double saved, DateTime updatedOn);
 
     /**
      * Stores savings potential data to data store.

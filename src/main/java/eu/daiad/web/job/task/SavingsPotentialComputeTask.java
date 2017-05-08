@@ -172,17 +172,18 @@ public class SavingsPotentialComputeTask extends BaseTask implements StoppableTa
 
             // Update store
             for (AccountSavings s : savingsStore.values()) {
-                savingsPotentialRepository.updateSavings(scenarioKey,
-                                                         s.userKey,
-                                                         s.totalConsumption,
-                                                         s.totalSavings,
-                                                         DateTime.now());
+                savingsPotentialRepository.updateSavingConsumer(scenarioKey,
+                                                                s.userKey,
+                                                                s.totalConsumption,
+                                                                s.totalSavings,
+                                                                DateTime.now());
             }
 
-            savingsPotentialRepository.updateSavings(scenarioKey,
-                                                     scenarioConsumption,
-                                                     scenarioSavings,
-                                                     DateTime.now());
+            savingsPotentialRepository.updateSavingScenario(scenarioKey,
+                                                            scenarioConsumption,
+                                                            scenarioSavings,
+                                                            DateTime.now(),
+                                                            savingsStore.size());
 
         } catch (Throwable t) {
             throw wrapApplicationException(t, SchedulerErrorCode.SCHEDULER_JOB_STEP_FAILED).set("step", chunkContext.getStepContext().getStepName());

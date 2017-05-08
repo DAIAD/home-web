@@ -210,7 +210,7 @@ public class DataExportController extends BaseController {
                     exportQuery.setUserKey(exportedUser.getKey());
                     exportQuery.setDeviceKeys(data.getDeviceKeys());
 
-                    exportQuery.setStartTimstamp(data.getStartDateTime());
+                    exportQuery.setStartTimestamp(data.getStartDateTime());
                     exportQuery.setEndTimestamp(data.getEndDateTime());
 
                     if (StringUtils.isBlank(data.getTimezone())) {

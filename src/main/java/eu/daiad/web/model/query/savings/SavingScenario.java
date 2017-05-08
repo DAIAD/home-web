@@ -38,6 +38,8 @@ public class SavingScenario {
 
     private EnumSavingScenarioStatus status;
 
+    private Integer numberOfConsumers;
+
     public SavingScenario(SavingsPotentialScenarioEntity entity, ObjectMapper objectMapper) throws JsonParseException, JsonMappingException, IOException {
         key = entity.getKey();
         utilityKey = entity.getUtility().getKey();
@@ -51,6 +53,7 @@ public class SavingScenario {
         processingBeginOn = entity.getProcessingDateBegin();
         processingEndOn = entity.getProcessingDateEnd();
         status = entity.getStatus();
+        numberOfConsumers = entity.getNumberOfConsumers();
     }
 
     public UUID getKey() {
@@ -99,6 +102,10 @@ public class SavingScenario {
 
     public EnumSavingScenarioStatus getStatus() {
         return status;
+    }
+
+    public Integer getNumberOfConsumers() {
+        return numberOfConsumers;
     }
 
 }

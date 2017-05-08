@@ -8,7 +8,7 @@ public abstract class DataExportQuery {
     /**
      * Export time interval start time stamp.
      */
-    private Long startTimstamp;
+    private Long startTimestamp;
 
     /**
      * Export time interval end time stamp.
@@ -20,12 +20,12 @@ public abstract class DataExportQuery {
      */
     private String timezone;
 
-    public Long getStartTimstamp() {
-        return startTimstamp;
+    public Long getStartTimestamp() {
+        return startTimestamp;
     }
 
-    public void setStartTimstamp(Long startTimstamp) {
-        this.startTimstamp = startTimstamp;
+    public void setStartTimestamp(Long startTimestamp) {
+        this.startTimestamp = startTimestamp;
     }
 
     public Long getEndTimestamp() {

@@ -74,7 +74,11 @@ public class ImportForecastingDataToHBaseTask extends BaseTask implements Stoppa
         /**
          * HDFS path.
          */
-        HDFS_PATH("fs.defaultFS");
+        HDFS_PATH("fs.defaultFS"),
+        /**
+         * Aggregate results
+         */
+        EXECUTE_MR_AGGREGATE_JOB("aggregate.results");
 
         private final String value;
 

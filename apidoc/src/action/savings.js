@@ -11,6 +11,7 @@
  * @apiSuccess (Scenario) {Number}   createdOn            Timestamp of scenario creation.
  * @apiSuccess (Scenario) {Number}   processingBeginOn    Processing start timestamp.
  * @apiSuccess (Scenario) {Number}   processingEndOn      Processing end timestamp.
+ * @apiSuccess (Scenario) {Number}   numberOfConsumers    Total number of selected consumers.
  * @apiSuccess (Scenario) {String}   status               Current scenario status. Valid values are:
  * <br/><br/><code>PENDING</code>   Scenario has been saved but not yet computed.
  * <br/><br/><code>RUNNING</code>   The Flink job that computes savings is running.
@@ -199,7 +200,8 @@ function refreshSavings { return; }
  *       "createdOn": 1491408156080,
  *       "processingBeginOn": 1491411647308,
  *       "processingEndOn": 1491411647429,
- *       "status": "COMPLETED"
+ *       "status": "COMPLETED",
+ *       "numberOfConsumers": 100
  *    },
  *    "success": true
  * }
@@ -388,7 +390,8 @@ function exploreSavings { return; }
  *       "createdOn": 1491408156080,
  *       "processingBeginOn": 1491411647308,
  *       "processingEndOn": 1491411647429,
- *       "status": "COMPLETED"
+ *       "status": "COMPLETED",
+ *       "numberOfConsumers": 100
  *    }],
  *    "success": true
  * }

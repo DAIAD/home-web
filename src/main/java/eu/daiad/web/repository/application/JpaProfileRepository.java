@@ -857,12 +857,16 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
                 householdMemberEntity.setIndex(member.getIndex());
                 householdMemberEntity.setCreatedOn(updatedOn);
                 householdMemberEntity.setUpdatedOn(updatedOn);
+                householdMemberEntity.setActive(member.isActive());
 
                 householdMemberEntity.setHousehold(householdEntity);
 
                 entityManager.persist(householdMemberEntity);
             } else {
                 householdMemberEntity.setUpdatedOn(updatedOn);
+                if (member.getIndex() != 0) {
+                    householdMemberEntity.setActive(member.isActive());
+                }
             }
 
             /*
@@ -872,9 +876,6 @@ public class JpaProfileRepository extends BaseRepository implements IProfileRepo
             }
             */
 
-            if (member.getIndex() != 0) {
-                householdMemberEntity.setActive(member.isActive());
-            }
             householdMemberEntity.setName(member.getName());
             householdMemberEntity.setGender(member.getGender());
             householdMemberEntity.setAge(member.getAge());
