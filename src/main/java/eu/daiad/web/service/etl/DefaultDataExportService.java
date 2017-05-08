@@ -105,7 +105,7 @@ public class DefaultDataExportService extends BaseService implements IDataExport
     public void export(UtilityDataExportQuery query) throws ApplicationException {
         ExportResult result = null;
         if(query.isExportFinalTrialData()) {
-            query.setStartTimstamp((new DateTime(2016, 3, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis());
+            query.setStartTimestamp((new DateTime(2016, 3, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis());
             query.setEndTimestamp((new DateTime(2017, 3, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis());
         }
         try {
