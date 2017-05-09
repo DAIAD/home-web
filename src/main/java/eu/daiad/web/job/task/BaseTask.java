@@ -103,7 +103,6 @@ public abstract class BaseTask {
         return parameters;
     }
 
-
     /**
      * Merge parameters from the job execution context to the step parameters.
      *
