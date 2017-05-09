@@ -1,61 +1,6 @@
 /* Fonts */
 
 @font-face {
-    font-family: "SourceSansPro";
-    src: url("../fonts/SourceSansPro/SourceSansPro-Regular.ttf");
-}
-@font-face {
-    font-family: "SourceSansPro";
-    src: url("../fonts/SourceSansPro/SourceSansPro-Italic.ttf");
-    font-style: italic;
-}
-@font-face {
-    font-family: "SourceSansPro";
-    src: url("../fonts/SourceSansPro/SourceSansPro-Bold.ttf");
-    font-weight: bold;
-}
-@font-face {
-    font-family: "SourceSansPro";
-    src: url("../fonts/SourceSansPro/SourceSansPro-BoldItalic.ttf");
-    font-weight: bold;
-		font-style: italic;
-}
-@font-face {
-    font-family: "SourceSansPro";
-    src: url("../fonts/SourceSansPro/SourceSansPro-SemiBold.ttf");
-    font-weight: 600;
-}
-@font-face {
-    font-family: "SourceSansPro";
-    src: url("../fonts/SourceSansPro/SourceSansPro-SemiBoldItalic.ttf");
-    font-weight: 600;
-		font-style: italic;
-}
-@font-face {
-    font-family: "SourceSansPro";
-    src: url("../fonts/SourceSansPro/SourceSansPro-Light.ttf");
-    font-weight: 300;
-}
-@font-face {
-    font-family: "SourceSansPro";
-    src: url("../fonts/SourceSansPro/SourceSansPro-LightItalic.ttf");
-    font-weight: 300;
-		font-style: italic;
-}
-@font-face {
-    font-family: "SourceSansPro";
-    src: url("../fonts/SourceSansPro/SourceSansPro-ExtraLight.ttf");
-    font-weight: 200;
-  font-family: "SourceSansPro", Helvetica, Arial, sans-serif;
-}
-@font-face {
-    font-family: "SourceSansPro";
-    src: url("../fonts/SourceSansPro/SourceSansPro-ExtraLightItalic.ttf");
-    font-weight: 200;
-		font-style: italic;
-}
-
-@font-face {
     font-family: "OpenSansCondensed";
     src: url("../fonts/OpenSansCondensed/OpenSans-CondLight.ttf");
     font-weight: 400;
@@ -72,7 +17,7 @@
 @font-face {
     font-family: "OpenSansCondensed";
     src: url("../fonts/OpenSansCondensed/OpenSans-CondBold.ttf");
-    font-weight: 600;
+    font-weight: bold;
 		font-style: normal;
 }
 @font-face {
@@ -278,8 +223,7 @@ input[type="checkbox"]:checked + label {
 h1, h2, h3, h4, h5, h6 {
   font-family: "Simplifica", Helvetica, Arial, sans-serif;
   color: #424242;
-	//color: #2D3580;
-  font-weight: bold;
+  //font-weight: bold;
   letter-spacing: 0.025em;
   margin: 0 0 5px;
   padding: 0;
@@ -287,7 +231,6 @@ h1, h2, h3, h4, h5, h6 {
 
 h1 {
   font-size: 3.5em;
-  font-weight: bold;
   margin: 0 0 15px;
   padding: 0;
 }
@@ -412,6 +355,7 @@ label {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  height: 100%;
 }
 .site-header {
   flex-grow: 0;
@@ -1125,6 +1069,7 @@ div[class^="section.login"]{
 .widget-body {
   flex-grow: 1;
   flex-shrink: 1;
+  height: 100%;
   overflow: hidden;
 }
 .widget-body span {
@@ -1135,8 +1080,8 @@ div[class^="section.login"]{
 .widget-footer {
   flex-grow: 0;
   text-align: center;
-  padding: 5px;
-  min-height: 37px;
+  padding: 2px;
+  //min-height: 37px;
   border-top: 1px #9fa1a2 solid;
 }
 .widget-x {
@@ -1161,16 +1106,30 @@ div[class^="section.login"]{
   font-size: 1.1em;
 }
 
+.stat {
+  display: flex;
+  height: 100%;
+  max-height: 85px;
+}
+
 .stat-left {
-  float: left;
-  width: 30%;
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 0;
+  padding: 10px 20px;
+}
+
+.stat-left h2 {
+  margin: 0;
 }
 
 .stat-right {
-  float: left;
-  width: 65%;
-  padding: 10px 0px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex-grow: 1;
+  text-align: center;
 }
 
 
@@ -1182,25 +1141,34 @@ div[class^="section.login"]{
 /* Widget type-specific */
 
 .wateriq.stat .stat-left {
-  padding: 0;
 }
 
 .wateriq.stat .stat-highlight {
   height: 100%;
 }
 
-.total.stat .stat-left {
-  width: 38%;
+
+.tip {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
 }
 
-.total.stat .stat-right {
-  width: 60%;
-  text-align: center;
+
+.tip-left {
+  height: 100%;
 }
 
 .tip-right {
-  padding: 5px;
+  padding: 2px 10px;
+  flex-grow: 1;
 }
+
+.tip-left img {
+  //height: 100%;
+  width: 100%;
+}
+
 .ranking .chart {
   padding-top: 10px;
 }
@@ -1228,6 +1196,11 @@ div[class^="section.login"]{
 }
 .add-widget-modal p {
   padding: 15px;
+}
+
+.add-widget-types {
+  width: 100%;
+  height: 100%;
 }
 
 .add-widget-types.ul {
@@ -1678,6 +1651,7 @@ div[class^="section.notifications"] .notification-list ul li .btn-a {
 }
 
 .tweet {
+  margin-top: 10px;
 }
 
 .acknowledged {
