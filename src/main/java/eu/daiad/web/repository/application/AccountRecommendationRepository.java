@@ -47,22 +47,22 @@ public class AccountRecommendationRepository extends BaseRepository
     public static final int DEFAULT_LIMIT = 50;
 
     private static final Log logger = LogFactory.getLog(AccountRecommendationRepository.class);
-    
+
     @PersistenceContext(unitName = "default")
     EntityManager entityManager;
 
     @Autowired
     IRecommendationTemplateTranslationRepository translationRepository;
-    
+
     @Autowired
     ICurrencyRateService currencyRateService;
-    
+
     @Override
     public AccountRecommendationEntity findOne(int id)
     {
         return entityManager.find(AccountRecommendationEntity.class, id);
     }
-    
+
     @Override
     public int countAll()
     {
@@ -134,22 +134,17 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public List<AccountRecommendationEntity> findByAccount(UUID accountKey, int minId)
-    {
-        return findByAccount(accountKey, minId, new PagingOptions(DEFAULT_LIMIT));
-    }
-
-    @Override
-    public List<AccountRecommendationEntity> findByAccount(UUID accountKey, int minId, PagingOptions pagination)
+    public List<AccountRecommendationEntity> findByAccount(UUID accountKey, int minId, PagingOptions pagination, EnumMessageLevel significant)
     {
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
             "SELECT r FROM account_recommendation r " +
-                "WHERE r.account.key = :accountKey AND r.id > :minId " +
+                "WHERE r.account.key = :accountKey AND r.id > :minId  AND r.significant >= :significant " +
                 "ORDER BY r.id " + (pagination.isAscending()? "ASC" : "DESC"),
             AccountRecommendationEntity.class);
 
         query.setParameter("accountKey", accountKey);
         query.setParameter("minId", minId);
+        query.setParameter("significant", significant);
 
         int offset = pagination.getOffset();
         if (offset > 0)
@@ -161,14 +156,15 @@ public class AccountRecommendationRepository extends BaseRepository
     }
 
     @Override
-    public int countByAccount(UUID accountKey, int minId)
+    public int countByAccount(UUID accountKey, int minId, EnumMessageLevel significant)
     {
         TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(r.id) FROM account_recommendation r " +
-                "WHERE r.account.key = :accountKey AND r.id > :minId ",
+                "WHERE r.account.key = :accountKey AND r.id > :minId AND r.significant >= :significant ",
             Long.class);
         query.setParameter("accountKey", accountKey);
         query.setParameter("minId", minId);
+        query.setParameter("significant", significant);
         return query.getSingleResult().intValue();
     }
 
@@ -305,7 +301,7 @@ public class AccountRecommendationRepository extends BaseRepository
 
     @Override
     public List<AccountRecommendationEntity> findByExecution(int xid)
-    {        
+    {
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
             "SELECT a FROM account_recommendation a WHERE a.resolverExecution.id = :xid",
             AccountRecommendationEntity.class);
@@ -326,7 +322,7 @@ public class AccountRecommendationRepository extends BaseRepository
 
     @Override
     public List<AccountRecommendationEntity> findByAccountAndExecution(UUID accountKey, int xid)
-    {        
+    {
         TypedQuery<AccountRecommendationEntity> query = entityManager.createQuery(
             "SELECT a FROM account_recommendation a " +
                 "WHERE a.resolverExecution.id = :xid AND a.account.key = :accountKey",
@@ -351,7 +347,7 @@ public class AccountRecommendationRepository extends BaseRepository
 
     @Override
     public int countByExecution(int xid)
-    {        
+    {
         TypedQuery<Long> query = entityManager.createQuery(
             "SELECT count(a.id) FROM account_recommendation a WHERE a.resolverExecution.id = :xid",
             Long.class);
@@ -424,7 +420,7 @@ public class AccountRecommendationRepository extends BaseRepository
 
         if (account == null)
             return null;
-        
+
         return createWith(account, parameterizedTemplate, resolverExecution, deviceType, level);
     }
 
@@ -441,13 +437,13 @@ public class AccountRecommendationRepository extends BaseRepository
             account = entityManager.find(AccountEntity.class, account.getId());
 
         // Find entity mapping to target template
-        
+
         EnumRecommendationTemplate template = parameterizedTemplate.getTemplate();
         RecommendationTemplateEntity templateEntity =
             entityManager.find(RecommendationTemplateEntity.class, template.getValue());
-        
+
         // Create
-        
+
         AccountRecommendationEntity r = new AccountRecommendationEntity();
         r.setAccount(account);
         r.setTemplate(templateEntity);
@@ -455,7 +451,7 @@ public class AccountRecommendationRepository extends BaseRepository
         r.setDeviceType(deviceType);
         r.setResolverExecution(resolverExecution);
         r.setSignificant(level);
-        
+
         return create(r);
     }
 
@@ -530,7 +526,7 @@ public class AccountRecommendationRepository extends BaseRepository
 
         // Retrieve generation-time parameters (as a parameterized template)
 
-        ParameterizedTemplate parameterizedTemplate = null; 
+        ParameterizedTemplate parameterizedTemplate = null;
         try {
             parameterizedTemplate = r.getParameterizedTemplate();
         } catch (ClassCastException | ClassNotFoundException | IOException ex) {
@@ -539,22 +535,22 @@ public class AccountRecommendationRepository extends BaseRepository
                 r.getId(), ex.getMessage()));
             parameterizedTemplate = null;
         }
-        
+
         // Format
-        
-        String title = translation.getTitle(); 
+
+        String title = translation.getTitle();
         String description = translation.getDescription();
         if (parameterizedTemplate != null) {
-            // Make underlying parameters aware of target locale    
+            // Make underlying parameters aware of target locale
             parameterizedTemplate = parameterizedTemplate.withLocale(locale, currencyRateService);
             // Format messages (interpolate parameters)
             Map<String, Object> parameters = parameterizedTemplate.getParameters();
             title = (new MessageFormat(title, locale)).format(parameters);
             description = (new MessageFormat(description, locale)).format(parameters);
         }
-        
+
         // Build a DTO object with formatted messages
-        
+
         Recommendation message = new Recommendation(r.getId(), template);
         message.setLocale(locale.getLanguage());
         message.setTitle(title);
@@ -568,7 +564,7 @@ public class AccountRecommendationRepository extends BaseRepository
 
         return message;
     }
-    
+
     @Override
     public Recommendation formatMessage(int id, Locale locale)
     {
