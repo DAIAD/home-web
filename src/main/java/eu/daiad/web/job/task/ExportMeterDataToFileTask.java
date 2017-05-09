@@ -12,6 +12,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
@@ -147,9 +149,20 @@ public class ExportMeterDataToFileTask extends BaseTask implements StoppableTask
                                        end.getDayOfMonth(),
                                        23, 59, 59, timezone);
 
-                    query.setStartTimstamp(start.getMillis());
+                    query.setStartTimestamp(start.getMillis());
                     query.setEndTimestamp(end.getMillis());
                 }
+            }
+            if (parameters.containsKey(EnumInParameter.MAX_EXPORT_DATE_VALUE.getValue())) {
+                String maxDateFormat = parameters.get(EnumInParameter.MAX_EXPORT_DATE_FORMAT.getValue());
+                if (StringUtils.isBlank(maxDateFormat)) {
+                    maxDateFormat = "dd/MM/yyyy";
+                }
+                DateTimeZone timezone = DateTimeZone.forID(utility.getTimezone());
+                DateTimeFormatter parseFormatter = DateTimeFormat.forPattern(maxDateFormat).withZone(timezone);
+
+                DateTime maxDate = parseFormatter.parseDateTime(parameters.get(EnumInParameter.MAX_EXPORT_DATE_VALUE.getValue()));
+                query.setEndTimestamp(maxDate.getMillis());
             }
 
             dataExportService.export(query);
@@ -225,6 +238,14 @@ public class ExportMeterDataToFileTask extends BaseTask implements StoppableTask
          * execution date.
          */
         EXPORT_YEARS("export.years"),
+        /**
+         * Max export date format
+         */
+        MAX_EXPORT_DATE_FORMAT("max.date.format"),
+        /**
+         * Max export date formatted using the pattern {@link EnumInParameter#MAX_EXPORT_DATE_FORMAT}
+         */
+        MAX_EXPORT_DATE_VALUE("max.date.value"),
         /**
          * Working directory
          */

@@ -124,7 +124,7 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
 
                     totalRows = exportAllMeterDailyData(dailyDataFilename,
                                                         query.getTimezone(),
-                                                        query.getStartTimstamp(),
+                                                        query.getStartTimestamp(),
                                                         query.getEndTimestamp(),
                                                         query.getDateFormat());
 
@@ -133,7 +133,7 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
                     // Export all data
                     totalRows += exportAllMeterData(dataFilename,
                                                     query.getTimezone(),
-                                                    query.getStartTimstamp(),
+                                                    query.getStartTimestamp(),
                                                     query.getEndTimestamp(),
                                                     query.getDateFormat());
                     break;
@@ -165,8 +165,10 @@ public class UtilityMeterDataExportService extends AbstractUtilityDataExportServ
                             meterQuery.setDeviceKey(new UUID[] { meterDevice.getKey() });
                             meterQuery.setUserKey(userKey);
                             meterQuery.setGranularity(TemporalConstants.NONE);
-                            if ((query.getStartTimstamp() != null) && (query.getEndTimestamp() != null)) {
-                                meterQuery.setStartDate(query.getStartTimstamp());
+                            if (query.getStartTimestamp() != null) {
+                                meterQuery.setStartDate(query.getStartTimestamp());
+                            }
+                            if (query.getEndTimestamp() != null) {
                                 meterQuery.setEndDate(query.getEndTimestamp());
                             }
 

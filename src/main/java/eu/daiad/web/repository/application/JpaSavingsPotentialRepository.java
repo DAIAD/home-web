@@ -192,15 +192,17 @@ public class JpaSavingsPotentialRepository extends BaseRepository implements ISa
      * @param consumption total consumption for all consumers in the scenario time interval.
      * @param saved savings potential volume.
      * @param updatedOn update timestamp.
+     * @param numberOfCosnumers number of consumers.
      */
     @Override
-    public void updateSavings(UUID key, double consumption, double saved, DateTime updatedOn) {
+    public void updateSavingScenario(UUID key, double consumption, double saved, DateTime updatedOn, int numberOfCosnumers) {
         SavingsPotentialScenarioEntity scenario = getScenarioByKey(key);
 
         scenario.setConsumption(consumption);
         scenario.setSavingsVolume(saved);
         scenario.setSavingsPercent(consumption > 0 && saved < consumption ? saved / consumption : 0);
         scenario.setProcessingDateBegin(updatedOn);
+        scenario.setNumberOfConsumers(numberOfCosnumers);
 
         entityManager.flush();
     }
@@ -215,7 +217,7 @@ public class JpaSavingsPotentialRepository extends BaseRepository implements ISa
      * @param updatedOn update timestamp.
      */
     @Override
-    public void updateSavings(UUID scenarioKey, UUID userKey, double consumption, double saved, DateTime updatedOn) {
+    public void updateSavingConsumer(UUID scenarioKey, UUID userKey, double consumption, double saved, DateTime updatedOn) {
         SavingsPotentialScenarioEntity scenario = getScenarioByKey(scenarioKey);
 
         String queryString = "select a from account a where a.key = :key";

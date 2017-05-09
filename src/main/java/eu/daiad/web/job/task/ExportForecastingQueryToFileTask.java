@@ -34,6 +34,7 @@ import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
+import eu.daiad.web.service.scheduling.Constants;
 
 /**
  * Task for creating a forecasting query for the users of a utility.
@@ -104,11 +105,11 @@ public class ExportForecastingQueryToFileTask extends BaseTask implements Stoppa
 
             if((StringUtils.isBlank(parameters.get(EnumInParameter.INTERVAL_FROM.getValue()))) ||
                (StringUtils.isBlank(parameters.get(EnumInParameter.INTERVAL_TO.getValue())))) {
-                DateTime now = new DateTime(timezone).minusDays(15);
-                minDate = new DateTime(now.getYear(), now.getMonthOfYear(), now.getDayOfMonth(), 0, 0, 0, timezone);
+                minDate = new DateTime(timezone).minusDays(15);
+                minDate = new DateTime(minDate.getYear(), minDate.getMonthOfYear(), minDate.getDayOfMonth(), 0, 0, 0, timezone);
 
-                DateTime nextMonth = now.plusDays(30);
-                maxDate = new DateTime(nextMonth.getYear(), nextMonth.getMonthOfYear(), nextMonth.getDayOfMonth(), 23, 0, 0, timezone);
+                maxDate = new DateTime(timezone).plusDays(45);
+                maxDate = new DateTime(maxDate.getYear(), maxDate.getMonthOfYear(), maxDate.getDayOfMonth(), 23, 0, 0, timezone);
             } else {
                 minDate = parseFormatter.parseDateTime(parameters.get(EnumInParameter.INTERVAL_FROM.getValue()));
                 minDate = new DateTime(minDate.getYear(), minDate.getMonthOfYear(), minDate.getDayOfMonth(), 0, 0, 0, timezone);
@@ -138,6 +139,8 @@ public class ExportForecastingQueryToFileTask extends BaseTask implements Stoppa
             }
 
             queryPrinter.flush();
+
+            exportParametersToContext(chunkContext, parseFormatter, minDate, maxDate);
         } catch (Throwable t) {
             throw wrapApplicationException(t, SchedulerErrorCode.SCHEDULER_JOB_STEP_FAILED)
                 .set("step", chunkContext.getStepContext().getStepName());
@@ -155,8 +158,28 @@ public class ExportForecastingQueryToFileTask extends BaseTask implements Stoppa
         // TODO: Add business logic for stopping processing
     }
 
+    private void exportParametersToContext(ChunkContext chunkContext, DateTimeFormatter formatter, DateTime minDate, DateTime maxDate) {
+        String key = chunkContext.getStepContext().getStepName() +
+                     Constants.PARAMETER_NAME_DELIMITER +
+                     EnumOutParameter.INTERVAL_FROM.getValue();
+
+        chunkContext.getStepContext()
+                    .getStepExecution()
+                    .getExecutionContext()
+                    .put(key, minDate.toString(formatter));
+
+        key = chunkContext.getStepContext().getStepName() +
+              Constants.PARAMETER_NAME_DELIMITER +
+              EnumOutParameter.INTERVAL_TO.getValue();
+
+        chunkContext.getStepContext()
+                    .getStepExecution()
+                    .getExecutionContext()
+                    .put(key, maxDate.toString(formatter));
+    }
+
     /**
-     * Enumeration of job input parameters.
+     * Enumeration of task input parameters.
      */
     public static enum EnumInParameter {
         /**
@@ -196,6 +219,31 @@ public class ExportForecastingQueryToFileTask extends BaseTask implements Stoppa
         }
 
         private EnumInParameter(String value) {
+            this.value = value;
+        }
+    }
+
+    /**
+     * Enumeration of task output parameters.
+     */
+    public static enum EnumOutParameter {
+        /**
+         * Interval start date formatted using the pattern {@link EnumInParameter#DATE_FORMAT_INPUT}
+         */
+        INTERVAL_FROM("interval.from"),
+        /**
+         * Interval end date formatted using the pattern {@link EnumInParameter#DATE_FORMAT_INPUT}
+         */
+        INTERVAL_TO("interval.to");
+
+
+        private final String value;
+
+        public String getValue() {
+            return value;
+        }
+
+        private EnumOutParameter(String value) {
             this.value = value;
         }
     }

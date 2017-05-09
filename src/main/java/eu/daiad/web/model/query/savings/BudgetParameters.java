@@ -34,6 +34,9 @@ public class BudgetParameters {
     }
 
     public EnumBudgetDistribution getDistribution() {
+        if (distribution == null) {
+            return EnumBudgetDistribution.UNDEFINED;
+        }
         return distribution;
     }
 

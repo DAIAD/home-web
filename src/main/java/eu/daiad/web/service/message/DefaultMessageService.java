@@ -1,12 +1,9 @@
 package eu.daiad.web.service.message;
 
-import java.text.NumberFormat;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.logging.Log;
@@ -110,11 +107,11 @@ public class DefaultMessageService
     public MessageResult getMessages(AuthenticatedUser user, MessageRequest request)
     {
         MessageResult result = new MessageResult();
-        
+
         Locale locale = request.getLocale();
         if (locale == null)
             locale = Locale.forLanguageTag(user.getLocale());
-        
+
         UUID userKey = user.getKey();
 
         List<Message> messages = new ArrayList<>();
@@ -151,10 +148,10 @@ public class DefaultMessageService
             PagingOptions pagination = options.getPagination();
 
             result.setTotalRecommendations(
-                accountRecommendationRepository.countByAccount(userKey, minMessageId));
+                accountRecommendationRepository.countByAccount(userKey, minMessageId, EnumMessageLevel.NOTIFY));
 
             List<AccountRecommendationEntity> recommendations =
-                accountRecommendationRepository.findByAccount(userKey, minMessageId, pagination);
+                accountRecommendationRepository.findByAccount(userKey, minMessageId, pagination, EnumMessageLevel.NOTIFY);
             for (AccountRecommendationEntity r: recommendations) {
                 if (EnumMessageLevel.compare(r.getSignificant(), EnumMessageLevel.NOTIFY) < 0)
                     continue; // skip; not considered significant

@@ -2,6 +2,7 @@ package eu.daiad.web.job.builder;
 
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
@@ -491,9 +492,18 @@ public class ForecastingJobBuilder extends BaseJobBuilder implements IJobBuilder
 
                                      @Override
                                      public ExitStatus afterStep(StepExecution stepExecution) {
-                                         // If data import is successful, compute consumption clusters
-                                         if(stepExecution.getExitStatus().getExitCode().equals(ExitStatus.COMPLETED.getExitCode())) {
-                                             schedulerService.launch("MAPREDUCE-METER-FORECAST-AGGREGATE");
+                                         // If data import was successful, aggregate data using the MapReduce job
+                                         if (stepExecution.getExitStatus().getExitCode().equals(ExitStatus.COMPLETED.getExitCode())) {
+                                             String parameterKey = STEP_IMPORT_RESULT +
+                                                                   Constants.PARAMETER_NAME_DELIMITER +
+                                                                   ImportForecastingDataToHBaseTask.EnumInParameter.EXECUTE_MR_AGGREGATE_JOB.getValue();
+
+                                             String parameterValue = stepExecution.getJobParameters().getString(parameterKey);
+
+                                             // Override command by appending input file
+                                             if ((!StringUtils.isBlank(parameterValue)) && (parameterValue.equalsIgnoreCase("true"))) {
+                                                 schedulerService.launch("MAPREDUCE-METER-FORECAST-AGGREGATE");
+                                             }
                                          }
                                          return null;
                                      }

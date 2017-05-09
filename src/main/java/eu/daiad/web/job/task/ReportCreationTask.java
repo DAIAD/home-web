@@ -85,6 +85,13 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
 
                 DateTime localDateTime = DateTime.now(DateTimeZone.forID(utility.getTimezone()));
 
+                if ((!StringUtils.isBlank(parameters.get(EnumParameter.REFERENCE_DATE_FORMAT.getValue()))) &&
+                    (!StringUtils.isBlank(parameters.get(EnumParameter.REFERENCE_DATE_VALUE.getValue())))) {
+                    DateTimeFormatter refDateformatter = DateTimeFormat.forPattern(parameters.get(EnumParameter.REFERENCE_DATE_FORMAT.getValue()))
+                                                                       .withZone(DateTimeZone.forID(utility.getTimezone()));
+                    localDateTime = refDateformatter.parseDateTime(parameters.get(EnumParameter.REFERENCE_DATE_VALUE.getValue()));
+                }
+
                 String from = localDateTime.minusMonths(1).dayOfMonth().withMinimumValue().toString(formatter);
                 String to = localDateTime.minusMonths(1).dayOfMonth().withMaximumValue().toString(formatter);
 
@@ -241,6 +248,17 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
          * External script for invoking report creation.
          */
         REPORT_COMMAND("shell.script"),
+        /**
+         * Reference date format.
+         */
+        REFERENCE_DATE_FORMAT("reference.date.format"),
+        /**
+         * Reference date for selecting the month interval. The date is
+         * formatted using the pattern
+         * {@link EnumParameter#REFERENCE_DATE_FORMAT} and the generated reports
+         * refer to the previous month.
+         */
+        REFERENCE_DATE_VALUE("reference.date.value"),
         /**
          * Message representing the success of the external script execution.
          */
