@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,6 +58,8 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
 
             // The utilities for which reports will be generated.
             String[] utilityId = StringUtils.split(parameters.get(EnumParameter.UTILITY_ID.getValue()), ',');
+            // Optional user key filter
+            String[] filteredUserKeys = StringUtils.split(parameters.get(EnumParameter.FILTER_USER_KEYS.getValue()), ',');
             // Credentials for accessing the utilities. The order of the
             // credentials must match that of the utility identifiers.
             String[] utilityUsername = StringUtils.split(parameters.get(EnumParameter.ADMIN_ACOUNT.getValue()), ',');
@@ -106,6 +109,9 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
                 FileUtils.mkdir(new File(outputDirectory), true);
 
                 for (UUID userKey : userRepository.getUserKeysForUtility(utility.getKey())) {
+                    if (ignoreUserKey(filteredUserKeys, userKey)) {
+                        continue;
+                    }
                     AuthenticatedUser user = userRepository.getUserByKey(userKey);
 
                     try {
@@ -185,6 +191,20 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
     }
 
     /**
+     * Skip report creation if the user key is not in a valid list of user keys.
+     *
+     * @param filteredUserKeys a list of user keys.
+     * @param userKey the user key to search.
+     * @return true if report creation must be skipped.
+     */
+    private boolean ignoreUserKey(String[] filteredUserKeys, UUID userKey) {
+        if (filteredUserKeys == null) {
+            return false;
+        }
+        return ((filteredUserKeys.length > 0) && (!ArrayUtils.contains(filteredUserKeys, userKey.toString())));
+    }
+
+    /**
      * Resolves locale.
      *
      * @param userLocale user locale from user profile.
@@ -215,6 +235,11 @@ public class ReportCreationTask extends BaseTask implements StoppableTasklet {
          * Array of utility identifiers for which the reports are created.
          */
         UTILITY_ID("utility.id"),
+        /**
+         * Array of user keys for which the reports are created. This filter is
+         * used in combination with {@link EnumParameter#UTILITY_ID} filter.
+         */
+        FILTER_USER_KEYS("filter.user.keys"),
         /**
          * Administrative accounts for accessing the utilities. One account must
          * be declared for every utility id.
