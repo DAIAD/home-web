@@ -1,10 +1,12 @@
 package eu.daiad.web.repository.application;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.WaterIqHistoryEntity;
+import eu.daiad.web.domain.application.mappings.SavingsPotentialWaterIqMappingEntity;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.profile.ComparisonRanking;
 import eu.daiad.web.model.profile.ComparisonRanking.DailyConsumption;
@@ -110,8 +113,8 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
             waterIq.user.volume = entries.get(i).getUserVolume();
 
 
-            waterIq.nearest.value = entries.get(i).getNearestUserValue();
-            waterIq.nearest.volume = entries.get(i).getNearestUserVolume();
+            waterIq.neighbor.value = entries.get(i).getNearestUserValue();
+            waterIq.neighbor.volume = entries.get(i).getNearestUserVolume();
 
             waterIq.similar.value = entries.get(i).getSimilarUserValue();
             waterIq.similar.volume= entries.get(i).getSimilarUserVolume();
@@ -124,7 +127,7 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
             ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion = new ComparisonRanking.MonthlyConsumtpion(entries.get(i).getYear(), entries.get(i).getMonth());
             monthlyConsumtpion.user = entries.get(i).getUserLast1MonthConsmution();
             monthlyConsumtpion.similar = entries.get(i).getSimilarLast1MonthConsmution();
-            monthlyConsumtpion.nearest = entries.get(i).getNearestLast1MonthConsmution();
+            monthlyConsumtpion.neighbor = entries.get(i).getNearestLast1MonthConsmution();
             monthlyConsumtpion.all = entries.get(i).getAllLast1MonthConsmution();
             monthlyConsumtpion.from = entries.get(i).getFrom();
             monthlyConsumtpion.to = entries.get(i).getTo();
@@ -147,7 +150,7 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
      * @param to time interval end date formatted using the pattern {@code yyyyMMdd}.
      * @param user water IQ data for a single user.
      * @param similar water IQ data for a group of similar users.
-     * @param nearest water IQ data for the group of neighbors.
+     * @param neighbor water IQ data for the group of neighbors.
      * @param all water IQ data for all users.
      * @param monthlyConsumtpion monthly consumption data.
      * @param dailyConsumption daily consumption data.
@@ -158,7 +161,7 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
                        String to,
                        ComparisonRanking.WaterIq user,
                        ComparisonRanking.WaterIq similar,
-                       ComparisonRanking.WaterIq nearest,
+                       ComparisonRanking.WaterIq neighbor,
                        ComparisonRanking.WaterIq all,
                        ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion,
                        List<ComparisonRanking.DailyConsumption> dailyConsumption) {
@@ -203,9 +206,9 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
             waterIqHistoryEntity.setSimilarUserValue(similar.value);
             waterIqHistoryEntity.setSimilarUserVolume(similar.volume);
         }
-        if (nearest != null) {
-            waterIqHistoryEntity.setNearestUserValue(nearest.value);
-            waterIqHistoryEntity.setNearestUserVolume(nearest.volume);
+        if (neighbor != null) {
+            waterIqHistoryEntity.setNearestUserValue(neighbor.value);
+            waterIqHistoryEntity.setNearestUserVolume(neighbor.volume);
         }
         if (all != null) {
             waterIqHistoryEntity.setAllUserValue(all.value);
@@ -214,7 +217,7 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
 
         waterIqHistoryEntity.setUserLast1MonthConsmution(monthlyConsumtpion.user);
         waterIqHistoryEntity.setSimilarLast1MonthConsmution(monthlyConsumtpion.similar);
-        waterIqHistoryEntity.setNearestLast1MonthConsmution(monthlyConsumtpion.nearest);
+        waterIqHistoryEntity.setNearestLast1MonthConsmution(monthlyConsumtpion.neighbor);
         waterIqHistoryEntity.setAllLast1MonthConsmution(monthlyConsumtpion.all);
 
         if(persist) {
@@ -222,7 +225,7 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
         }
 
         // Store daily consumption
-        hBaseWaterIqRepository.update(userKey, from, to, user, similar, nearest, all, monthlyConsumtpion, dailyConsumption);
+        hBaseWaterIqRepository.update(userKey, from, to, user, similar, neighbor, all, monthlyConsumtpion, dailyConsumption);
     }
 
     /**
@@ -239,27 +242,42 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
     }
 
     /**
-     * Returns the Water IQ as computed by the savings potential algorithm.
+     * Returns the Water IQ for similar users as computed by the savings potential algorithm.
      *
+     * @param utilityId the utility id.
      * @param month the month.
      * @param serial the meter serial number.
-     * @return a value from A to F or null if not savings potential data exist.
+     * @return a list of Water IQ values as computed by the savings potential algorithm.
      */
+    @SuppressWarnings("unchecked")
     @Override
-    public String getWaterIqFromSavingsPotential(int month, String serial) {
-        String queryString = "select i.iq from savings_potential_water_iq i where i.month = :month and i.serial = :serial";
+    public List<SavingsPotentialWaterIqMappingEntity> getWaterIqForSimilarUsersFromSavingsPotential(int utilityId, int month, String serial) {
+        String clusterQueryString = "select i.cluster from savings_potential_water_iq i " +
+                                    "where i.utility.id = :utilityId and i.month = :month and i.serial = :serial";
 
-        TypedQuery<String> query = entityManager.createQuery(queryString, String.class)
-                                                .setParameter("month", month)
-                                                .setParameter("serial", serial);
+        TypedQuery<String> clusterQuery = entityManager.createQuery(clusterQueryString, String.class)
+                                                       .setParameter("utilityId", utilityId)
+                                                       .setParameter("month", month)
+                                                       .setParameter("serial", serial);
 
-        List<String> values = query.getResultList();
-
-        if(values.isEmpty()) {
-            return null;
+        List<String> clusters = clusterQuery.getResultList();
+        if (clusters.size() != 1) {
+            return new ArrayList<SavingsPotentialWaterIqMappingEntity>();
         }
 
-        return values.get(0);
+        String waterIqQuery = "select   i.serial, i.iq, a.key as user_key " +
+                              "from     savings_potential_water_iq i " +
+                              "             inner join device_meter m on i.serial = m.serial " +
+                              "             inner join device d on m.id = d.id " +
+                              "             inner join account a on d.account_id = a.id " +
+                              "where i.utility_id = :utilityId and i.month = :month and i.cluster = :cluster";
+
+        Query query = entityManager.createNativeQuery(waterIqQuery, "SavingsPotentialWaterIqResult")
+                                   .setParameter("utilityId", utilityId)
+                                   .setParameter("month", month)
+                                   .setParameter("cluster", clusters.get(0));
+
+        return (List<SavingsPotentialWaterIqMappingEntity>) query.getResultList();
     }
 
 }

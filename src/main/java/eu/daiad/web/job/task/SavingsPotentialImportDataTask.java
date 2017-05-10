@@ -118,7 +118,11 @@ public class SavingsPotentialImportDataTask extends BaseTask implements Stoppabl
         /**
          * Execution mode: Can be SAVINGS or WATER_IQ.
          */
-        EXECUTION_MODE("execution.mode");
+        EXECUTION_MODE("execution.mode"),
+        /**
+         * Compute consumption clusters if value is equal to {@code true}.
+         */
+        COMPUTE_CONSUMPTION_CLUSTERS("compute.consumption.clusters");
 
         private final String value;
 

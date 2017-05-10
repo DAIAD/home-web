@@ -481,7 +481,12 @@ public class SavingsPotentialJobBuilder extends BaseJobBuilder implements IJobBu
                                          if(mode.equals(MODE_WATER_IQ)) {
                                              // If data import is successful, compute consumption clusters
                                              if(stepExecution.getExitStatus().getExitCode().equals(ExitStatus.COMPLETED.getExitCode())) {
-                                                 schedulerService.launch("CONSUMPTION-CLUSTERS");
+                                                 String key = STEP_IMPORT_RESULT +
+                                                              Constants.PARAMETER_NAME_DELIMITER +
+                                                              SavingsPotentialImportDataTask.EnumInParameter.COMPUTE_CONSUMPTION_CLUSTERS.getValue();
+                                                 if(stepExecution.getJobParameters().getString(key, "true").equals("true")) {
+                                                     schedulerService.launch("CONSUMPTION-CLUSTERS");
+                                                 }
                                              }
                                          }
 

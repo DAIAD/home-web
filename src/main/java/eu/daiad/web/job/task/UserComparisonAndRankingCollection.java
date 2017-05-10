@@ -13,35 +13,14 @@ import com.vividsolutions.jts.geom.Geometry;
 class UserComparisonAndRankingCollection {
 
     /**
-     * Distance used for deciding the nearest neighbors.
-     */
-    private float distance;
-
-    /**
      * A collection of user comparison and ranking data.
      */
     private Map<UUID, UserComparisonAndRanking> users = new HashMap<UUID, UserComparisonAndRanking>();
 
     /**
      * Creates a new instance of {@link UserComparisonAndRankingCollection}.
-     *
-     * @param distance distance used for deciding the nearest neighbors.
      */
-    public UserComparisonAndRankingCollection(float distance) {
-        this.distance = distance;
-    }
-
-    /**
-     * Computes the spatial distance in meters for the given geometries.
-     *
-     * @param g1 the first geometry.
-     * @param g2 the second geometry.
-     * @return the geometry objects distance in meters.
-     */
-    private double distance(Geometry g1, Geometry g2) {
-        double distance = g1.distance(g2);
-
-        return distance * (Math.PI / 180) * 6378137;
+    public UserComparisonAndRankingCollection() {
     }
 
     /**
@@ -63,9 +42,13 @@ class UserComparisonAndRankingCollection {
      * @return true if the users are neighbors.
      */
     private boolean isNeighbor(UserComparisonAndRanking user1, UserComparisonAndRanking user2) {
-        return ((user1.getLocation() != null) &&
-                (user2.getLocation() != null) &&
-                (distance(user1.getLocation(), user2.getLocation()) <= distance));
+        if (user1.getKey().equals(user2.getKey())) {
+            return true;
+        }
+        if ((user1.getNeighborhoodId() != null) && (user2.getNeighborhoodId() != null)) {
+            return user1.getNeighborhoodId().equals(user2.getNeighborhoodId());
+        }
+        return false;
     }
 
     /**
@@ -75,20 +58,22 @@ class UserComparisonAndRankingCollection {
      * @param householdSize the household size.
      * @param volume the water consumption of the user for the last month.
      * @param location the location of the user as inferred by the registered smart water meter.
+     * @param neighborhoodId the neighborhood id.
+     * @param serial water meter serial number.
      */
-    public void addUser(UUID key, int householdSize, double volume, Geometry location) {
+    public void addUser(UUID key, int householdSize, double volume, Geometry location, Integer neighborhoodId, String serial) {
         // Create user
-        UserComparisonAndRanking user = new UserComparisonAndRanking(key, householdSize, volume, location);
+        UserComparisonAndRanking user = new UserComparisonAndRanking(key, householdSize, volume, location, neighborhoodId, serial);
         users.put(key, user);
 
-        // Update similar/nearest users for all users
+        // Update similar/neighbor users for all users
         for (UserComparisonAndRanking u : users.values()) {
             if (isSimilar(user, u)) {
                 u.addSimilar(user);
             }
 
             if (isNeighbor(user, u)) {
-                u.addNearest(user);
+                u.addNeighbor(user);
             }
         }
     }
@@ -103,15 +88,28 @@ class UserComparisonAndRankingCollection {
         int value = 0;
 
         for (UserComparisonAndRanking user : users.values()) {
-            volume += user.getSelf().volume;
+            volume += (user.getSelf().volume * user.getHouseholdSize());
             value += user.getSelf().value;
         }
 
         WaterIq result = new WaterIq();
-        result.volume = volume / users.size();
+        result.volume = volume / getAllTotalMembers();
         result.value = Math.round((float) value / users.size());
 
         return result;
+    }
+
+    /**
+     * Returns the total number of household members.
+     *
+     * @return the total number of household members.
+     */
+    public int getAllTotalMembers() {
+        int total = 0;
+        for (UserComparisonAndRanking user : users.values()) {
+            total += user.getHouseholdSize();
+        }
+        return total;
     }
 
     /**

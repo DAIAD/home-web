@@ -410,6 +410,7 @@ public class JpaSavingsPotentialRepository extends BaseRepository implements ISa
                     SavingsPotentialWaterIqEntity entity = new SavingsPotentialWaterIqEntity();
                     entity.setUtility(utility);
                     entity.setJobId(jobId);
+                    entity.setCluster(cluster.name);
                     entity.setMonth(month.index);
                     entity.setSerial(consumer.serial);
                     entity.setIq(consumer.waterIq);

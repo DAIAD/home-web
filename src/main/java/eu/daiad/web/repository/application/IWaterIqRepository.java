@@ -3,6 +3,7 @@ package eu.daiad.web.repository.application;
 import java.util.List;
 import java.util.UUID;
 
+import eu.daiad.web.domain.application.mappings.SavingsPotentialWaterIqMappingEntity;
 import eu.daiad.web.model.profile.ComparisonRanking;
 import eu.daiad.web.model.profile.ComparisonRanking.DailyConsumption;
 
@@ -23,7 +24,7 @@ public interface IWaterIqRepository {
      * @param to time interval end date formatted using the pattern {@code yyyyMMdd}.
      * @param user water IQ data for a single user.
      * @param similar water IQ data for a group of similar users.
-     * @param nearest water IQ data for the group of neighbors.
+     * @param neighbor water IQ data for the group of neighbors.
      * @param all water IQ data for all users.
      * @param monthlyConsumtpion monthly consumption data.
      * @param dailyConsumption daily consumption data.
@@ -33,7 +34,7 @@ public interface IWaterIqRepository {
                 String to,
                 ComparisonRanking.WaterIq user,
                 ComparisonRanking.WaterIq similar,
-                ComparisonRanking.WaterIq nearest,
+                ComparisonRanking.WaterIq neighbor,
                 ComparisonRanking.WaterIq all,
                 ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion,
                 List<ComparisonRanking.DailyConsumption> dailyConsumption);
@@ -59,12 +60,13 @@ public interface IWaterIqRepository {
     List<ComparisonRanking.DailyConsumption> getComparisonDailyConsumption(UUID userKey, int year, int month);
 
     /**
-     * Returns the Water IQ as computed by the savings potential algorithm.
+     * Returns the Water IQ for similar users as computed by the savings potential algorithm.
      *
+     * @param utilityId the utility id.
      * @param month the month.
      * @param serial the meter serial number.
-     * @return a value from A to F or null if not savings potential data exist.
+     * @return a list of Water IQ values as computed by the savings potential algorithm
      */
-    String getWaterIqFromSavingsPotential(int month, String serial);
+    List<SavingsPotentialWaterIqMappingEntity> getWaterIqForSimilarUsersFromSavingsPotential(int utilityId, int month, String serial);
 
 }

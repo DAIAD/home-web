@@ -20,10 +20,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import com.vividsolutions.jts.geom.Geometry;
+
 import eu.daiad.web.domain.application.AccountEntity;
+import eu.daiad.web.domain.application.AreaGroupMemberEntity;
 import eu.daiad.web.domain.application.ClusterEntity;
 import eu.daiad.web.domain.application.GroupSegmentEntity;
 import eu.daiad.web.domain.application.SurveyEntity;
+import eu.daiad.web.domain.application.mappings.SavingsPotentialWaterIqMappingEntity;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.admin.Counter;
 import eu.daiad.web.model.device.Device;
@@ -31,6 +35,7 @@ import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SchedulerErrorCode;
+import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.group.Cluster;
 import eu.daiad.web.model.group.Segment;
 import eu.daiad.web.model.profile.ComparisonRanking;
@@ -47,6 +52,7 @@ import eu.daiad.web.model.query.UserDataPoint;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
+import eu.daiad.web.repository.application.ISpatialRepository;
 import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.repository.application.IWaterIqRepository;
@@ -93,6 +99,12 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     private IDeviceRepository deviceRepository;
 
     /**
+     * Repository for accessing spatial data.
+     */
+    @Autowired
+    private ISpatialRepository spatialRepository;
+
+    /**
      * Repository for updating water IQ data.
      */
     @Autowired
@@ -117,28 +129,15 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
             String[] segmentNames = StringUtils.split((String) parameters.get(EnumInParameter.SEGMENT_NAMES.getValue()), ";");
 
             if ((segmentNames == null) || (segmentNames.length == 0)) {
-                // The number of segment names must match the number of segments
                 throw createApplicationException(SchedulerErrorCode.SCHEDULER_INVALID_PARAMETER)
                         .set("parameter", EnumInParameter.SEGMENT_NAMES.getValue())
                         .set("value", (String) parameters.get(EnumInParameter.SEGMENT_NAMES.getValue()));
-            }
-
-            // Get max distance of neighbors
-            float maxDistance = Float.parseFloat((String) parameters.get(EnumInParameter.DISTANCE.getValue()));
-            if (maxDistance <= 0) {
-                // Max distance must be a positive value
-                throw createApplicationException(SchedulerErrorCode.SCHEDULER_INVALID_PARAMETER)
-                        .set("parameter", EnumInParameter.DISTANCE.getValue())
-                        .set("value", (String) parameters.get(EnumInParameter.DISTANCE.getValue()));
             }
 
             // Delete stale water IQ data
             waterIqRepository.clean(365);
 
             for (UtilityInfo utility : utilityRepository.getUtilities()) {
-                // Collection of user comparison and ranking data
-                UserComparisonAndRankingCollection comparisons = new UserComparisonAndRankingCollection(maxDistance);
-
                 // Initialize context
                 ExecutionContext context = new ExecutionContext();
 
@@ -180,13 +179,13 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                         computeRanking(context);
 
                         // Compute user monthly water consumption range
-                        computeConsumptionRange(context, comparisons);
+                        computeConsumptionRange(context);
 
                         // Create cluster
-                        createCluster(context, comparisons);
+                        createCluster(context);
 
                         // Compute comparisons and rankings for all users
-                        computeComparisonAndRanking(context, comparisons);
+                        computeComparisonAndRanking(context);
                     }
                 }
             }
@@ -253,9 +252,8 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
      * Computes the user monthly consumption range.
      *
      * @param context the execution context.
-     * @comparisons collection of user comparisons and rankings.
      */
-    private void computeConsumptionRange(ExecutionContext context, UserComparisonAndRankingCollection comparisons) {
+    private void computeConsumptionRange(ExecutionContext context) {
         if(context.ranking == null) {
             return;
         }
@@ -265,20 +263,20 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
 
         // Compute minimum/maximum consumption and fetch user data
         for (UserDataPoint point : context.ranking.getUsers()) {
-            MeterUserDataPoint meter = (MeterUserDataPoint) point;
+            MeterUserDataPoint userDataPoint = (MeterUserDataPoint) point;
 
             // Get survey data and compute consumption per household member
-            SurveyEntity survey = userRepository.getSurveyByKey(meter.getKey());
+            SurveyEntity survey = userRepository.getSurveyByKey(userDataPoint.getKey());
 
             int householdSize = 1;
-            double volume = meter.getVolume().get(EnumMetric.SUM);
+            double volume = userDataPoint.getVolume().get(EnumMetric.SUM);
 
             if ((survey != null) && (survey.getHouseholdMemberTotal() > 0)) {
                 householdSize = survey.getHouseholdMemberTotal();
             }
             volume /= householdSize;
 
-            meter.getVolume().put(EnumMetric.SUM, volume);
+            userDataPoint.getVolume().put(EnumMetric.SUM, volume);
 
             // Adjust minimum/maximum consumption values
             if (min > volume) {
@@ -288,8 +286,18 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                 max = volume;
             }
 
-            AccountEntity account = userRepository.getAccountByKey(meter.getKey());
-            comparisons.addUser(meter.getKey(), householdSize, meter.getVolume().get(EnumMetric.SUM), account.getLocation());
+            // Get user account, meter,  location and neighborhood
+            AccountEntity account = userRepository.getAccountByKey(userDataPoint.getKey());
+            WaterMeterDevice userMeter = getUserMeter(userDataPoint.getKey());
+            Geometry location = resolveUserLocation(account.getKey(), account.getLocation());
+            Integer neighborhoodId = resolveUserNeighborhoodId(context, userDataPoint.getKey());
+
+            context.comparisons.addUser(userDataPoint.getKey(),
+                                        householdSize,
+                                        userDataPoint.getVolume().get(EnumMetric.SUM),
+                                        location,
+                                        neighborhoodId,
+                                        userMeter.getSerial());
         }
 
         context.minConsumption = min;
@@ -331,9 +339,8 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
      * Group users based on their monthly consumption
      *
      * @param context the execution context.
-     * @comparisons collection of user comparisons and rankings.
      */
-    private void createCluster(ExecutionContext context, UserComparisonAndRankingCollection comparisons) {
+    private void createCluster(ExecutionContext context) {
         if(context.ranking == null) {
             return;
         }
@@ -368,16 +375,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
 
             cluster.getSegments().get(index).getMembers().add(meter.getKey());
 
-            // Override value if savings potential data exist
-            List<Device> devices = deviceRepository.getUserDevices(point.getKey(), EnumDeviceType.METER);
-            if (devices.size() == 1) {
-                index = overrideWaterIqWithSavingPotentialResult(context,
-                                                                 index,
-                                                                 context.start.getMonthOfYear(),
-                                                                 ((WaterMeterDevice) devices.get(0)).getSerial());
-            }
-
-            comparisons.getUserByKey(meter.getKey()).getSelf().value = index;
+            context.comparisons.getUserByKey(meter.getKey()).getSelf().value = index;
         }
 
         // Save cluster
@@ -388,18 +386,20 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
      * Creates or updates a new/existing water IQ
      *
      * @param context job execution data.
-     * @param data water IQ data.
      */
-    private void computeComparisonAndRanking(ExecutionContext context, UserComparisonAndRankingCollection data) {
+    private void computeComparisonAndRanking(ExecutionContext context) {
         DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyyMMdd");
 
         String startAsText = context.start.toString(formatter);
         String endAsText = context.end.toString(formatter);
 
-        ComparisonRanking.WaterIq all = convertWaterIq(context, data.getAll());
+        ComparisonRanking.WaterIq all = convertWaterIq(context, context.comparisons.getAll());
 
-        for(UUID key : data.getUserKeys()) {
-            UserComparisonAndRanking user = data.getUserByKey(key);
+        for(UUID key : context.comparisons.getUserKeys()) {
+            UserComparisonAndRanking user = context.comparisons.getUserByKey(key);
+
+            // Override results for similar users from savings potential algorithm results
+            overrideWaterIqWithSavingPotentialResult(context, user);
 
             // Build data query for the last month total consumption
             ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion = new ComparisonRanking.MonthlyConsumtpion(context.start.getYear(), context.start.getMonthOfYear());
@@ -409,8 +409,8 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                                                        .absolute(context.start, context.end, EnumTimeAggregation.MONTH)
                                                        .user("self", user.getKey())
                                                        .users("similar", user.getSimilarUsers())
-                                                       .users("nearest", user.getNearestUsers())
-                                                       .utility("utility", context.utilityKey)
+                                                       .users("neighbor", user.getNeighborUsers())
+                                                       .users("utility", context.comparisons.getUserKeys().toArray(new UUID[] {}))
                                                        .sum()
                                                        .meter()
                                                        .build();
@@ -428,22 +428,22 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                     switch (series.getLabel()) {
                         case "self":
                             if (!series.getPoints().isEmpty()) {
-                                monthlyConsumtpion.user = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
+                                monthlyConsumtpion.user = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM) / user.getHouseholdSize();
                             }
                             break;
                         case "similar":
                             if (!series.getPoints().isEmpty()) {
-                                monthlyConsumtpion.similar = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
+                                monthlyConsumtpion.similar = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM) / user.getSimilarTotalMembers();
                             }
                             break;
-                        case "nearest":
+                        case "neighbor":
                             if (!series.getPoints().isEmpty()) {
-                                monthlyConsumtpion.nearest = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
+                                monthlyConsumtpion.neighbor = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM) / user.getNeighborTotalMembers();
                             }
                             break;
                         case "utility":
                             if (!series.getPoints().isEmpty()) {
-                                monthlyConsumtpion.all = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM);
+                                monthlyConsumtpion.all = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM) / context.comparisons.getAllTotalMembers();
                             }
                             break;
                     }
@@ -458,8 +458,8 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                                                    .absolute(context.start, context.end, EnumTimeAggregation.DAY)
                                                    .user("self", user.getKey())
                                                    .users("similar", user.getSimilarUsers())
-                                                   .users("nearest", user.getNearestUsers())
-                                                   .utility("utility", context.utilityKey)
+                                                   .users("neighbor", user.getNeighborUsers())
+                                                   .users("utility", context.comparisons.getUserKeys().toArray(new UUID[] {}))
                                                    .sum()
                                                    .meter()
                                                    .build();
@@ -473,28 +473,28 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                             for(DataPoint point : series.getPoints()) {
                                 MeterDataPoint meter = (MeterDataPoint) point;
 
-                                getDailyConsumption(context, dailyConsumption, meter).user = meter.getVolume().get(EnumMetric.SUM);
+                                getDailyConsumption(context, dailyConsumption, meter).user = meter.getVolume().get(EnumMetric.SUM) / user.getHouseholdSize();
                             }
                             break;
                         case "similar":
                             for(DataPoint point : series.getPoints()) {
                                 MeterDataPoint meter = (MeterDataPoint) point;
 
-                                getDailyConsumption(context, dailyConsumption, meter).similar = meter.getVolume().get(EnumMetric.SUM);
+                                getDailyConsumption(context, dailyConsumption, meter).similar = meter.getVolume().get(EnumMetric.SUM) / user.getSimilarTotalMembers();
                             }
                             break;
-                        case "nearest":
+                        case "neighbor":
                             for(DataPoint point : series.getPoints()) {
                                 MeterDataPoint meter = (MeterDataPoint) point;
 
-                                getDailyConsumption(context, dailyConsumption, meter).nearest = meter.getVolume().get(EnumMetric.SUM);
+                                getDailyConsumption(context, dailyConsumption, meter).neighbor = meter.getVolume().get(EnumMetric.SUM) / user.getNeighborTotalMembers();
                             }
                             break;
                         case "utility":
                             for(DataPoint point : series.getPoints()) {
                                 MeterDataPoint meter = (MeterDataPoint) point;
 
-                                getDailyConsumption(context, dailyConsumption, meter).all = meter.getVolume().get(EnumMetric.SUM);
+                                getDailyConsumption(context, dailyConsumption, meter).all = meter.getVolume().get(EnumMetric.SUM) / context.comparisons.getAllTotalMembers();
                             }
                             break;
                     }
@@ -506,7 +506,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                                      endAsText,
                                      convertWaterIq(context, user.getSelf()),
                                      convertWaterIq(context, user.getSimilarWaterIq()),
-                                     convertWaterIq(context, user.getNearestWaterIq()),
+                                     convertWaterIq(context, user.getNeighborWaterIq()),
                                      all,
                                      monthlyConsumtpion,
                                      toList(dailyConsumption.values()));
@@ -579,6 +579,55 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
     }
 
     /**
+     * Computes user location. If no user location exists, the location of the assigned meter is returned.
+     *
+     * @param userKey the user key.
+     * @param userLocation the user account location.
+     * @return the user location.
+     */
+    private Geometry resolveUserLocation(UUID userKey, Geometry userLocation) {
+        if (userLocation != null) {
+            return userLocation;
+        }
+
+        List<Device> devices = deviceRepository.getUserDevices(userKey, EnumDeviceType.METER);
+        if (devices.size() == 1) {
+            return ((WaterMeterDevice) devices.get(0)).getLocation();
+        }
+        return null;
+    }
+
+    /**
+     * Finds the water meter assigned to the user.
+     *
+     * @param userKey the user key.
+     * @return the user water meter.
+     */
+    private WaterMeterDevice getUserMeter(UUID userKey) {
+        List<Device> devices = deviceRepository.getUserDevices(userKey, EnumDeviceType.METER);
+        if (devices.size() == 1) {
+            return ((WaterMeterDevice) devices.get(0));
+        }
+        return null;
+    }
+
+    /**
+     * Computes user neighborhood id.
+     *
+     * @param context the execution context.
+     * @param userKey the user key.
+     * @return the area id or null if neighborhood could not be found.
+     */
+    private Integer resolveUserNeighborhoodId(ExecutionContext context, UUID userKey) {
+        AreaGroupMemberEntity entity = spatialRepository.getUserDefaultAreaByUserKey(context.utilityKey, userKey);
+        if (entity == null) {
+            return null;
+        }
+
+        return entity.getId();
+    }
+
+    /**
      * A simple store for data required during the job execution
      *
      */
@@ -593,6 +642,11 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
          * Utility unique key.
          */
         UUID utilityKey;
+
+        /**
+         * Comparison and ranking data.
+         */
+        UserComparisonAndRankingCollection comparisons = new UserComparisonAndRankingCollection();
 
         /**
          * Reference date time for computing query time intervals.
@@ -650,7 +704,6 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
         double maxConsumption = 0;
     }
 
-
     /**
      * Enumeration of job input parameters.
      */
@@ -663,10 +716,6 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
          * Segment names separated with (;).
          */
         SEGMENT_NAMES("cluster.segments"),
-        /**
-         * Distance in meters for computing nearest consumers.
-         */
-        DISTANCE("nearest.distance"),
         /**
          * Reference timestamp for computing year and month.
          */
@@ -684,19 +733,46 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
         }
     }
 
-    private int overrideWaterIqWithSavingPotentialResult(ExecutionContext context, int current, int month, String serial) {
-        String value = waterIqRepository.getWaterIqFromSavingsPotential(month, serial);
+    private void overrideWaterIqWithSavingPotentialResult(ExecutionContext context, UserComparisonAndRanking user) {
+        int month = context.start.getMonthOfYear();
+        String serial = user.getSerial();
 
-        if (StringUtils.isBlank(value)) {
-            return current;
+        List<SavingsPotentialWaterIqMappingEntity> results = waterIqRepository.getWaterIqForSimilarUsersFromSavingsPotential(context.utilityId, month, serial);
+
+        if (results.size() == 0) {
+            return;
         }
 
-        for (int i = 0, count = context.labels.length; i < count; i++) {
-            if (context.labels[i].equalsIgnoreCase(value)) {
-                return i;
+        List<UserComparisonAndRanking> similar = new ArrayList<UserComparisonAndRanking>();
+
+        for(SavingsPotentialWaterIqMappingEntity result : results) {
+            // Get existing user
+            UserComparisonAndRanking existing = context.comparisons.getUserByKey(result.userKey);
+            if (existing == null) {
+                throw ApplicationException.create(SharedErrorCode.UNKNOWN, String.format("User with key [%s] was not found.", result.userKey.toString()));
             }
+            // Get ranking
+            boolean match = false;
+            for (int i = 0, count = context.labels.length; i < count; i++) {
+                if (context.labels[i].equalsIgnoreCase(result.iq)) {
+                    result.value = i;
+                    match = true;
+                    break;
+                }
+            }
+            if(!match) {
+                throw ApplicationException.create(SharedErrorCode.UNKNOWN, String.format("Consumption class [%s] was not found.", result.iq));
+            }
+            // Create new similar user entry
+            UserComparisonAndRanking newUser = new UserComparisonAndRanking(result.userKey,
+                                                                            existing.getHouseholdSize(),
+                                                                            existing.getSelf().volume,
+                                                                            existing.getLocation(),
+                                                                            existing.getNeighborhoodId(),
+                                                                            existing.getSerial());
+            newUser.getSelf().value = result.value;
+            similar.add(newUser);
         }
-
-        return current;
+        user.overrideSimilar(similar);
     }
 }

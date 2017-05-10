@@ -20,6 +20,7 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.springframework.stereotype.Repository;
 
+import eu.daiad.web.domain.application.mappings.SavingsPotentialWaterIqMappingEntity;
 import eu.daiad.web.hbase.EnumHBaseColumnFamily;
 import eu.daiad.web.model.error.DataErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
@@ -98,7 +99,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
      * @param to time interval end date formatted using the pattern {@code yyyyMMdd}.
      * @param user water IQ data for a single user.
      * @param similar water IQ data for a group of similar users.
-     * @param nearest water IQ data for the group of neighbors.
+     * @param neighbor water IQ data for the group of neighbors.
      * @param all water IQ data for all users.
      * @param monthlyConsumtpion monthly consumption data.
      * @param dailyConsumption daily consumption data.
@@ -109,7 +110,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
                        String to,
                        WaterIq user,
                        WaterIq similar,
-                       WaterIq nearest,
+                       WaterIq neighbor,
                        WaterIq all,
                        MonthlyConsumtpion monthlyConsumtpion,
                        List<DailyConsumption> dailyConsumption) {
@@ -141,7 +142,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
                 p.addColumn(columnFamily, column, Bytes.toBytes(day.similar));
 
                 column = Bytes.toBytes(EnumColumn.NEAREST_VOLUME.getValue());
-                p.addColumn(columnFamily, column, Bytes.toBytes(day.nearest));
+                p.addColumn(columnFamily, column, Bytes.toBytes(day.neighbor));
 
                 column = Bytes.toBytes(EnumColumn.ALL_VOLUME.getValue());
                 p.addColumn(columnFamily, column, Bytes.toBytes(day.all));
@@ -270,7 +271,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
                             dailyConsumption.similar = Bytes.toDouble(entry.getValue());
                             break;
                         case NEAREST_VOLUME:
-                            dailyConsumption.nearest = Bytes.toDouble(entry.getValue());
+                            dailyConsumption.neighbor = Bytes.toDouble(entry.getValue());
                             break;
                         case ALL_VOLUME:
                             dailyConsumption.all = Bytes.toDouble(entry.getValue());
@@ -308,14 +309,14 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
 
 
     /**
-     * Returns the Water IQ as computed by the savings potential algorithm.
-     *
+     * Returns the Water IQ for similar users as computed by the savings potential algorithm.
+     * @param utilityId the utility id.
      * @param month the month.
      * @param serial the meter serial number.
-     * @return a value from A to F or null if not savings potential data exist.
+     * @return a list of Water IQ values as computed by the savings potential algorithm.
      */
     @Override
-    public String getWaterIqFromSavingsPotential(int month, String serial) {
+    public List<SavingsPotentialWaterIqMappingEntity> getWaterIqForSimilarUsersFromSavingsPotential(int utilityId, int month, String serial) {
         throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 

@@ -1,7 +1,11 @@
 package eu.daiad.web.domain.application;
 
+import java.util.UUID;
+
 import javax.persistence.Basic;
 import javax.persistence.Column;
+import javax.persistence.ColumnResult;
+import javax.persistence.ConstructorResult;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -10,6 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.SqlResultSetMapping;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
@@ -17,6 +22,13 @@ import org.joda.time.DateTime;
 
 @Entity(name = "savings_potential_water_iq")
 @Table(schema = "public", name = "savings_potential_water_iq")
+@SqlResultSetMapping(name = "SavingsPotentialWaterIqResult", classes = {
+    @ConstructorResult(targetClass = eu.daiad.web.domain.application.mappings.SavingsPotentialWaterIqMappingEntity.class, columns = {
+        @ColumnResult(name = "serial"),
+        @ColumnResult(name = "iq"),
+        @ColumnResult(name = "user_key", type = UUID.class),
+    })
+})
 public class SavingsPotentialWaterIqEntity {
 
     @Id()
@@ -37,6 +49,9 @@ public class SavingsPotentialWaterIqEntity {
     private DateTime createdOn = new DateTime();
 
     @Basic()
+    private String cluster;
+
+    @Basic()
     private int month;
 
     @Basic()
@@ -44,6 +59,14 @@ public class SavingsPotentialWaterIqEntity {
 
     @Basic()
     private String iq;
+
+    public String getCluster() {
+        return cluster;
+    }
+
+    public void setCluster(String cluster) {
+        this.cluster = cluster;
+    }
 
     public int getMonth() {
         return month;
