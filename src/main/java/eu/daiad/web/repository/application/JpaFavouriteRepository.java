@@ -388,9 +388,9 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
                                 "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.name = :name",
                                 eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
 
-                queryCheck.setParameter("accountId", account.getId());
-                queryCheck.setParameter("name", finalTitle);
-                List<DataQueryEntity> unfortunateDuplicate = queryCheck.getResultList();
+                queryUnfortunateCheck.setParameter("accountId", account.getId());
+                queryUnfortunateCheck.setParameter("name", finalTitle);
+                List<DataQueryEntity> unfortunateDuplicate = queryUnfortunateCheck.getResultList();
                 if(unfortunateDuplicate.size()>0){
                         int randomNum = ThreadLocalRandom.current().nextInt(1, 100);
                         finalTitle = finalTitle + " (duplicate) " + unfortunateDuplicate.get(0).getId()+ " " + randomNum;
