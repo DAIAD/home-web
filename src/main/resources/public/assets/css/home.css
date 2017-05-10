@@ -1037,7 +1037,7 @@ div[class^="section.login"]{
 }
 
 .say-hello {
-  
+  margin: 20px 20px 0px 20px; 
 }
 
 /* Widget */
@@ -1170,6 +1170,7 @@ div[class^="section.login"]{
 }
 
 .ranking .chart {
+  margin-top: 5px;
 }
 
 /* Add widget */
