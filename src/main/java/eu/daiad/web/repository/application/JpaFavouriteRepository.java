@@ -41,6 +41,7 @@ import eu.daiad.web.model.query.NamedDataQuery;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Repository
 @Transactional("applicationTransactionManager")
@@ -382,6 +383,19 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
             String finalTitle;
             if(duplicate.size() > 0){
                 finalTitle = namedDataQuery.getTitle() + " (duplicate title) " + duplicate.get(0).getId();
+                
+                TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> queryUnfortunateCheck = entityManager.createQuery(
+                                "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.name = :name",
+                                eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
+
+                queryCheck.setParameter("accountId", account.getId());
+                queryCheck.setParameter("name", finalTitle);
+                List<DataQueryEntity> unfortunateDuplicate = queryCheck.getResultList();
+                if(unfortunateDuplicate.size()>0){
+                        int randomNum = ThreadLocalRandom.current().nextInt(1, 100);
+                        finalTitle = finalTitle + " (duplicate) " + unfortunateDuplicate.get(0).getId()+ " " + randomNum;
+                }
+            
             } else {
                 finalTitle = namedDataQuery.getTitle();
             }
@@ -424,7 +438,12 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
             String finalTitle;
             if(duplicate.size() > 0){
-                finalTitle = namedDataQuery.getTitle() + " (duplicate title) "+ duplicate.get(0).getId();
+                if(duplicate.get(0).getId() == namedDataQuery.getId()){
+                    finalTitle = namedDataQuery.getTitle();
+                } else {
+                    finalTitle = namedDataQuery.getTitle() + " (duplicate title) "+ duplicate.get(0).getId();
+                }
+                
             } else {
                 finalTitle = namedDataQuery.getTitle();
             }
