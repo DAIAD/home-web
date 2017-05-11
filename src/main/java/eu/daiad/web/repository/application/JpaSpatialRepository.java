@@ -204,7 +204,7 @@ public class JpaSpatialRepository extends BaseRepository implements ISpatialRepo
                                                                    .setFirstResult(0)
                                                                    .setMaxResults(1);
 
-        areaQuery.setParameter("groupKey", areaKey);
+        areaQuery.setParameter("areaKey", areaKey);
 
         List<AreaGroupMemberEntity> areas = areaQuery.getResultList();
 
