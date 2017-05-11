@@ -229,7 +229,7 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
     }
 
     /**
-     * Returns the daily consumption for the given key for the selected year and month.
+     * Returns the daily consumption data for the given key for the selected year and month.
      *
      * @param userKey the user key.
      * @param year the year.
@@ -238,6 +238,17 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
      */
     @Override
     public List<DailyConsumption> getComparisonDailyConsumption(UUID userKey, int year, int month) {
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
+    }
+
+    /**
+     * Returns all the daily consumption data for the given user key.
+     *
+     * @param userKey the user key.
+     * @return a list of {@link DailyConsumption}.
+     */
+    @Override
+    public List<ComparisonRanking.DailyConsumption> getAllComparisonDailyConsumption(UUID userKey) {
         throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 
@@ -278,6 +289,17 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
                                    .setParameter("cluster", clusters.get(0));
 
         return (List<SavingsPotentialWaterIqMappingEntity>) query.getResultList();
+    }
+
+    /**
+     * Update user Water IQ.
+     *
+     * @param userKey the user key.
+     * @param dailyConsumption daily consumption data.
+     */
+    @Override
+    public void storeDailyData(UUID userKey, List<ComparisonRanking.DailyConsumption> dailyConsumption) {
+        throw createApplicationException(SharedErrorCode.NOT_IMPLEMENTED);
     }
 
 }
