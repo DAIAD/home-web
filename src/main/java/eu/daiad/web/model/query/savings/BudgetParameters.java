@@ -1,5 +1,6 @@
 package eu.daiad.web.model.query.savings;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -8,7 +9,7 @@ public class BudgetParameters {
 
     private Scenario scenario;
 
-    private Integer goal;
+    private BigDecimal goal;
 
     @JsonDeserialize(using = EnumBudgetDistribution.Deserializer.class)
     private EnumBudgetDistribution distribution;
@@ -25,11 +26,11 @@ public class BudgetParameters {
         this.scenario = scenario;
     }
 
-    public Integer getGoal() {
+    public BigDecimal getGoal() {
         return goal;
     }
 
-    public void setGoal(Integer goal) {
+    public void setGoal(BigDecimal goal) {
         this.goal = goal;
     }
 
@@ -64,7 +65,7 @@ public class BudgetParameters {
 
         private UUID key;
 
-        private int percent;
+        private BigDecimal percent;
 
         public UUID getKey() {
             return key;
@@ -74,11 +75,11 @@ public class BudgetParameters {
             this.key = key;
         }
 
-        public int getPercent() {
+        public BigDecimal getPercent() {
             return percent;
         }
 
-        public void setPercent(int percent) {
+        public void setPercent(BigDecimal percent) {
             this.percent = percent;
         }
 

@@ -19,7 +19,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -91,10 +90,10 @@ public class JpaBudgetRepository extends BaseRepository implements IBudgetReposi
      * @param name a user-friendly name for the budget.
      * @param parameters parameters for selecting user data.
      * @return the new budget key.
-     * @throws JsonProcessingException if parameters serialization fails
+     * @throws IOException if initialization fails.
      */
     @Override
-    public UUID createBudget(int ownerId, String name, BudgetParameters parameters) throws JsonProcessingException {
+    public UUID createBudget(int ownerId, String name, BudgetParameters parameters) throws IOException {
         AccountEntity owner = getAccountById(ownerId);
 
         // Create budget
@@ -121,7 +120,11 @@ public class JpaBudgetRepository extends BaseRepository implements IBudgetReposi
 
         entityManager.persist(budget);
 
-        return budget.getKey();
+        UUID key = budget.getKey();
+
+        initializeBudgetConsumers(key);
+
+        return key;
     }
 
     /**
@@ -162,10 +165,10 @@ public class JpaBudgetRepository extends BaseRepository implements IBudgetReposi
         }
 
         if (budget.getScenario() == null) {
-            budget.setExpectedPercent((double) budget.getGoal() / 100);
+            budget.setExpectedPercent(budget.getGoal().doubleValue() / 100);
         } else {
             if ((consumption > 0) && (savings < consumption)) {
-                double expectedPercent = (savings / consumption) * ((double) budget.getScenarioPercent() / 100D);
+                double expectedPercent = (savings / consumption) * (budget.getScenarioPercent().doubleValue() / 100D);
                 budget.setExpectedPercent(expectedPercent);
             } else {
                 budget.setExpectedPercent(0D);
@@ -714,7 +717,7 @@ public class JpaBudgetRepository extends BaseRepository implements IBudgetReposi
         BudgetEntity budget = getBudgetByKey(budgetKey);
 
         if(budget.getScenario() == null) {
-            return (double) budget.getGoal() / 100D;
+            return budget.getGoal().doubleValue() / 100D;
         }
 
         List<UUID> userKeys = getBudgetMembers(budgetKey);
@@ -734,7 +737,7 @@ public class JpaBudgetRepository extends BaseRepository implements IBudgetReposi
         }
 
         if ((consumption > 0) && (savings < consumption)) {
-            return (savings / consumption) * ((double) budget.getScenarioPercent() / 100D);
+            return (savings / consumption) * (budget.getScenarioPercent().doubleValue() / 100D);
         } else {
             return 0D;
         }
@@ -751,7 +754,7 @@ public class JpaBudgetRepository extends BaseRepository implements IBudgetReposi
         BudgetEntity budget = getBudgetByKey(budgetKey);
 
         if(budget.getScenario() == null) {
-            return (double) budget.getGoal() / 100D;
+            return budget.getGoal().doubleValue() / 100D;
         }
 
         String queryString = "SELECT a FROM savings_potential_account a where a.scenario.key = :scenarioKey and a.account.key = :userKey";
@@ -761,7 +764,7 @@ public class JpaBudgetRepository extends BaseRepository implements IBudgetReposi
                                                                      .getSingleResult();
 
         if ((scenarioAccount.getConsumption() > 0) && (scenarioAccount.getSavingsVolume() < scenarioAccount.getConsumption())) {
-            return (scenarioAccount.getSavingsVolume() / scenarioAccount.getConsumption()) * ((double) budget.getScenarioPercent() / 100D);
+            return (scenarioAccount.getSavingsVolume() / scenarioAccount.getConsumption()) * (budget.getScenarioPercent().doubleValue() / 100D);
         } else {
             return 0D;
         }

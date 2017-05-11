@@ -1,11 +1,7 @@
 package eu.daiad.web.service.savings;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import eu.daiad.web.model.query.savings.Budget;
 import eu.daiad.web.model.query.savings.BudgetExploreClusterResult;
@@ -30,16 +26,6 @@ public interface IBudgetService {
      * @return the new budget key.
      */
     UUID createBudget(AuthenticatedUser user, String name, BudgetParameters parameters);
-
-    /**
-     * Initializes the budget consumers.
-     *
-     * @param key the budget key.
-     * @throws IOException
-     * @throws JsonMappingException
-     * @throws JsonParseException
-     */
-    void initializeBudgetConsumers(UUID key) throws JsonParseException, JsonMappingException, IOException;
 
     /**
      * Schedules the execution of a job for computing a snapshot for a budget for a selected year and month.
