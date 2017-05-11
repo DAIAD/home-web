@@ -28,7 +28,7 @@ public class ComparisonRanking {
 
         public WaterIq similar = new WaterIq();
 
-        public WaterIq neighbor = new WaterIq();
+        public WaterIq nearest = new WaterIq();
 
         public WaterIq all = new WaterIq();
 
@@ -47,10 +47,10 @@ public class ComparisonRanking {
             this.month = month;
         }
 
-        public MonthlyConsumtpion(Double user, Double similar, Double neighbor, Double all) {
+        public MonthlyConsumtpion(Double user, Double similar, Double nearest, Double all) {
             this.user = (user == null ? 0 : user);
             this.similar = (similar == null ? 0 : similar);
-            this.neighbor = (neighbor == null ? 0 : neighbor);
+            this.nearest = (nearest == null ? 0 : nearest);
             this.all = (all == null ? 0 : all);
         }
 
@@ -66,7 +66,7 @@ public class ComparisonRanking {
 
         public double similar;
 
-        public double neighbor;
+        public double nearest;
 
         public double all;
     }
@@ -86,14 +86,14 @@ public class ComparisonRanking {
             this.day = day;
         }
 
-        public DailyConsumption(int year, int month, int week, int day, Double user, Double similar, Double neighbor, Double all) {
+        public DailyConsumption(int year, int month, int week, int day, Double user, Double similar, Double nearest, Double all) {
             this.year = year;
             this.month = month;
             this.week = week;
             this.day = day;
             this.user = (user == null ? 0 : user);
             this.similar = (similar == null ? 0 : similar);
-            this.neighbor = (neighbor == null ? 0 : neighbor);
+            this.nearest = (nearest == null ? 0 : nearest);
             this.all = (all == null ? 0 : all);
         }
 
@@ -113,7 +113,7 @@ public class ComparisonRanking {
 
         public double similar;
 
-        public double neighbor;
+        public double nearest;
 
         public double all;
     }
