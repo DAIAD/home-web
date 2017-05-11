@@ -438,7 +438,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                             break;
                         case "neighbor":
                             if (!series.getPoints().isEmpty()) {
-                                monthlyConsumtpion.neighbor = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM) / user.getNeighborTotalMembers();
+                                monthlyConsumtpion.nearest = ((MeterDataPoint) series.getPoints().get(0)).getVolume().get(EnumMetric.SUM) / user.getNeighborTotalMembers();
                             }
                             break;
                         case "utility":
@@ -487,7 +487,7 @@ public class ConsumptionClusterTask extends BaseTask implements StoppableTasklet
                             for(DataPoint point : series.getPoints()) {
                                 MeterDataPoint meter = (MeterDataPoint) point;
 
-                                getDailyConsumption(context, dailyConsumption, meter).neighbor = meter.getVolume().get(EnumMetric.SUM) / user.getNeighborTotalMembers();
+                                getDailyConsumption(context, dailyConsumption, meter).nearest = meter.getVolume().get(EnumMetric.SUM) / user.getNeighborTotalMembers();
                             }
                             break;
                         case "utility":

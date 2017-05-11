@@ -113,8 +113,8 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
             waterIq.user.volume = entries.get(i).getUserVolume();
 
 
-            waterIq.neighbor.value = entries.get(i).getNearestUserValue();
-            waterIq.neighbor.volume = entries.get(i).getNearestUserVolume();
+            waterIq.nearest.value = entries.get(i).getNearestUserValue();
+            waterIq.nearest.volume = entries.get(i).getNearestUserVolume();
 
             waterIq.similar.value = entries.get(i).getSimilarUserValue();
             waterIq.similar.volume= entries.get(i).getSimilarUserVolume();
@@ -127,7 +127,7 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
             ComparisonRanking.MonthlyConsumtpion monthlyConsumtpion = new ComparisonRanking.MonthlyConsumtpion(entries.get(i).getYear(), entries.get(i).getMonth());
             monthlyConsumtpion.user = entries.get(i).getUserLast1MonthConsmution();
             monthlyConsumtpion.similar = entries.get(i).getSimilarLast1MonthConsmution();
-            monthlyConsumtpion.neighbor = entries.get(i).getNearestLast1MonthConsmution();
+            monthlyConsumtpion.nearest = entries.get(i).getNearestLast1MonthConsmution();
             monthlyConsumtpion.all = entries.get(i).getAllLast1MonthConsmution();
             monthlyConsumtpion.from = entries.get(i).getFrom();
             monthlyConsumtpion.to = entries.get(i).getTo();
@@ -217,7 +217,7 @@ public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepo
 
         waterIqHistoryEntity.setUserLast1MonthConsmution(monthlyConsumtpion.user);
         waterIqHistoryEntity.setSimilarLast1MonthConsmution(monthlyConsumtpion.similar);
-        waterIqHistoryEntity.setNearestLast1MonthConsmution(monthlyConsumtpion.neighbor);
+        waterIqHistoryEntity.setNearestLast1MonthConsmution(monthlyConsumtpion.nearest);
         waterIqHistoryEntity.setAllLast1MonthConsmution(monthlyConsumtpion.all);
 
         if(persist) {

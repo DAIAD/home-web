@@ -142,7 +142,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
                 p.addColumn(columnFamily, column, Bytes.toBytes(day.similar));
 
                 column = Bytes.toBytes(EnumColumn.NEAREST_VOLUME.getValue());
-                p.addColumn(columnFamily, column, Bytes.toBytes(day.neighbor));
+                p.addColumn(columnFamily, column, Bytes.toBytes(day.nearest));
 
                 column = Bytes.toBytes(EnumColumn.ALL_VOLUME.getValue());
                 p.addColumn(columnFamily, column, Bytes.toBytes(day.all));
@@ -271,7 +271,7 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
                             dailyConsumption.similar = Bytes.toDouble(entry.getValue());
                             break;
                         case NEAREST_VOLUME:
-                            dailyConsumption.neighbor = Bytes.toDouble(entry.getValue());
+                            dailyConsumption.nearest = Bytes.toDouble(entry.getValue());
                             break;
                         case ALL_VOLUME:
                             dailyConsumption.all = Bytes.toDouble(entry.getValue());
