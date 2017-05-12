@@ -120,6 +120,7 @@ public class AnnouncementRepository
         message.setLocale(locale.getLanguage());
         message.setTitle(translation.getTitle());
         message.setContent(translation.getContent());
+        message.setCreatedOn(a.getCreatedOn());
         return message;
     }
 }

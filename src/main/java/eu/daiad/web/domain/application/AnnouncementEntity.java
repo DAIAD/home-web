@@ -18,6 +18,10 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Type;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
 @Entity(name = "announcement")
 @Table(schema = "public", name = "announcement")
 public class AnnouncementEntity
@@ -51,6 +55,10 @@ public class AnnouncementEntity
 	)
     private Set<AnnouncementChannelEntity> channels = new HashSet<>();
 
+    @Column(name = "created_on")
+    @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
+    private DateTime createdOn = DateTime.now(DateTimeZone.UTC);
+
 	public AnnouncementEntity() {}
 
 	public AnnouncementEntity(int priority)
@@ -72,6 +80,10 @@ public class AnnouncementEntity
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public DateTime getCreatedOn() {
+        return createdOn;
     }
 
     public List<ChannelEntity> getChannels()
