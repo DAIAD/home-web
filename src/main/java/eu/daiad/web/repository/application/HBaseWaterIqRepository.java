@@ -163,6 +163,58 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
         }
     }
 
+    /**
+     * Update user Water IQ.
+     *
+     * @param userKey the user key.
+     * @param dailyConsumption daily consumption data.
+     */
+    @Override
+    public void storeDailyData(UUID userKey, List<ComparisonRanking.DailyConsumption> dailyConsumption) {
+        Table table = null;
+        try {
+            table = connection.getTable(HBASE_TABLE_COMPARISON_RANKING_DAILY);
+
+            MessageDigest md = MessageDigest.getInstance("MD5");
+
+            byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
+
+            byte[] userKeyHash = md.digest(userKey.toString().getBytes("UTF-8"));
+
+            for (DailyConsumption day : dailyConsumption) {
+                Put p = new Put(createRowKey(userKeyHash, day.year, day.month, day.day));
+
+                byte[] column = Bytes.toBytes(EnumColumn.WEEK.getValue());
+                p.addColumn(columnFamily, column, Bytes.toBytes(day.week));
+
+                column = Bytes.toBytes(EnumColumn.USER_VOLUME.getValue());
+                p.addColumn(columnFamily, column, Bytes.toBytes(day.user));
+
+                column = Bytes.toBytes(EnumColumn.SIMILAR_VOLUME.getValue());
+                p.addColumn(columnFamily, column, Bytes.toBytes(day.similar));
+
+                column = Bytes.toBytes(EnumColumn.NEAREST_VOLUME.getValue());
+                p.addColumn(columnFamily, column, Bytes.toBytes(day.nearest));
+
+                column = Bytes.toBytes(EnumColumn.ALL_VOLUME.getValue());
+                p.addColumn(columnFamily, column, Bytes.toBytes(day.all));
+
+                table.put(p);
+            }
+        } catch (Exception ex) {
+            throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
+        } finally {
+            try {
+                if (table != null) {
+                    table.close();
+                    table = null;
+                }
+            } catch (Exception ex) {
+                logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
+            }
+        }
+    }
+
     private byte[] createRowKey(byte[] userKeyHash, int year, int month, int day) {
         byte[] timestamp = Bytes.toBytes((int) year * 10000 + month * 100 + day);
 
@@ -224,13 +276,25 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
      */
     @Override
     public List<DailyConsumption> getComparisonDailyConsumption(UUID userKey, int year, int month) {
+        return getComparisonDailyConsumptionData(userKey, year, month);
+    }
+
+    /**
+     * Returns all the daily consumption data for the given user key.
+     *
+     * @param userKey the user key.
+     * @return a list of {@link DailyConsumption}.
+     */
+    @Override
+    public List<ComparisonRanking.DailyConsumption> getAllComparisonDailyConsumption(UUID userKey) {
+        return getComparisonDailyConsumptionData(userKey, null, null);
+    }
+
+    private List<DailyConsumption> getComparisonDailyConsumptionData(UUID userKey, Integer year, Integer month) {
         Table table = null;
         ResultScanner scanner = null;
 
         List<DailyConsumption> result = new ArrayList<DailyConsumption>();
-
-        int minYear = (month < 6 ? (year - 1) : year);
-        int minMonth = ((month - 5) > 0 ? (month - 5) : (month + 7));
 
         try {
             table = connection.getTable(HBASE_TABLE_COMPARISON_RANKING_DAILY);
@@ -244,10 +308,17 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
             Scan scan = new Scan();
             scan.setCaching(scanCacheSize);
             scan.addFamily(columnFamily);
-            scan.setStartRow(createRowKey(userKeyHash, minYear, minMonth));
-            scan.setStopRow(createRowKey(userKeyHash, year, month + 1));
+            if ((year != null) && (month != null)) {
+                int minYear = (month < 6 ? (year - 1) : year);
+                int minMonth = ((month - 5) > 0 ? (month - 5) : (month + 7));
+                scan.setStartRow(createRowKey(userKeyHash, minYear, minMonth));
+                scan.setStopRow(createRowKey(userKeyHash, year, month + 1));
+            } else {
+                scan.setStartRow(createRowKey(userKeyHash, 0, 0));
+                scan.setStopRow(createRowKey(userKeyHash, 9999, 13));
+            }
 
-           scanner = table.getScanner(scan);
+            scanner = table.getScanner(scan);
 
             for (Result r = scanner.next(); r != null; r = scanner.next()) {
                 NavigableMap<byte[], byte[]> map = r.getFamilyMap(columnFamily);
@@ -304,7 +375,6 @@ public class HBaseWaterIqRepository extends AbstractHBaseRepository implements I
                 logger.error(getMessage(SharedErrorCode.RESOURCE_RELEASE_FAILED), ex);
             }
         }
-
     }
 
 

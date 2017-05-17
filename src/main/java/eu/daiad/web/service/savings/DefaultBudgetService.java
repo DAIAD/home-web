@@ -18,8 +18,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.daiad.web.domain.application.BudgetEntity;
@@ -165,19 +163,6 @@ public class DefaultBudgetService extends BaseService implements IBudgetService,
     }
 
     /**
-     * Initializes the budget consumers.
-     *
-     * @param key the budget key.
-     * @throws IOException
-     * @throws JsonMappingException
-     * @throws JsonParseException
-     */
-    @Override
-    public void initializeBudgetConsumers(UUID key) throws JsonParseException, JsonMappingException, IOException {
-        budgetRepository.initializeBudgetConsumers(key);
-    }
-
-    /**
      * Creates a snapshot for an active budget for a selected year and month.
      *
      * @param jobId the id of the job that created the snapshot.
@@ -203,7 +188,7 @@ public class DefaultBudgetService extends BaseService implements IBudgetService,
 
             // Initialize budget if not already
             if (!budget.isInitialized()) {
-                initializeBudgetConsumers(key);
+                budgetRepository.initializeBudgetConsumers(key);
             }
             // Reset snapshot
             budgetRepository.deleteSnapshot(key, year, month);

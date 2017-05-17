@@ -1,5 +1,6 @@
 package eu.daiad.web.domain.application;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -71,10 +72,10 @@ public class BudgetEntity {
     private Set<BudgetSnapshotEntity> snapshots = new HashSet<>();
 
     @Column(name = "scenario_percent")
-    private Integer scenarioPercent;
+    private BigDecimal scenarioPercent;
 
     @Column(name = "budget_goal_percent")
-    private Integer goal;
+    private BigDecimal goal;
 
     @Column(name = "created_on")
     @Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
@@ -146,19 +147,19 @@ public class BudgetEntity {
         this.scenario = scenario;
     }
 
-    public Integer getScenarioPercent() {
+    public BigDecimal getScenarioPercent() {
         return scenarioPercent;
     }
 
-    public void setScenarioPercent(Integer scenarioPercent) {
+    public void setScenarioPercent(BigDecimal scenarioPercent) {
         this.scenarioPercent = scenarioPercent;
     }
 
-    public Integer getGoal() {
+    public BigDecimal getGoal() {
         return goal;
     }
 
-    public void setGoal(Integer goal) {
+    public void setGoal(BigDecimal goal) {
         this.goal = goal;
     }
 

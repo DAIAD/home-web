@@ -7,7 +7,6 @@ import java.util.UUID;
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import eu.daiad.web.domain.application.BudgetEntity;
@@ -31,9 +30,9 @@ public interface IBudgetRepository {
      * @param name a user-friendly name for the budget.
      * @param parameters parameters for selecting user data.
      * @return the new budget key.
-     * @throws JsonProcessingException if parameters serialization fails
+     * @throws IOException if initialization fails.
      */
-    UUID createBudget(int ownerId, String name, BudgetParameters parameters) throws JsonProcessingException ;
+    UUID createBudget(int ownerId, String name, BudgetParameters parameters) throws IOException ;
 
     /**
      * Initializes the budget consumers.

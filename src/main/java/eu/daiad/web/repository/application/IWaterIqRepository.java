@@ -40,7 +40,10 @@ public interface IWaterIqRepository {
                 List<ComparisonRanking.DailyConsumption> dailyConsumption);
 
     /**
-     * Returns water IQ data for the user with the given key.
+     * Returns water IQ data for the user with the given key. Monthly data for
+     * the last six months is returned. Daily data is returned only for the
+     * most recent month. The time interval is set by the reference year and
+     * month.
      *
      * @param key the user key.
      * @param year reference year.
@@ -50,7 +53,7 @@ public interface IWaterIqRepository {
     ComparisonRanking getWaterIqByUserKey(UUID key, int year, int month);
 
     /**
-     * Returns the daily consumption for the given key for the selected year and month.
+     * Returns the daily consumption data for the given key for the selected year and month.
      *
      * @param userKey the user key.
      * @param year the year.
@@ -58,6 +61,14 @@ public interface IWaterIqRepository {
      * @return a list of {@link DailyConsumption}.
      */
     List<ComparisonRanking.DailyConsumption> getComparisonDailyConsumption(UUID userKey, int year, int month);
+
+    /**
+     * Returns all the daily consumption data for the given user key.
+     *
+     * @param userKey the user key.
+     * @return a list of {@link DailyConsumption}.
+     */
+    List<ComparisonRanking.DailyConsumption> getAllComparisonDailyConsumption(UUID userKey);
 
     /**
      * Returns the Water IQ for similar users as computed by the savings potential algorithm.
@@ -69,4 +80,11 @@ public interface IWaterIqRepository {
      */
     List<SavingsPotentialWaterIqMappingEntity> getWaterIqForSimilarUsersFromSavingsPotential(int utilityId, int month, String serial);
 
+    /**
+     * Update user Water IQ.
+     *
+     * @param userKey the user key.
+     * @param dailyConsumption daily consumption data.
+     */
+    void storeDailyData(UUID userKey, List<ComparisonRanking.DailyConsumption> dailyConsumption);
 }

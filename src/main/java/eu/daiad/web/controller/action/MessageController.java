@@ -295,7 +295,6 @@ public class MessageController extends BaseController {
                 service.getAnnouncement(announcementId, user.getLocale()));
             response.setReceivers(
                 service.getAnnouncementReceivers(announcementId));
-
             return response;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
