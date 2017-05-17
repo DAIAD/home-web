@@ -556,6 +556,7 @@ div[class^="section."]{
   margin-top: 8px;
   flex-grow: 0;
   flex-basis: 230px;
+  text-align: right;
 }
 .top-header-right > div, .top-header-right > a {
   margin-left: 20px;
