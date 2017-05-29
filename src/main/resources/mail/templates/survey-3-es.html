@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title th:remove="all">Reset Password</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<style>
+.content {
+	width: 600px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.inner-content {
+	width: 600px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.header {
+	background: #f8f8f8;
+	border-color: #e7e7e7;
+	height: 40px;
+	text-align: center;
+}
+
+p {
+	font-size: 16px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	text-align: justify;
+}
+
+a.reset {
+	color: #265A84;
+	background-color: #fff;
+	display: inline-block;
+	padding: 6px 12px;
+	margin-bottom: 0;
+	font-size: 17px;
+	font-weight: 400;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	line-height: 1.42857143;
+	text-align: center;
+	vertical-align: middle;
+	-ms-touch-action: manipulation;
+	touch-action: manipulation;
+	cursor: pointer;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	background-image: none;
+	border: 1px solid #265A84;
+	border-radius: 4px;
+	text-decoration: none;
+}
+
+span.pin {
+	font-weight: bold;
+}
+
+div.footer {
+	border-top: 1px solid #ccc;
+	font-size: 12px;
+	text-align: center;
+	padding-top: 10px;
+}
+
+div.footer p {
+	font-size: small;
+}
+</style>
+</head>
+<body>
+	<div class="content">
+		<div class="header">
+			<img alt="DAIAD"
+				src="https://app.dev.daiad.eu/assets/images/shared/daiad-logo.svg"
+				style="margin-top: 15px;" />
+		</div>
+
+		<div class="inner-content">
+			<p>
+				Querido DAIADista,
+			</p>
+			<p>
+				Desde el Centro de Investigación e Innovación Athena, coordinadores del proyecto europeo DAIAD, queremos darte las gracias por haber participado en el piloto de Alicante. Gracias a la colaboración de Aguas de Alicante y sobre todo, a vuestra experiencia, hemos podido comprobar los ahorros que puede proporcionar el uso de las nuevas tecnologías en el día a día. Con vuestra ayuda, hemos conseguido explorar nuevas estrategias para la sostenibilidad de los recursos.
+			</p>
+			<p>
+				Ahora nos gustaría pedirte un último favor: tu opinión sobre la potencialidad que tendría el sistema DAIAD en la sociedad. Para ello, a continuación encontrarás el enlace a un pequeño formulario para que valoresdesde este nuevo punto de vista tanto la herramienta, como el dispositivo.
+			</p>
+			<div style="text-align: center;">
+				<a class="reset" th:href="|https://goo.gl/forms/yNw8PK4z8MEBZjlP2|">
+					<span>Comenzar formulario</span>
+				</a>
+			</div>
+			<p>
+				Puedes compartir este enlace con familia y amigos. ¡Queremos tener más opiniones! Eso sí, te pedimos que cuando lo hagas, también compartas con ellos tu experiencia con DAIAD…
+			</p>
+			<br />
+			<p>
+				Muchas gracias de antemano y un cordial saludo,
+			</p>
+			<p>
+				El equipo DAIAD
+			</p>
+		</div>
+	</div>
+</body>
+</html>
