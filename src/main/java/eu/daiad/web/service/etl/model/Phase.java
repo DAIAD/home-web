@@ -196,4 +196,21 @@ public class Phase {
         Modes.put(EnumPhase.MOBILE_ON_SOCIAL_ON, EnumSessionSelectionMode.INTERPOLATION);
         Modes.put(EnumPhase.MOBILE_ON_SOCIAL_ON_AMPHIRO_ON, EnumSessionSelectionMode.NEAREST);
     }
+
+    public void alignSessionId(Phase previous, MemorySessionStore sessions) {
+        if (isSessionSet()) {
+            if (minSessionId.longValue() > maxSessionId.longValue()) {
+                Long temp = minSessionId;
+                minSessionId = maxSessionId;
+                maxSessionId = temp;
+            }
+
+            if ((previous != null) && (previous.isSessionSet()) && (previous.maxSessionId.longValue() == minSessionId.longValue())) {
+                minSessionId = sessions.getNext(minSessionId);
+                if ((minSessionId != null) && (minSessionId.longValue() > maxSessionId.longValue())) {
+                    minSessionId = maxSessionId;
+                }
+            }
+        }
+    }
 }

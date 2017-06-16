@@ -909,6 +909,7 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                             if(interpolationError) {
                                 break;
                             }
+                            phase.alignSessionId(i > 0 ? timeline.get(i - 1) : null, sessions);
                         }
 
                         timeline.validate();
@@ -942,28 +943,41 @@ public class UtilityAmphiroDataExportService extends AbstractUtilityDataExportSe
                         }
                         // Add extra phase
                         if(query.isExportFinalTrialData()) {
+                            boolean intervalComputed = false;
                             row.add("AMPHIRO_ON_MOBILE_ON_SOCIAL_ON");
-                            if((interpolationError) || (timeline.size() != 4)) {
-                                row.add("N/A");
-                                row.add("N/A");
-                            } else {
+                            if ((!interpolationError) && (timeline.size() == 4)) {
                                 long startTimestamp = (new DateTime(2017, 2, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis();
                                 long endTimestamp = (new DateTime(2017, 3, 1, 0, 0, DateTimeZone.forID(query.getTimezone()))).getMillis();
 
                                 AmphiroSession left = sessions.getNearestSession(startTimestamp);
                                 AmphiroSession right = sessions.getNearestSession(endTimestamp);
 
-                                if ((left != null) && (right != null) && (left.getId() <= right.getId())) {
-                                    row.add(Long.toString(left.getId()));
-                                    row.add(Long.toString(right.getId()));
-
-                                    if(query.isExportFinalTrialData()) {
-                                        deviceMaxShowerId.put(device.getDeviceKey(), right.getId());
+                                if ((left != null) && (right != null)) {
+                                    // Align
+                                    if (left.getId() > right.getId()) {
+                                        AmphiroSession temp = left;
+                                        left = right;
+                                        right = temp;
                                     }
-                                } else {
-                                    row.add("N/A");
-                                    row.add("N/A");
+                                    Phase previous = timeline.get(timeline.size() - 1);
+                                    if ((previous != null) && (previous.isSessionSet()) && (previous.getMaxSessionId().longValue() == left.getId())) {
+                                        left = sessions.getNextSession(left.getId());
+                                        if ((left != null) && (left.getId() > right.getId())) {
+                                            left = right;
+                                        }
+                                    }
+                                    if ((left != null) && (right != null)) {
+                                        row.add(Long.toString(left.getId()));
+                                        row.add(Long.toString(right.getId()));
+
+                                        deviceMaxShowerId.put(device.getDeviceKey(), right.getId());
+                                        intervalComputed = true;
+                                    }
                                 }
+                            }
+                            if (!intervalComputed) {
+                                row.add("N/A");
+                                row.add("N/A");
                             }
                         }
                         totalRows++;

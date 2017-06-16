@@ -175,6 +175,38 @@ public class MemorySessionStore {
     }
 
     /**
+     * Returns the next session id for the given id.
+     *
+     * @param id the session id to search for.
+     * @return the id of the session which is immediately after the session with the given id.
+     */
+    public Long getNext(long id) {
+        for (int i = 0, count = sessions.size() - 1; i < count; i++) {
+            if (((AmphiroSession) sessions.get(i)).getId() == id) {
+                return ((AmphiroSession) sessions.get(i + 1)).getId();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the next session for the given id.
+     *
+     * @param id the session id to search for.
+     * @return the session which is immediately after the session with the given id.
+     */
+    public AmphiroSession getNextSession(long id) {
+        for (int i = 0, count = sessions.size() - 1; i < count; i++) {
+            if (((AmphiroSession) sessions.get(i)).getId() == id) {
+                return ((AmphiroSession) sessions.get(i + 1));
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Given a timestamp, the two most recent real time sessions before and
      * after it are computed. The session index interval defined by the two
      * sessions is separated into two sets based on either (a) the given
