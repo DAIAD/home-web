@@ -228,6 +228,9 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0 0 5px;
   padding: 0;
 }
+h1:lang(el), h2:lang(el), h3:lang(el), h4:lang(el), h5:lang(el), h6:lang(el) {
+  font-family: "OpenSansCondensed", Helvetica, Arial, sans-serif;
+}
 
 h1 {
   font-size: 3.5em;
@@ -1043,7 +1046,7 @@ div[class^="section.login"]{
   flex-shrink: 1;
   flex-basis: 150px;
   background: #D0EAFA; 
-  padding: 20px;
+  padding: 15px;
 }
 
 .say-hello {
@@ -1326,7 +1329,7 @@ div[class^="section.login"]{
 }
 .dashboard-device-info > a > h6 {
   margin-top: 10px;
-  font-size: 0.93em;
+  font-size: 0.98em;
 }
 .dashboard-device-info > a > h6 > img {
   margin-right: 10px;
@@ -1341,6 +1344,15 @@ div[class^="section.login"]{
 .dashboard-save { 
   margin-top: 20px;
 }
+
+.dashboard-save > img {
+  margin-right: 5px;
+}
+
+.dashboard-save-prompt {
+  margin-top: 8px;
+}
+
 .dashboard-save-btn {
   margin-top: 5px;
   float: left;
