@@ -228,7 +228,8 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0 0 5px;
   padding: 0;
 }
-h1:lang(el), h2:lang(el), h3:lang(el), h4:lang(el), h5:lang(el), h6:lang(el) {
+h1:lang(el), h2:lang(el), h3:lang(el), h4:lang(el), h5:lang(el), h6:lang(el) 
+.modal h1, .modal h2, .modal h3, .modal h4, .modal h5, .modal h6 {
   font-family: "OpenSansCondensed", Helvetica, Arial, sans-serif;
 }
 
