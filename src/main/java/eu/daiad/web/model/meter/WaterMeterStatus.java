@@ -12,22 +12,12 @@ public class WaterMeterStatus {
 
 	private float volume;
 
-	private float variation;
-
 	public WaterMeterStatus(String serial) {
 		this.serial = serial;
 	}
 
 	public UUID getDeviceKey() {
 		return deviceKey;
-	}
-
-	public float getVariation() {
-		return variation;
-	}
-
-	public void setVariation(float variation) {
-		this.variation = variation;
 	}
 
 	public long getTimestamp() {

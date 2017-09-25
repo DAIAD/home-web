@@ -32,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.model.error.ActionErrorCode;
 import eu.daiad.web.model.error.ApplicationException;
+import eu.daiad.web.model.error.ImportErrorCode;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.loader.EnumUploadFileType;
 import eu.daiad.web.model.loader.FileProcessingStatus;
@@ -307,6 +308,12 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
             // Update and import row data
             importMeterDataToHBase(status, rows);
 
+            if ((status.getProcessedRows() > 0) && ((status.getIgnoredRows() / status.getProcessedRows()) > 0.05)) {
+                throw createApplicationException(ImportErrorCode.TOO_MANY_ERRORS)
+                    .set("errors", status.getIgnoredRows())
+                    .set("total", status.getProcessedRows());
+            }
+
         } catch (FileNotFoundException fileEx) {
             logger.error(String.format("File [%s] was not found.", filename), fileEx);
         } finally {
@@ -405,12 +412,16 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
      * @param row the data to import.
      */
     private void insert(FileProcessingStatus status, MeterDataRow row) {
-        WaterMeterMeasurementCollection data = new WaterMeterMeasurementCollection();
+        try {
+            WaterMeterMeasurementCollection data = new WaterMeterMeasurementCollection();
 
-        data.add(row.timestamp, row.volume, row.difference);
+            data.add(row.timestamp, row.volume, row.difference);
 
-        waterMeterMeasurementRepository.store(row.serial, data);
-
+            waterMeterMeasurementRepository.store(row.serial, data);
+        } catch (Exception ex) {
+            logger.warn(String.format("Failed to import row %s;%d;%f;%f. Reason:\n", row.serial, row.timestamp, row.volume, row.difference), ex);
+            status.ignoreRow();
+        }
         status.processRow();
     }
 

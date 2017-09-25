@@ -10,6 +10,8 @@ public class FileProcessingStatus {
 
     private long skippedRows = 0;
 
+    private long ignoredRows = 0;
+
     private Long minTimestamp;
 
     private Long maxTimestamp;
@@ -44,12 +46,24 @@ public class FileProcessingStatus {
         this.skippedRows = skippedRows;
     }
 
+    public long getIgnoredRows() {
+        return ignoredRows;
+    }
+
+    public void setIgnoredRows(long ignoredRows) {
+        this.ignoredRows = ignoredRows;
+    }
+
     public void processRow() {
         processedRows++;
     }
 
     public void skipRow() {
         skippedRows++;
+    }
+
+    public void ignoreRow() {
+        ignoredRows++;
     }
 
     public Long getMinTimestamp() {

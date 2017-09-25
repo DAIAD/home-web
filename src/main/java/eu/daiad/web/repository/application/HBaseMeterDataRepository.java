@@ -307,7 +307,7 @@ public class HBaseMeterDataRepository extends AbstractHBaseMeterDataRepository i
                 } else {
                     scan.setReversed(true);
                 }
-                scan.setCaching(2);
+                scan.setCaching(4);
                 scanner = table.getScanner(scan);
 
                 int valueCount = 0;
@@ -377,18 +377,12 @@ public class HBaseMeterDataRepository extends AbstractHBaseMeterDataRepository i
                     case 0:
                         // No value found
                         break;
-                    case 1:
-                        status.setTimestamp(value2.getTimestamp());
-                        status.setVolume(value2.getVolume());
-                        status.setVariation(0);
-
-                        data.getDevices().add(status);
                     default:
                         status.setTimestamp(value2.getTimestamp());
                         status.setVolume(value2.getVolume());
-                        status.setVariation(value2.getVolume() - value1.getVolume());
 
                         data.getDevices().add(status);
+                        break;
                 }
             }
 
