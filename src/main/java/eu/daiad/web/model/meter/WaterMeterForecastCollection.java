@@ -14,4 +14,14 @@ public class WaterMeterForecastCollection {
         return measurements;
     }
 
+    public void add(long timestamp, Float difference) {
+        if (measurements == null) {
+            measurements = new ArrayList<WaterMeterForecast>();
+        }
+        WaterMeterForecast m = new WaterMeterForecast();
+        m.setTimestamp(timestamp);
+        m.setDifference(difference);
+        measurements.add(m);
+    }
+
 }

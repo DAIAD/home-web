@@ -456,6 +456,22 @@ public class GroupDataSeries
         return areaId;
     }
 
+    public boolean isEmpty() {
+        return points.isEmpty();
+    }
+
+    public DataPoint getTemporalNearest(long timestamp) {
+        DataPoint result = null;
+        for (DataPoint p : points) {
+            if (result == null) {
+                result = p;
+            } else if (Math.abs(result.getTimestamp() - timestamp) > Math.abs(p.getTimestamp() - timestamp)) {
+                result = p;
+            }
+        }
+        return result;
+    }
+
     public SeriesFacade newFacade()
     {
         return this.new Facade();
