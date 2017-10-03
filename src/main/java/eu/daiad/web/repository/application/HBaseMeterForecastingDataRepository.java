@@ -19,7 +19,6 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
-import org.joda.time.DateTimeZone;
 import org.springframework.stereotype.Repository;
 
 import eu.daiad.web.hbase.EnumHBaseColumnFamily;
@@ -206,43 +205,42 @@ public class HBaseMeterForecastingDataRepository extends AbstractHBaseMeterDataR
             table = connection.getTable(EnumHBaseTable.SWM_FORECAST_TIME.getValue());
             byte[] columnFamily = Bytes.toBytes(EnumHBaseColumnFamily.DEFAULT.getValue());
 
-            DateTime startDate = new DateTime(query.getStartDateTime(), DateTimeZone.UTC);
-            DateTime endDate = new DateTime(query.getEndDateTime(), DateTimeZone.UTC);
+            DateTime startDate = new DateTime(query.getStartDateTime(), query.getTimezone());
+            DateTime endDate = new DateTime(query.getEndDateTime(), query.getTimezone());
 
             switch (query.getGranularity()) {
                 case HOUR:
                     startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(),
-                                    startDate.getDayOfMonth(), startDate.getHourOfDay(), 0, 0, DateTimeZone.UTC);
+                                    startDate.getDayOfMonth(), startDate.getHourOfDay(), 0, 0, query.getTimezone());
                     endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.getDayOfMonth(),
-                                    endDate.getHourOfDay(), 59, 59, DateTimeZone.UTC);
+                                    endDate.getHourOfDay(), 59, 59, query.getTimezone());
                     break;
                 case DAY:
                     startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(),
-                                    startDate.getDayOfMonth(), 0, 0, 0, DateTimeZone.UTC);
+                                    startDate.getDayOfMonth(), 0, 0, 0, query.getTimezone());
                     endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.getDayOfMonth(), 23,
-                                    59, 59, DateTimeZone.UTC);
+                                    59, 59, query.getTimezone());
                     break;
                 case WEEK:
                     DateTime monday = startDate.withDayOfWeek(DateTimeConstants.MONDAY);
                     DateTime sunday = endDate.withDayOfWeek(DateTimeConstants.SUNDAY);
                     startDate = new DateTime(monday.getYear(), monday.getMonthOfYear(), monday.getDayOfMonth(), 0, 0,
-                                    0, DateTimeZone.UTC);
+                                    0, query.getTimezone());
                     endDate = new DateTime(sunday.getYear(), sunday.getMonthOfYear(), sunday.getDayOfMonth(), 23, 59,
-                                    59, DateTimeZone.UTC);
+                                    59, query.getTimezone());
                     break;
                 case MONTH:
                     startDate = new DateTime(startDate.getYear(), startDate.getMonthOfYear(), 1, 0, 0, 0,
-                                    DateTimeZone.UTC);
+                                    query.getTimezone());
                     endDate = new DateTime(endDate.getYear(), endDate.getMonthOfYear(), endDate.dayOfMonth()
-                                    .getMaximumValue(), 23, 59, 59, DateTimeZone.UTC);
+                                    .getMaximumValue(), 23, 59, 59, query.getTimezone());
                     break;
                 case YEAR:
-                    startDate = new DateTime(startDate.getYear(), 1, 1, 0, 0, 0, DateTimeZone.UTC);
-                    endDate = new DateTime(endDate.getYear(), 12, 31, 23, 59, 59, DateTimeZone.UTC);
+                    startDate = new DateTime(startDate.getYear(), 1, 1, 0, 0, 0, query.getTimezone());
+                    endDate = new DateTime(endDate.getYear(), 12, 31, 23, 59, 59, query.getTimezone());
                     break;
                 default:
-                    throw createApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level",
-                                    query.getGranularity());
+                    throw createApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level", query.getGranularity());
             }
 
             for (short p = 0; p < timePartitions; p++) {

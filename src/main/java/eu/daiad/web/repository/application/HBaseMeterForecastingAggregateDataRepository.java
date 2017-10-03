@@ -59,7 +59,6 @@ public class HBaseMeterForecastingAggregateDataRepository  extends AbstractHBase
     public List<GroupDataSeries> forecast(ExpandedDataQuery query) throws ApplicationException {
         Table detailTable = null;
         Table aggregateTable = null;
-
         ResultScanner scanner = null;
 
         List<GroupDataSeries> result = new ArrayList<GroupDataSeries>();
@@ -126,10 +125,10 @@ public class HBaseMeterForecastingAggregateDataRepository  extends AbstractHBase
                 default:
                     throw createApplicationException(DataErrorCode.TIME_GRANULARITY_NOT_SUPPORTED).set("level", query.getGranularity());
             }
-
+            startDate = startDate.millisOfSecond().setCopy(0);
+            endDate = endDate.millisOfSecond().setCopy(0);
             for (ExpandedPopulationFilter filter : query.getGroups()) {
                 GroupDataSeries series = new GroupDataSeries(filter.getLabel(), filter.getSize(), filter.getAreaId());
-
                 if(filter.getType() == EnumPopulationFilterType.USER) {
                     for (int index = 0, count = filter.getSerialHashes().size(); index < count; index++) {
                         Scan scan = new Scan();
@@ -149,7 +148,7 @@ public class HBaseMeterForecastingAggregateDataRepository  extends AbstractHBase
                             Float difference = null;
 
                             for (Entry<byte[], byte[]> entry : map.entrySet()) {
-                                short offset = Bytes.toShort(Arrays.copyOfRange(entry.getKey(), 0, 2));
+                                int offset = Bytes.toInt(Arrays.copyOfRange(entry.getKey(), 0, 4));
                                 long timestamp = ((Long.MAX_VALUE / 1000L) - (timeBucket + (long) offset)) * 1000L;
 
                                 if ((startDate.getMillis() <= timestamp) && (timestamp <= endDate.getMillis())) {
@@ -171,7 +170,6 @@ public class HBaseMeterForecastingAggregateDataRepository  extends AbstractHBase
                                             0,
                                             query.getMetrics(),
                                             query.getTimezone());
-
                                         difference = null;
                                     }
 
@@ -183,6 +181,7 @@ public class HBaseMeterForecastingAggregateDataRepository  extends AbstractHBase
                             scanner = null;
                         }
                     }
+
                     flatProjectSeries(query, filter, series);
                 } else {
                     Scan scan = new Scan();
