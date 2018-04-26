@@ -23,6 +23,8 @@ import org.apache.commons.net.util.Base64;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
+import com.vividsolutions.jts.geom.Geometry;
+
 import eu.daiad.web.model.profile.EnumMobileMode;
 import eu.daiad.web.model.profile.EnumWebMode;
 
@@ -89,6 +91,9 @@ public class UtilityEntity {
 
     @Column(name = "message_generation_enabled")
     private boolean messageGenerationEnabled;
+
+    @Column(name = "geom_center")
+    private Geometry center;
 
     public int getId() {
         return id;
@@ -195,6 +200,14 @@ public class UtilityEntity {
 
     public void setMessageGenerationEnabled(boolean messageGenerationEnabled) {
         this.messageGenerationEnabled = messageGenerationEnabled;
+    }
+
+    public Geometry getCenter() {
+        return center;
+    }
+
+    public void setCenter(Geometry center) {
+        this.center = center;
     }
 
 }

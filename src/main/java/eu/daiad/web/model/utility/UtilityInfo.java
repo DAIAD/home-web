@@ -2,6 +2,8 @@ package eu.daiad.web.model.utility;
 
 import java.util.UUID;
 
+import com.vividsolutions.jts.geom.Geometry;
+
 import eu.daiad.web.domain.application.UtilityEntity;
 
 public class UtilityInfo {
@@ -14,6 +16,7 @@ public class UtilityInfo {
     private String locale;
     private String city;
     private boolean messageGenerationEnabled;
+    private Geometry center;
 
     public UtilityInfo(UtilityEntity utility) {
 
@@ -25,6 +28,7 @@ public class UtilityInfo {
         locale = utility.getLocale();
         city = utility.getCity();
         messageGenerationEnabled = utility.isMessageGenerationEnabled();
+        center = utility.getCenter();
     }
 
     public int getId() {
@@ -61,6 +65,10 @@ public class UtilityInfo {
 
     public boolean isMessageGenerationEnabled() {
         return messageGenerationEnabled;
+    }
+
+    public Geometry getCenter() {
+        return center;
     }
 
 }
