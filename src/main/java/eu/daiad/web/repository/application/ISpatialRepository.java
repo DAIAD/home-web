@@ -7,6 +7,7 @@ import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AreaGroupEntity;
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
+import eu.daiad.web.domain.application.DeviceMeterEntity;
 
 /**
  * Provides methods for accessing application spatial data.
@@ -70,5 +71,13 @@ public interface ISpatialRepository {
      * @return the area or null if it does not exist.
      */
     AreaGroupMemberEntity getAreaByKey(UUID areaKey);
+
+    /**
+     * Returns all meters for a utility given its key.
+     *
+     * @param utilityKey the utility key.
+     * @return a list of {@link DeviceMeterEntity} entities.
+     */
+    List<DeviceMeterEntity> getAllMetersByUtilityId(UUID utilityKey);
 
 }

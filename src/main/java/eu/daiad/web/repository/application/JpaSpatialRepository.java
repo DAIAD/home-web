@@ -214,4 +214,20 @@ public class JpaSpatialRepository extends BaseRepository implements ISpatialRepo
 
         return null;
    }
+
+    /**
+     * Returns all meters for a utility given its key.
+     *
+     * @param utilityKey the utility key.
+     * @return a list of {@link DeviceMeterEntity} entities.
+     */
+    @Override
+    public List<DeviceMeterEntity> getAllMetersByUtilityId(UUID utilityKey) {
+        String meterQueryString = "select d from device_meter d where d.account.utility.key = :utilityKey";
+
+        return entityManager.createQuery(meterQueryString, DeviceMeterEntity.class)
+                     .setParameter("utilityKey", utilityKey)
+                     .getResultList();
+
+    }
 }

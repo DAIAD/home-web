@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 import eu.daiad.web.controller.BaseController;
 import eu.daiad.web.domain.application.AreaGroupEntity;
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
+import eu.daiad.web.domain.application.DeviceMeterEntity;
 import eu.daiad.web.model.RestResponse;
+import eu.daiad.web.model.device.WaterMeterDevice;
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.SharedErrorCode;
 import eu.daiad.web.model.security.AuthenticatedUser;
@@ -26,6 +28,7 @@ import eu.daiad.web.model.spatial.AreaCollectionResponse;
 import eu.daiad.web.model.spatial.AreaGroup;
 import eu.daiad.web.model.spatial.AreaGroupCollectionResponse;
 import eu.daiad.web.model.spatial.AreaResponse;
+import eu.daiad.web.model.spatial.MeterCollectionResponse;
 import eu.daiad.web.repository.application.ISpatialRepository;
 
 /**
@@ -44,6 +47,24 @@ public class SpatialController extends BaseController {
      */
     @Autowired
     private ISpatialRepository spatialRepository;
+
+    /**
+     * Returns all available SWM
+     *
+     * @param authenticatedUser the currently authenticated user.
+     * @return a collection of {@link WaterMeterDevice}.
+     */
+    @RequestMapping(value = "/action/spatial/meters", method = RequestMethod.GET)
+    @Secured({ RoleConstant.ROLE_UTILITY_ADMIN, RoleConstant.ROLE_SYSTEM_ADMIN })
+    public RestResponse getMeters(@AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        try {
+            List<DeviceMeterEntity> meters = spatialRepository.getAllMetersByUtilityId(authenticatedUser.getUtilityKey());
+
+            return new MeterCollectionResponse(meters);
+        } catch (Exception ex) {
+            return handleException(ex);
+        }
+    }
 
     /**
      * Returns all available area groups.

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.vividsolutions.jts.geom.Geometry;
 
+import eu.daiad.web.domain.application.DeviceMeterEntity;
 import eu.daiad.web.model.KeyValuePair;
 
 public class WaterMeterDevice extends Device {
@@ -13,6 +14,14 @@ public class WaterMeterDevice extends Device {
     private String serial;
 
     private Geometry location;
+
+    public WaterMeterDevice(DeviceMeterEntity entity) {
+        this(entity.getId(),
+             entity.getKey(),
+             entity.getSerial(),
+             entity.getLocation(),
+             entity.getRegisteredOn().getMillis());
+    }
 
     public WaterMeterDevice(int id, UUID key, String serial, long registeredOn) {
         super(id, key, registeredOn);
@@ -58,11 +67,11 @@ public class WaterMeterDevice extends Device {
     public DeviceRegistration toDeviceRegistration() {
         WaterMeterDeviceRegistration r = new WaterMeterDeviceRegistration();
 
-        r.setDeviceKey(this.getKey());
-        r.setSerial(this.getSerial());
-        r.setRegisteredOn(this.getRegisteredOn());
+        r.setDeviceKey(getKey());
+        r.setSerial(getSerial());
+        r.setRegisteredOn(getRegisteredOn());
 
-        for (Iterator<KeyValuePair> p = this.getProperties().iterator(); p.hasNext();) {
+        for (Iterator<KeyValuePair> p = getProperties().iterator(); p.hasNext();) {
             KeyValuePair property = p.next();
             r.getProperties().add(new KeyValuePair(property.getKey(), property.getValue()));
         }
