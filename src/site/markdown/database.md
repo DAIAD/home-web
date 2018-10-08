@@ -4,4 +4,4 @@ DAIAD web application requires two databases in order to function properly, one 
 
 The [PostgreSQL](https://www.postgresql.org/) database server version 9.3 is used. Once the databases have been setup and appropriate accounts have been created, the application schema will be automatically populated during the application startup.
 
-The database initialization is performed by [Flyway](https://flywaydb.org/). The database migration scripts can be found in folder [src/main/resources/db/migration](https://github.com/DAIAD/home-web/tree/master/src/main/resources/db/migration). For additional configuration options about database migration see [Configuration](config.html).
+The database initialization is performed by [Flyway](https://flywaydb.org/). The database migration scripts can be found in folder [src/main/resources/db/migration](https://github.com/DAIAD/home-web/tree/master/src/main/resources/db/migration). For additional configuration options about database migration see [Configuration](config.html).  [Configuration](https://github.com/DAIAD/home-web/blob/master/src/site/markdown/config.md).
