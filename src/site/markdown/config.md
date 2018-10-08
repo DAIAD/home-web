@@ -2,9 +2,9 @@
 
 In order to successfully deploy DAIAD web application, a few configuration properties must be set. The application configuration properties are stored in several files. These files must be located in folder `/src/main/resources` during the project building phase.
 
-As a both a convenience and reference an example for each required configuration file can be found in folder [configuration](https://github.com/DAIAD/home-web/tree/master/configuration). Before building the project, the contents of this folder should be copied in `/src/main/resources` and updated appropriately.
+As both a convenience and a reference, an example for each required configuration file can be found in folder [configuration](https://github.com/DAIAD/home-web/tree/master/configuration). Before building the project, the contents of this folder should be copied in `/src/main/resources` and updated appropriately.
 
-Next we present every configuration file along with a short description for all of its properties.
+Next we present every configuration file along with a short description their properties.
 
 # Logging
 
