@@ -689,34 +689,41 @@ form.report-form fieldset {
   font-weight: normal;
 }
 
-.report-form.form-horizontal .dropdown.select-report button > span.text {width: 20em;}
-.report-form.form-horizontal .dropdown.select-report .dropdown-menu {width: 22.8em;}
+.report-form.form-horizontal .Select.select-report {width: 22.8em;}
 
 .report-form.form-horizontal .dropdown.select-level button > span.text {width: 8em;}
 .report-form.form-horizontal .dropdown.select-level .dropdown-menu {width: 9em;}
 
-.report-form.form-inline .dropdown.select-field button > span.text {width: 7em;}
-.report-form.form-horizontal .dropdown.select-field button > span.text {width: 9em;}
+.report-form.form-inline .Select.select-field {width: 9em;}
+.report-form.form-horizontal .Select.select-field {width: 9em;}
 
-.report-form.form-inline .dropdown.select-source button > span.text {width: 7em;}
-.report-form.form-horizontal .dropdown.select-source button > span.text {width: 10em;}
-.report-form.form-horizontal .dropdown.select-source .dropdown-menu {width: 12.8em;}
+.report-form.form-inline .Select.select-source {min-width: 10em;}
+.report-form.form-horizontal .Select.select-source {min-width: 10em;}
+
+.report-form.form-inline .Select.select-timespan {width: 14.6em; display: inline-flex;}
+.report-form.form-horizontal .Select.select-timespan {width: 14.6em; display: inline-flex;}
 
 .report-form.form-inline .dropdown.select-timespan button > span.text {width: 5.5em;}
 .report-form.form-horizontal .dropdown.select-timespan button > span.text {width: 12em;}
 .report-form.form-horizontal .dropdown.select-timespan .dropdown-menu {min-width: 14.6em;}
 .report-form.form-horizontal .dropdown.select-timespan {margin-right: 6px;}
 
+.report-form.form-inline .Select.select-cluster {width: 14.6em; display: inline-flex}
+.report-form.form-horizontal .Select.select-cluster {width: 14.6em; display: inline-flex}
+
 .report-form.form-inline .dropdown.select-cluster button > span.text {width: 7em;}
 .report-form.form-horizontal .dropdown.select-cluster button > span.text {width: 12em;}
 .report-form.form-horizontal .dropdown.select-cluster .dropdown-menu {min-width: 14.6em;}
+
+.report-form.form-inline .Select.select-cluster-group {width: 16.7em; display: inline-flex}
+.report-form.form-horizontal .Select.select-cluster-group {width: 16.7em; display: inline-flex}
 
 .report-form.form-inline .dropdown.select-cluster-group button > span.text {width: 7em;}
 .report-form.form-horizontal .dropdown.select-cluster-group button > span.text {width: 14em;}
 .report-form.form-horizontal .dropdown.select-cluster-group .dropdown-menu {min-width: 16.7em;}
 
-.pilot-reports .report-form.form-inline .dropdown.select-month button > span.text {width: 10em;}
-.pilot-reports .report-form.form-inline .dropdown.select-month .dropdown-menu {width: 12.8em;}
+.pilot-reports .report-form.form-inline .Select.select-month {min-width: 12.8em;}
+
 .pilot-reports .report-form.form-inline .form-group.submit-buttons {float: right;}
 .pilot-reports .report-form.form-inline .form-group:last-child {margin-right: 0px;}
 
