@@ -38,10 +38,8 @@ import eu.daiad.web.repository.application.IUtilityRepository;
 
 @Service
 @ConfigurationProperties(prefix = "daiad.services.consumption-aggregation")
-public class DefaultConsumptionAggregationService
-    implements IConsumptionAggregationService
+public class DefaultConsumptionAggregationService implements IConsumptionAggregationService
 {
-    private static final Log logger = LogFactory.getLog(DefaultConsumptionAggregationService.class);
 
 	@Autowired
 	IGroupRepository groupRepository;
