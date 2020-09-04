@@ -1,15 +1,13 @@
 package eu.daiad.web.service.message.resolvers;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import static eu.daiad.web.model.query.Point.betweenTime;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
-import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
@@ -35,19 +33,16 @@ import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 import eu.daiad.web.model.message.ScoringMessageResolutionStatus;
-import eu.daiad.web.model.message.SimpleMessageResolutionStatus;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
-import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
+import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
-
-import static eu.daiad.web.model.query.Point.betweenTime;
 
 
 @MessageGenerator(period = "P1W", dayOfWeek = EnumDayOfWeek.MONDAY, maxPerWeek = 1)
@@ -59,7 +54,7 @@ public class InsightB1WeeklyConsumption extends AbstractRecommendationResolver
         implements ParameterizedTemplate
     {
         /** A minimum value for weekly volume consumption */
-        private static final String MIN_VALUE = "1E+1"; 
+        private static final String MIN_VALUE = "1E+1";
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -110,7 +105,7 @@ public class InsightB1WeeklyConsumption extends AbstractRecommendationResolver
         @Override
         public EnumRecommendationTemplate getTemplate()
         {
-            boolean incr = (averageValue < currentValue); 
+            boolean incr = (averageValue < currentValue);
             return (deviceType == EnumDeviceType.AMPHIRO)?
                 (incr?
                     EnumRecommendationTemplate.INSIGHT_B1_SHOWER_WEEKLY_CONSUMPTION_INCR:
@@ -127,7 +122,7 @@ public class InsightB1WeeklyConsumption extends AbstractRecommendationResolver
             Map<String, Object> parameters = super.getParameters();
 
             parameters.put("value", currentValue);
-            parameters.put("consumption", currentValue);     
+            parameters.put("consumption", currentValue);
 
             parameters.put("average_value", averageValue);
             parameters.put("average_consumption", averageValue);
@@ -144,37 +139,37 @@ public class InsightB1WeeklyConsumption extends AbstractRecommendationResolver
             return this;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
         final double K = 1.55;  // a threshold (z-score) of significant change
         final double F = 0.60;  // a threshold ratio of non-nulls for collected values
-        
+
         final int N = 12; // number of past weeks to examine
-        final DateTime targetDate = refDate.minusWeeks(1) // target previous week 
+        final DateTime targetDate = refDate.minusWeeks(1) // target previous week
             .withDayOfWeek(DateTimeConstants.MONDAY)
             .withTimeAtStartOfDay();
-        
+
         final double threshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.WEEK);
-        
+
         // Build a common part of a data-service query
 
         DataQuery query;
         DataQueryResponse queryResponse;
         SeriesFacade series;
         Interval interval;
-        
+
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
-        
+
         // Compute for target period
 
         query = queryBuilder
@@ -183,7 +178,7 @@ public class InsightB1WeeklyConsumption extends AbstractRecommendationResolver
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
         interval = query.getTime().asInterval();
-        Double targetValue = (series != null)? 
+        Double targetValue = (series != null)?
             series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
             null;
         if (targetValue == null || targetValue < threshold)
@@ -201,7 +196,7 @@ public class InsightB1WeeklyConsumption extends AbstractRecommendationResolver
             queryResponse = dataService.execute(query);
             series = queryResponse.getFacade(deviceType);
             interval = query.getTime().asInterval();
-            Double val = (series != null)? 
+            Double val = (series != null)?
                 series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
                 null;
             if (val != null)
@@ -226,11 +221,11 @@ public class InsightB1WeeklyConsumption extends AbstractRecommendationResolver
             accountKey, deviceType, Period.weeks(N), targetDate.toString("dd/MM/YYYY"),
             targetValue, averageValue, sd, normValue, score);
 
-        ParameterizedTemplate parameterizedTemplate = 
+        ParameterizedTemplate parameterizedTemplate =
             new Parameters(refDate, deviceType, targetValue, averageValue);
-        MessageResolutionStatus<ParameterizedTemplate> result = 
+        MessageResolutionStatus<ParameterizedTemplate> result =
             new ScoringMessageResolutionStatus<>(score, parameterizedTemplate);
-        
+
         return Collections.singletonList(result);
     }
 }

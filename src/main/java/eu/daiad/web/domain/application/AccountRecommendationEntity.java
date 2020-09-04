@@ -1,10 +1,6 @@
 package eu.daiad.web.domain.application;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -18,7 +14,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -27,12 +22,9 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import eu.daiad.web.domain.attributeconverter.MessageLevelConverter;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.EnumMessageLevel;
-import eu.daiad.web.model.message.Recommendation;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 
 @Entity(name = "account_recommendation")
@@ -84,16 +76,16 @@ public class AccountRecommendationEntity
 	@Enumerated(EnumType.STRING)
 	@NotNull
 	private EnumDeviceType deviceType;
-	
+
 	@ManyToOne()
     @JoinColumn(name = "resolver_execution", nullable = false)
     @NotNull
     private RecommendationResolverExecutionEntity resolverExecution;
-	
+
 	@Column(name = "significant")
 	@Convert(converter = MessageLevelConverter.class)
 	private EnumMessageLevel significant = EnumMessageLevel.NOTIFY;
-	
+
 	public AccountRecommendationEntity() {}
 
     public AccountEntity getAccount()
@@ -111,7 +103,7 @@ public class AccountRecommendationEntity
 		return createdOn;
 	}
 
-	public void setCreatedOn(DateTime createdOn) 
+	public void setCreatedOn(DateTime createdOn)
 	{
 		this.createdOn = createdOn;
 	}
@@ -126,7 +118,7 @@ public class AccountRecommendationEntity
 		this.acknowledgedOn = acknowledgedOn;
 	}
 
-	public int getId() 
+	public int getId()
 	{
 		return id;
 	}
@@ -160,12 +152,12 @@ public class AccountRecommendationEntity
     {
         return resolverExecution.getRefDate();
     }
-    
+
     public String getResolverName()
     {
         return resolverExecution.getResolverName();
     }
-    
+
     public void setResolverExecution(RecommendationResolverExecutionEntity resolverExecution)
     {
         this.resolverExecution = resolverExecution;
@@ -175,7 +167,7 @@ public class AccountRecommendationEntity
     {
         return recommendationTemplate;
     }
-    
+
     public void setTemplate(RecommendationTemplateEntity recommendationTemplate)
     {
         this.recommendationTemplate = recommendationTemplate;
@@ -185,13 +177,13 @@ public class AccountRecommendationEntity
     {
         return parameters;
     }
-    
-    public ParameterizedTemplate getParameterizedTemplate() 
+
+    public ParameterizedTemplate getParameterizedTemplate()
         throws ClassNotFoundException, ClassCastException, IOException
     {
         return (parameters == null)? null : parameters.toParameterizedTemplate();
     }
-    
+
     public void setParameters(ParameterizedTemplate parameterizedTemplate)
     {
         if (parameterizedTemplate == null) {

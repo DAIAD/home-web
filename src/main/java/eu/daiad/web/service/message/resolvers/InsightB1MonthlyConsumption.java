@@ -1,21 +1,18 @@
 package eu.daiad.web.service.message.resolvers;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import static eu.daiad.web.model.query.Point.betweenTime;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
-import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
 import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
-import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -35,19 +31,16 @@ import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 import eu.daiad.web.model.message.ScoringMessageResolutionStatus;
-import eu.daiad.web.model.message.SimpleMessageResolutionStatus;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
-import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
+import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
-
-import static eu.daiad.web.model.query.Point.betweenTime;
 
 
 @MessageGenerator(period = "P1M", dayOfMonth = 2, maxPerMonth = 1)
@@ -59,7 +52,7 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
         implements ParameterizedTemplate
     {
         /** A minimum value for monthly volume consumption */
-        private static final String MIN_VALUE = "5E+1"; 
+        private static final String MIN_VALUE = "5E+1";
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -110,11 +103,11 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
         @Override
         public EnumRecommendationTemplate getTemplate()
         {
-            boolean incr = (averageValue < currentValue); 
-            return (deviceType == EnumDeviceType.AMPHIRO)? 
+            boolean incr = (averageValue < currentValue);
+            return (deviceType == EnumDeviceType.AMPHIRO)?
                 (incr?
                     EnumRecommendationTemplate.INSIGHT_B1_SHOWER_MONTHLY_CONSUMPTION_INCR:
-                    EnumRecommendationTemplate.INSIGHT_B1_SHOWER_MONTHLY_CONSUMPTION_DECR): 
+                    EnumRecommendationTemplate.INSIGHT_B1_SHOWER_MONTHLY_CONSUMPTION_DECR):
                 (incr?
                     EnumRecommendationTemplate.INSIGHT_B1_METER_MONTHLY_CONSUMPTION_INCR:
                     EnumRecommendationTemplate.INSIGHT_B1_METER_MONTHLY_CONSUMPTION_DECR);
@@ -127,7 +120,7 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
             Map<String, Object> parameters = super.getParameters();
 
             parameters.put("value", currentValue);
-            parameters.put("consumption", currentValue);     
+            parameters.put("consumption", currentValue);
 
             parameters.put("average_value", averageValue);
             parameters.put("average_consumption", averageValue);
@@ -144,37 +137,37 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
             return this;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
         final double K = 1.55;  // a threshold (z-score) of significant change
         final double F = 0.60;  // a threshold ratio of non-nulls for collected values
-        
+
         final int N = 4; // number of past months to examine
-        final DateTime targetDate = refDate.minusMonths(1) // target previous month 
+        final DateTime targetDate = refDate.minusMonths(1) // target previous month
             .withDayOfMonth(1)
             .withTimeAtStartOfDay();
 
         final double threshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.MONTH);
-        
+
         // Build a common part of a data-service query
 
         DataQuery query;
         DataQueryResponse queryResponse;
         SeriesFacade series;
         Interval interval;
-        
+
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
-        
+
         // Compute for target period
 
         query = queryBuilder
@@ -183,7 +176,7 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
         interval = query.getTime().asInterval();
-        Double targetValue = (series != null)? 
+        Double targetValue = (series != null)?
             series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
             null;
         if (targetValue == null || targetValue < threshold)
@@ -201,7 +194,7 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
             queryResponse = dataService.execute(query);
             series = queryResponse.getFacade(deviceType);
             interval = query.getTime().asInterval();
-            Double val = (series != null)? 
+            Double val = (series != null)?
                 series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
                 null;
             if (val != null)
@@ -217,9 +210,9 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
             return Collections.emptyList(); // not reliable, consumption is too low
 
         double sd = Math.sqrt(summary.getPopulationVariance());
-        double normValue = 
+        double normValue =
             (sd > 0)? ((targetValue - averageValue) / sd) : Double.POSITIVE_INFINITY;
-        double score = 
+        double score =
             (sd > 0)? (Math.abs(normValue) / (2 * K)) : Double.POSITIVE_INFINITY;
 
         debug(
@@ -228,11 +221,11 @@ public class InsightB1MonthlyConsumption extends AbstractRecommendationResolver
             accountKey, deviceType, Period.months(N), targetDate.toString("dd/MM/YYYY"),
             targetValue, averageValue, sd, normValue, score);
 
-        ParameterizedTemplate parameterizedTemplate = 
+        ParameterizedTemplate parameterizedTemplate =
             new Parameters(refDate, deviceType, targetValue, averageValue);
-        MessageResolutionStatus<ParameterizedTemplate> result = 
+        MessageResolutionStatus<ParameterizedTemplate> result =
             new ScoringMessageResolutionStatus<>(score, parameterizedTemplate);
-        
+
         return Collections.singletonList(result);
     }
 }

@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.collections4.FluentIterable;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -18,7 +17,6 @@ import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 import eu.daiad.web.model.message.Alert.SimpleParameterizedTemplate;
 import eu.daiad.web.model.message.EnumAlertTemplate;
@@ -27,7 +25,6 @@ import eu.daiad.web.model.message.SimpleMessageResolutionStatus;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
-import eu.daiad.web.model.query.EnumDataField;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.Point;
 import eu.daiad.web.model.query.SeriesFacade;
@@ -40,12 +37,12 @@ import eu.daiad.web.service.message.AbstractAlertResolver;
 public class AlertHighTemperature extends AbstractAlertResolver
 {
     public static final double TEMPERATURE_THRESHOLD = 45.0;
-    
+
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
@@ -72,8 +69,8 @@ public class AlertHighTemperature extends AbstractAlertResolver
 
         ParameterizedTemplate parameterizedTemplate = new SimpleParameterizedTemplate(
             refDate, EnumDeviceType.AMPHIRO, EnumAlertTemplate.HIGH_TEMPERATURE);
-        
-        MessageResolutionStatus<ParameterizedTemplate> result = 
+
+        MessageResolutionStatus<ParameterizedTemplate> result =
             new SimpleMessageResolutionStatus<>(parameterizedTemplate);
         return Collections.singletonList(result);
     }

@@ -1,16 +1,12 @@
 package eu.daiad.web.model.message;
 
-import java.nio.charset.Charset;
-
 import org.joda.time.DateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import org.springframework.security.crypto.codec.Base64;
-
 public class Tip extends Message
-{    
+{
     private int index = -1;
 
     private String description;
@@ -46,14 +42,14 @@ public class Tip extends Message
 
     @JsonIgnore
     @Override
-    public EnumMessageType getType() 
+    public EnumMessageType getType()
     {
         return EnumMessageType.TIP;
     }
-    
-    // Todo: replace with getType (only for API compatibility reasons) 
+
+    // Todo: replace with getType (only for API compatibility reasons)
     @JsonProperty("type")
-    public String getTypeAsLegacyName() 
+    public String getTypeAsLegacyName()
     {
         return "RECOMMENDATION_STATIC";
     }
@@ -73,15 +69,15 @@ public class Tip extends Message
     public void setDescription(String description) {
         this.description = description;
     }
-    
+
     @JsonProperty("imageEncoded")
-    public byte[] getImage() 
+    public byte[] getImage()
     {
         return image;
     }
 
     @JsonProperty("imageEncoded")
-    public void setImage(byte[] image) 
+    public void setImage(byte[] image)
     {
         this.image = image;
     }
@@ -109,7 +105,7 @@ public class Tip extends Message
     public void setSource(String source) {
         this.source = source;
     }
-    
+
     @JsonProperty("modifiedOn")
     public Long getModifiedOn() {
         return modifiedOn;

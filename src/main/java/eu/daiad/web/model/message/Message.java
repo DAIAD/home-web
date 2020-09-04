@@ -10,7 +10,6 @@ import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import eu.daiad.web.model.DateFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
 
 public abstract class Message
@@ -43,14 +42,14 @@ public abstract class Message
         {
             this.refDate = new DateTime(refDate);
         }
-        
+
         public void setDeviceType(EnumDeviceType deviceType)
         {
             this.deviceType = deviceType;
         }
 
         protected AbstractParameters() {}
-        
+
         protected AbstractParameters(DateTime refDate, EnumDeviceType deviceType)
         {
             this.refDate = refDate;
@@ -63,13 +62,13 @@ public abstract class Message
         {
             return refDate;
         }
-        
+
         @JsonProperty("refDate")
         public long getRefDateAsInstant()
         {
             return refDate.getMillis();
         }
-        
+
         @Override
         public EnumDeviceType getDeviceType()
         {
@@ -81,11 +80,11 @@ public abstract class Message
         public Map<String, Object> getParameters()
         {
             Map<String, Object> parameters = new HashMap<>();
-            
+
             parameters.put("ref_date", refDate.toDate());
-            
+
             parameters.put("device_type", deviceType);
-            
+
             return parameters;
         }
     }
@@ -113,25 +112,25 @@ public abstract class Message
     {
         this.id = id;
     }
-    
+
     @JsonProperty("id")
     public int getId()
     {
         return id;
     }
-    
+
     @JsonProperty("id")
     public void setId(int id)
     {
         this.id = id;
     }
-    
+
     @JsonProperty("locale")
     public String getLocale()
     {
         return locale;
     }
-    
+
     @JsonProperty("locale")
     public void setLocale(String locale)
     {
@@ -143,13 +142,13 @@ public abstract class Message
     {
         return title;
     }
-    
+
     @JsonProperty("title")
     public void setTitle(String title)
     {
         this.title = title;
     }
-    
+
     @JsonProperty("createdOn")
     public Long getCreatedOn()
     {
@@ -173,7 +172,7 @@ public abstract class Message
     {
         return acknowledgedOn;
     }
-    
+
     @JsonProperty("acknowledgedOn")
     public void setAcknowledgedOn(long acknowledged)
     {

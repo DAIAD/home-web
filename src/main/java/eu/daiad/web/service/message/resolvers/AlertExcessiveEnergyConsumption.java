@@ -3,31 +3,23 @@ package eu.daiad.web.service.message.resolvers;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.math3.stat.descriptive.summary.Sum;
-
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
-import eu.daiad.web.domain.application.AccountEntity;
-import eu.daiad.web.model.ComputedNumber;
 import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 import eu.daiad.web.model.message.Alert.SimpleParameterizedTemplate;
 import eu.daiad.web.model.message.EnumAlertTemplate;
-import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.SimpleMessageResolutionStatus;
 import eu.daiad.web.model.query.DataQuery;
@@ -49,29 +41,29 @@ import eu.daiad.web.service.message.AbstractAlertResolver;
 public class AlertExcessiveEnergyConsumption extends AbstractAlertResolver
 {
     public static final double HIGH_TEMPERATURE_THRESHOLD = 40.0;
-    
-    public static final double HIGH_TEMPERATURE_RATIO_OF_POINTS = 0.75; 
-    
+
+    public static final double HIGH_TEMPERATURE_RATIO_OF_POINTS = 0.75;
+
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Autowired
     IPriceDataService priceData;
 
     @Autowired
     IEnergyCalculator energyCalculator;
-    
+
     @Autowired
     IUserRepository userRepository;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
         DateTime start = refDate.withTimeAtStartOfDay();
-        
+
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .sliding(start, -30, EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
@@ -94,20 +86,20 @@ public class AlertExcessiveEnergyConsumption extends AbstractAlertResolver
 
         if (ratioHigh < HIGH_TEMPERATURE_RATIO_OF_POINTS)
             return Collections.emptyList();
-        
+
         // Consumes excessive energy, estimate annual savings if changes behavior
-        
+
         final int numMonthsPerYear = 12;
         final double pricePerKwh = priceData.getPricePerKwh(utility.getCountry());
         double annualSavings = numMonthsPerYear * pricePerKwh *
             energyCalculator.computeEnergyToRiseTemperature(2.0, monthlyConsumption);
-        
-        ParameterizedTemplate parameterizedTemplate = 
+
+        ParameterizedTemplate parameterizedTemplate =
             new SimpleParameterizedTemplate(
                 refDate, EnumDeviceType.AMPHIRO, EnumAlertTemplate.TOO_MUCH_ENERGY)
             .withMoney1(annualSavings);
-        
-        MessageResolutionStatus<ParameterizedTemplate> result = 
+
+        MessageResolutionStatus<ParameterizedTemplate> result =
             new SimpleMessageResolutionStatus<>(parameterizedTemplate);
         return Collections.singletonList(result);
     }

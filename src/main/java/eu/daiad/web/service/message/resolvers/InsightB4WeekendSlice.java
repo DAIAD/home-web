@@ -5,7 +5,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.validation.constraints.DecimalMin;
@@ -16,8 +15,6 @@ import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
-import org.joda.time.Interval;
-import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -39,9 +36,9 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
+import eu.daiad.web.model.query.EnumMeasurementDataSource;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.Point;
-import eu.daiad.web.model.query.EnumMeasurementDataSource;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
@@ -56,11 +53,11 @@ public class InsightB4WeekendSlice extends AbstractRecommendationResolver
         implements ParameterizedTemplate
     {
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-1"; 
+        private static final String MIN_VALUE = "1E-1";
 
         @NotNull
         @DecimalMin(MIN_VALUE)
-        private Double weekdayValue;        
+        private Double weekdayValue;
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -114,7 +111,7 @@ public class InsightB4WeekendSlice extends AbstractRecommendationResolver
                     EnumRecommendationTemplate.INSIGHT_B4_SHOWER_LESS_ON_WEEKEND):
                 (more?
                     EnumRecommendationTemplate.INSIGHT_B4_METER_MORE_ON_WEEKEND:
-                    EnumRecommendationTemplate.INSIGHT_B4_METER_LESS_ON_WEEKEND);    
+                    EnumRecommendationTemplate.INSIGHT_B4_METER_LESS_ON_WEEKEND);
         }
 
         @JsonIgnore
@@ -138,10 +135,10 @@ public class InsightB4WeekendSlice extends AbstractRecommendationResolver
             return this;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
@@ -153,7 +150,7 @@ public class InsightB4WeekendSlice extends AbstractRecommendationResolver
         final DateTimeZone tz = refDate.getZone();
         final int N = 8; // number of weeks to examine
         final double dailyThreshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);
-        
+
         // Build a common part of a data-service query
 
         DataQuery query;
@@ -165,13 +162,13 @@ public class InsightB4WeekendSlice extends AbstractRecommendationResolver
             .user("user", accountKey)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
-        
+
         // Initialize sums for working/weekend days
 
         Map<EnumDayOfWeek.Type, Sum> sumPerType = new EnumMap<>(EnumDayOfWeek.Type.class);
         sumPerType.put(EnumDayOfWeek.Type.WEEKDAY, new Sum());
         sumPerType.put(EnumDayOfWeek.Type.WEEKEND, new Sum());
-        
+
         // Fetch data for N past weeks
 
         DateTime start = targetDate.plusWeeks(1);
@@ -197,7 +194,7 @@ public class InsightB4WeekendSlice extends AbstractRecommendationResolver
                 sumPerType.get(day.getType()).increment(value);
             }
         }
-        
+
         // Do we have sufficient data?
 
         Sum weekdaySum = sumPerType.get(EnumDayOfWeek.Type.WEEKDAY);
@@ -206,7 +203,7 @@ public class InsightB4WeekendSlice extends AbstractRecommendationResolver
         final int N1 = (int) (N * F);
         if (weekdaySum.getN() < 5 * N1 || weekendSum.getN() < 2 * N1)
             return Collections.emptyList();
-        
+
         // Compute average for each type (working/weekend) day
 
         double weekdayAverage = weekdaySum.getResult() / weekdaySum.getN();
@@ -219,12 +216,12 @@ public class InsightB4WeekendSlice extends AbstractRecommendationResolver
                 "weekday-average=%.2f weekend-average=%.2f",
              accountKey, deviceType, N, targetDate.plusWeeks(1).toString("dd/MM/YYYY"),
              weekdayAverage, weekendAverage);
-        
+
         ParameterizedTemplate parameterizedTemplate =
             new Parameters(refDate, deviceType, weekdayAverage, weekendAverage);
         MessageResolutionStatus<ParameterizedTemplate> result =
             new SimpleMessageResolutionStatus<>(true, parameterizedTemplate);
-        
+
         return Collections.singletonList(result);
     }
 

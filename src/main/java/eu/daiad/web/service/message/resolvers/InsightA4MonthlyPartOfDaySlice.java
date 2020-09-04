@@ -1,12 +1,6 @@
 package eu.daiad.web.service.message.resolvers;
 
-import java.util.List;
-import java.util.UUID;
-
-import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.MessageResolutionStatus;
-import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
-import eu.daiad.web.service.message.AbstractRecommendationResolver;
+import static eu.daiad.web.model.query.Point.betweenTime;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -25,7 +19,6 @@ import javax.validation.constraints.Size;
 import org.apache.commons.lang.mutable.MutableDouble;
 import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
 import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -35,12 +28,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
-import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumPartOfDay;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.EnumMessageLevel;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
@@ -50,26 +41,24 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
-import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
+import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
-
-import static eu.daiad.web.model.query.Point.betweenTime;
 
 
 @MessageGenerator(period = "P1M", dayOfMonth = 2, maxPerMonth = 1)
 @Component
 @Scope("prototype")
 public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolver
-{  
+{
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
         /** A minimum value for monthly volume consumption */
-        private static final String MIN_VALUE = "5E+1"; 
+        private static final String MIN_VALUE = "5E+1";
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -107,7 +96,7 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
         {
             setPartsFromNumbers(partialValues);
         }
-        
+
         private <N extends Number> void setPartsFromNumbers(Map<EnumPartOfDay, N> partialValues)
         {
             for (EnumPartOfDay p: partialValues.keySet()) {
@@ -119,7 +108,7 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
 
         @JsonProperty("parts")
         public Map<EnumPartOfDay, Double> getParts()
-        {            
+        {
             return parts;
         }
 
@@ -129,7 +118,7 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
         {
             return EnumSet.complementOf(EnumSet.copyOf(parts.keySet()));
         }
-        
+
         @NotNull
         @DecimalMax("1E-2")
         @JsonIgnore
@@ -146,7 +135,7 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
         public Double getPart(EnumPartOfDay partOfDay)
         {
             Number n = parts.get(partOfDay);
-            return (n == null)? null : n.doubleValue();    
+            return (n == null)? null : n.doubleValue();
         }
 
         public Parameters withPart(EnumPartOfDay partOfDay, double value)
@@ -167,7 +156,7 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
         {
             EnumRecommendationTemplate t = null;
 
-            double y1 = parts.get(EnumPartOfDay.MORNING).doubleValue(); 
+            double y1 = parts.get(EnumPartOfDay.MORNING).doubleValue();
             double y2 = parts.get(EnumPartOfDay.AFTERNOON).doubleValue();
             double y3 = parts.get(EnumPartOfDay.NIGHT).doubleValue();
 
@@ -204,16 +193,16 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
             Map<String, Object> parameters = super.getParameters();
 
             parameters.put("value", totalValue);
-            parameters.put("consumption", totalValue); 
+            parameters.put("consumption", totalValue);
 
-            double y1 = parts.get(EnumPartOfDay.MORNING).doubleValue(); 
+            double y1 = parts.get(EnumPartOfDay.MORNING).doubleValue();
             double y2 = parts.get(EnumPartOfDay.AFTERNOON).doubleValue();
             double y3 = parts.get(EnumPartOfDay.NIGHT).doubleValue();
-            
+
             Double p1 = 100.0 * (y1 / totalValue);
             Double p2 = 100.0 * (y2 / totalValue);
             Double p3 = 100.0 * (y3 / totalValue);
-            
+
             parameters.put("morning_consumption", y1);
             parameters.put("morning_percentage", Integer.valueOf(p1.intValue()));
 
@@ -232,7 +221,7 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
             return this;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
 
@@ -242,7 +231,7 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
     {
         final double dailyThreshold = 0.8 * config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);
         final int N  = 18; // a threshold for number of days used
-        
+
         // Build a common part of a data-service query
 
         DataQuery query;
@@ -254,18 +243,18 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
             .user("user", accountKey)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
-        
+
         DateTime end = refDate.withDayOfMonth(1).withTimeAtStartOfDay();
         DateTime start = end.minusMonths(1);
-       
+
         // Initialize partial sums for each part-of-day
-        
+
         EnumMap<EnumPartOfDay, MutableDouble> sumPerPart = new EnumMap<>(EnumPartOfDay.class);
         for (EnumPartOfDay partOfDay: EnumPartOfDay.values())
             sumPerPart.put(partOfDay, new MutableDouble(.0));
-        
+
         // Compute for each day
-        
+
         double consumption = .0;
         int n = 0;
         for (DateTime target = start; target.isBefore(end); target = target.plusDays(1)) {
@@ -280,7 +269,7 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
                     .build();
                 queryResponse = dataService.execute(query);
                 series = queryResponse.getFacade(deviceType);
-                Double y = (series != null)? 
+                Double y = (series != null)?
                     series.aggregate(
                         EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(r), new Sum()):
                     null;
@@ -299,12 +288,12 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
             n++;
             consumption += dailyConsumption;
         }
-        
+
         if (n < N)
             return Collections.emptyList(); // too few days with significant consumption
-        
+
         // We have sufficient data
-        
+
         debug(
             "%s/%s: Consumption for P1M to %s: %.2f: " +
                 "morning=%.2f%% afternoon=%.2f%% night=%.2f%%",
@@ -312,12 +301,12 @@ public class InsightA4MonthlyPartOfDaySlice extends AbstractRecommendationResolv
              100 * sumPerPart.get(EnumPartOfDay.MORNING).doubleValue() / consumption,
              100 * sumPerPart.get(EnumPartOfDay.AFTERNOON).doubleValue() / consumption,
              100 * sumPerPart.get(EnumPartOfDay.NIGHT).doubleValue() / consumption);
-        
+
         ParameterizedTemplate parameterizedTemplate = new Parameters(
                 refDate, deviceType, consumption)
             .withParts(sumPerPart);
-        
-        MessageResolutionStatus<ParameterizedTemplate> result = 
+
+        MessageResolutionStatus<ParameterizedTemplate> result =
             new SimpleMessageResolutionStatus<>(parameterizedTemplate);
         return Collections.singletonList(result);
     }

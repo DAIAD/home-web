@@ -1,7 +1,5 @@
 package eu.daiad.web.domain.application;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -17,14 +15,14 @@ public class AlertCodeEntity
 {
     @Id()
     private String code;
-    
+
     @ManyToOne()
     @JoinColumn(name = "type", nullable = false, updatable = false)
     @NotNull
     private AlertTypeEntity type;
-    
+
     private AlertCodeEntity() {}
-    
+ 
     public AlertCodeEntity(AlertCode code, AlertTypeEntity typeEntity)
     {
         this.code = code.toString();

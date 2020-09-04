@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.EnumTimeAggregation;
-import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.Message;
@@ -50,13 +49,13 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @Scope("prototype")
 public class RecommendShampooChange extends AbstractRecommendationResolver
 {
-    public static final double VOLUME_HIGH_RATIO = 1.10; 
-    
+    public static final double VOLUME_HIGH_RATIO = 1.10;
+
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
 
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
-    { 
+    {
         @NotNull
         @DecimalMin("1E+1")
         private Double userAverageConsumption;
@@ -64,7 +63,7 @@ public class RecommendShampooChange extends AbstractRecommendationResolver
         @NotNull
         @DecimalMin("1E+1")
         private Double averageConsumption;
-        
+
         public Parameters()
         {}
 
@@ -84,13 +83,13 @@ public class RecommendShampooChange extends AbstractRecommendationResolver
         {
             this.userAverageConsumption = userAverageConsumption;
         }
-        
+
         public Parameters withUserAverageConsumption(double userAverageConsumption)
         {
             this.userAverageConsumption = userAverageConsumption;
             return this;
         }
-        
+
         @JsonProperty("averageConsumption")
         public Double getAverageConsumption()
         {
@@ -102,35 +101,35 @@ public class RecommendShampooChange extends AbstractRecommendationResolver
         {
             this.averageConsumption = averageConsumption;
         }
-        
+
         public Parameters withAverageConsumption(double averageConsumption)
         {
             this.averageConsumption = averageConsumption;
             return this;
         }
-        
+
         @Override
         public Parameters withLocale(Locale target, ICurrencyRateService currencyRate)
         {
             return this;
         }
-        
+
         @Override
         @JsonIgnore
         public Map<String, Object> getParameters()
         {
             Map<String, Object> parameters = super.getParameters();
-           
+
             parameters.put("user_average_consumption", userAverageConsumption);
-            
+
             parameters.put("average_consumption", averageConsumption);
-            
+
             parameters.put("percent_above_consumption", Double.valueOf(
                 100.0 * (userAverageConsumption - averageConsumption) / averageConsumption));
-            
+
             return parameters;
         }
-        
+
         @Override
         @JsonIgnore
         public EnumRecommendationTemplate getTemplate()
@@ -141,24 +140,24 @@ public class RecommendShampooChange extends AbstractRecommendationResolver
 
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
         Assert.state(deviceType == EnumDeviceType.AMPHIRO);
-        
+
         final int N = 3; // number of months to examine
-        final Period period = Period.months(N); 
+        final Period period = Period.months(N);
         final EnumTimeAggregation granularity = EnumTimeAggregation.MONTH;
         final DateTime end = refDate.withDayOfMonth(1).withTimeAtStartOfDay();
-        
+
         Double averageConsumption = statisticsService.getNumber(
                 end, period, EnumMeasurementField.AMPHIRO_VOLUME, EnumStatistic.AVERAGE_PER_USER)
             .getValue();
         if (averageConsumption == null)
             return Collections.emptyList();
-        
+
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
@@ -179,14 +178,14 @@ public class RecommendShampooChange extends AbstractRecommendationResolver
         if (userConsumption != null && userConsumption > averageConsumption * VOLUME_HIGH_RATIO) {
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType)
                 .withAverageConsumption(averageConsumption)
-                .withUserAverageConsumption(userConsumption);          
-            MessageResolutionStatus<ParameterizedTemplate> result = 
+                .withUserAverageConsumption(userConsumption);
+            MessageResolutionStatus<ParameterizedTemplate> result =
                 new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         }
         return Collections.emptyList();
     }
-    
+
     @Override
     public Set<EnumDeviceType> getSupportedDevices()
     {

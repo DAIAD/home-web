@@ -1,26 +1,22 @@
 package eu.daiad.web.service.message.resolvers;
 
+import static eu.daiad.web.model.query.Point.betweenTime;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
-import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.collections4.FluentIterable;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
-import org.joda.time.Interval;
-import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -33,7 +29,6 @@ import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.EnumMessageLevel;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
@@ -43,15 +38,13 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
+import eu.daiad.web.model.query.EnumMeasurementDataSource;
 import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.Point;
-import eu.daiad.web.model.query.EnumMeasurementDataSource;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
-
-import static eu.daiad.web.model.query.Point.betweenTime;
 
 
 @MessageGenerator(period = "P2W", dayOfWeek = EnumDayOfWeek.MONDAY, maxPerWeek = 1)
@@ -61,9 +54,9 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
 {
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
-    {        
+    {
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E+0"; 
+        private static final String MIN_VALUE = "1E+0";
 
         /** The average daily consumption for the particular day-of-week */
         @NotNull
@@ -77,7 +70,7 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
 
         /** The day of week for this consumption peak (high or low) */
         @NotNull
-        private EnumDayOfWeek dayOfWeek; 
+        private EnumDayOfWeek dayOfWeek;
 
         public Parameters()
         {
@@ -85,7 +78,7 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
         }
 
         public Parameters(
-            DateTime refDate, EnumDeviceType deviceType, 
+            DateTime refDate, EnumDeviceType deviceType,
             double currentValue, double averageValue, EnumDayOfWeek dayOfWeek)
         {
             super(refDate, deviceType);
@@ -151,7 +144,7 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
             Map<String, Object> parameters = super.getParameters();
 
             parameters.put("value", currentValue);
-            parameters.put("consumption", currentValue);     
+            parameters.put("consumption", currentValue);
 
             parameters.put("average_value", averageValue);
             parameters.put("average_consumption", averageValue);
@@ -172,10 +165,10 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
             return this;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
@@ -185,7 +178,7 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
         final DateTimeZone tz = refDate.getZone();
         final int N = 9; // number of weeks to examine
         final double dailyThreshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);
-        
+
         // Build a common part of a data-service query
 
         DataQuery query;
@@ -197,14 +190,14 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
             .user("user", accountKey)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
-        
+
         // Initialize sums for each day of week, and sum for all days
 
         Map<EnumDayOfWeek, Sum> sumPerDay = new EnumMap<>(EnumDayOfWeek.class);
         for (EnumDayOfWeek day: EnumDayOfWeek.values())
             sumPerDay.put(day, new Sum());
         Sum sum = new Sum();
-        
+
         // Fetch data for N past weeks
 
         DateTime start = targetDate.plusWeeks(1);
@@ -231,7 +224,7 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
                 sum.increment(value);
             }
         }
-        
+
         // Do we have sufficient data for each day?
 
         boolean sufficient = true;
@@ -242,7 +235,7 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
             }
         if (!sufficient)
             return Collections.emptyList();
-        
+
         // Compute average daily consumption for each day-of-week; Find peak days
 
         double minOfDay = Double.POSITIVE_INFINITY, maxOfDay = Double.NEGATIVE_INFINITY;
@@ -262,7 +255,7 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
 
         if (maxOfDay < dailyThreshold)
             return Collections.emptyList(); // not reliable; overall consumption is too low
-     
+
         // Compute average daily consumption for all days
 
         double avg = sum.getResult() / sum.getN();
@@ -275,11 +268,11 @@ public class InsightB3DayOfWeekExtrema extends AbstractRecommendationResolver
              accountKey, deviceType, N, targetDate.plusWeeks(1).toString("dd/MM/YYYY"),
              minOfDay, dayMin, maxOfDay, dayMax, avg);
 
-        ParameterizedTemplate p1 = 
+        ParameterizedTemplate p1 =
             new Parameters(refDate, deviceType, minOfDay, avg, dayMin);
         ParameterizedTemplate p2 =
             new Parameters(refDate, deviceType, maxOfDay, avg, dayMax);
-        
+
         return Arrays.<MessageResolutionStatus<ParameterizedTemplate>>asList(
             new SimpleMessageResolutionStatus<>(p1),
             new SimpleMessageResolutionStatus<>(p2)

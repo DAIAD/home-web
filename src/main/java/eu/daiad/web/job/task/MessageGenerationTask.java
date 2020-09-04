@@ -1,14 +1,14 @@
 package eu.daiad.web.job.task;
 
+import static eu.daiad.web.model.device.EnumDeviceType.AMPHIRO;
+import static eu.daiad.web.model.device.EnumDeviceType.METER;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.commons.collections4.FluentIterable;
-import org.apache.commons.collections4.IterableUtils;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -23,14 +23,9 @@ import org.springframework.stereotype.Component;
 
 import eu.daiad.web.job.builder.MessageGeneratorJobBuilder;
 import eu.daiad.web.model.EnumTimeUnit;
-import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.service.message.IMessageGeneratorService;
-
-import static eu.daiad.web.model.device.EnumDeviceType.METER;
-import static eu.daiad.web.model.device.EnumDeviceType.AMPHIRO;
-
 
 /**
  * Task for generating reports
@@ -59,12 +54,12 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
         try {
             Map<EnumParameter, String> parameters = getParameters(chunkContext.getStepContext());
-            
+
             LocalDateTime refDate = parameters.containsKey(EnumParameter.REFERENCE_DATETIME)?
                 LocalDateTime.parse(parameters.get(EnumParameter.REFERENCE_DATETIME)) :
                 LocalDateTime.now().minusDays(1);
-           
-            eu.daiad.web.service.message.Configuration config = 
+
+            eu.daiad.web.service.message.Configuration config =
                     new eu.daiad.web.service.message.Configuration();
             config.setOnDemandExecution(true);
 
@@ -73,33 +68,33 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
                 config.setTipPeriod(Integer.parseInt(tipInterval));
 
             String budget = null;
-            
+
             budget = parameters.get(EnumParameter.METER_DAILY_BUDGET);
             if (!StringUtils.isBlank(budget))
                 config.setBudget(METER, EnumTimeUnit.DAY, Integer.parseInt(budget));
-            
+
             budget = parameters.get(EnumParameter.METER_WEEKLY_BUDGET);
             if (!StringUtils.isBlank(budget))
                 config.setBudget(METER, EnumTimeUnit.WEEK, Integer.parseInt(budget));
-            
+
             budget = parameters.get(EnumParameter.METER_MONTHLY_BUDGET);
             if (!StringUtils.isBlank(budget))
                 config.setBudget(METER, EnumTimeUnit.MONTH, Integer.parseInt(budget));
-            
+
             budget = parameters.get(EnumParameter.AMPHIRO_DAILY_BUDGET);
             if (!StringUtils.isBlank(budget))
                 config.setBudget(AMPHIRO, EnumTimeUnit.DAY, Integer.parseInt(budget));
-            
+
             budget = parameters.get(EnumParameter.AMPHIRO_WEEKLY_BUDGET);
             if (!StringUtils.isBlank(budget))
                 config.setBudget(AMPHIRO, EnumTimeUnit.WEEK, Integer.parseInt(budget));
-            
+
             budget = parameters.get(EnumParameter.AMPHIRO_MONTHLY_BUDGET);
             if (!StringUtils.isBlank(budget))
                 config.setBudget(AMPHIRO, EnumTimeUnit.MONTH, Integer.parseInt(budget));
-            
+
             // Generate messages
-            
+
             String accountKeys = parameters.get(EnumParameter.RUN_FOR_ACCOUNT);
             String utilityKeys = parameters.get(EnumParameter.RUN_FOR_UTILITY);
 
@@ -119,7 +114,7 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
                     }
                 }
             }
-            
+
             if (!StringUtils.isBlank(utilityKeys) && !utilityKeys.equals("-")) {
                 for(String key : StringUtils.split(utilityKeys, ",")) {
                     messageGeneratorService.executeUtility(refDate, config, UUID.fromString(key));
@@ -142,7 +137,7 @@ public class MessageGenerationTask extends BaseTask implements StoppableTasklet 
         }
         return parameters;
     }
-    
+
     @Override
     public void stop() {
         // TODO: Add business logic for stopping processing

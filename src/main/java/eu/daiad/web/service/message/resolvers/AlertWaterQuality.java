@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.collections4.FluentIterable;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -16,7 +15,6 @@ import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 import eu.daiad.web.model.message.Alert.SimpleParameterizedTemplate;
 import eu.daiad.web.model.message.EnumAlertTemplate;
@@ -38,12 +36,12 @@ import eu.daiad.web.service.message.AbstractAlertResolver;
 public class AlertWaterQuality extends AbstractAlertResolver
 {
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.METER);
-    
+
     @Autowired
     IDataService dataService;
-    
+
     // Fixme : This alert is appears repeatedly if user has not used any water
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
@@ -72,13 +70,13 @@ public class AlertWaterQuality extends AbstractAlertResolver
 
         ParameterizedTemplate parameterizedTemplate = new SimpleParameterizedTemplate(
             refDate, EnumDeviceType.METER, EnumAlertTemplate.WATER_QUALITY);
-        
-        MessageResolutionStatus<ParameterizedTemplate> result = 
+
+        MessageResolutionStatus<ParameterizedTemplate> result =
             new SimpleMessageResolutionStatus<>(parameterizedTemplate);
-        
+
         return Collections.singletonList(result);
     }
-    
+
     @Override
     public Set<EnumDeviceType> getSupportedDevices()
     {

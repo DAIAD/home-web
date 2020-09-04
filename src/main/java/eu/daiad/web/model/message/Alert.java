@@ -1,7 +1,6 @@
 package eu.daiad.web.model.message;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -13,9 +12,7 @@ import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import eu.daiad.web.model.NumberFormatter;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 import eu.daiad.web.service.ICurrencyRateService;
 
 public class Alert extends Message
@@ -26,21 +23,21 @@ public class Alert extends Message
          * Return the template to be used for this alert.
          */
         public EnumAlertTemplate getTemplate();
-        
+
         /**
          * Convert any locale-sensitive parameters inside this template.
          *
          * @param target The target locale
          * @param currencyRate A service providing currency-rate information in case a
-         *    parameter represents a money amounts (and must be converted) 
+         *    parameter represents a money amounts (and must be converted)
          * @return a localized {@link ParameterizedTemplate}
          */
         public ParameterizedTemplate withLocale(Locale target, ICurrencyRateService currencyRate);
     }
-    
+
     /**
      * A simple and logic-less implementation for {@link ParameterizedTemplate} using anonymous
-     * parameters. 
+     * parameters.
      */
     public static class SimpleParameterizedTemplate extends Message.AbstractParameters
         implements ParameterizedTemplate
@@ -49,7 +46,7 @@ public class Alert extends Message
         EnumAlertTemplate alertTemplate;
 
         // Provide some common parameters
-        
+
         private Integer integer1;
 
         private Integer integer2;
@@ -87,25 +84,25 @@ public class Alert extends Message
         {
             this.integer1 = n;
         }
-        
+
         @JsonProperty("integer2")
         public Integer getInteger2()
         {
             return integer2;
         }
-        
+
         public SimpleParameterizedTemplate withInteger2(Integer integer2)
         {
             this.integer2 = integer2;
             return this;
         }
-        
+
         @JsonProperty("integer2")
         public void setInteger2(Integer n)
         {
             this.integer2 = n;
         }
-        
+
         @JsonProperty("money1")
         public BigDecimal getMoney1()
         {
@@ -117,25 +114,25 @@ public class Alert extends Message
             setMoney1(y);
             return this;
         }
-        
+
         public SimpleParameterizedTemplate withMoney1(Double y)
         {
             setMoney1(y);
             return this;
         }
-        
+
         @JsonProperty("money1")
         public void setMoney1(BigDecimal y)
         {
             this.money1 = y;
         }
-        
+
         @JsonIgnore
         public void setMoney1(double y)
         {
             this.money1 = new BigDecimal(y);
         }
-           
+
         @JsonProperty("money2")
         public BigDecimal getMoney2()
         {
@@ -147,25 +144,25 @@ public class Alert extends Message
             setMoney2(y);
             return this;
         }
-        
+
         public SimpleParameterizedTemplate withMoney2(Double y)
         {
             setMoney2(y);
             return this;
-        }       
-        
+        }
+
         @JsonProperty("money2")
         public void setMoney2(BigDecimal y)
         {
             this.money2 = y;
         }
-        
+
         @JsonIgnore
         public void setMoney2(double y)
         {
             this.money2 = new BigDecimal(y);
         }
-        
+
         @JsonIgnore
         @Override
         public Map<String, Object> getParameters()
@@ -190,29 +187,29 @@ public class Alert extends Message
         {
             alertTemplate = template;
         }
-        
+
         @JsonProperty("template")
         @Override
         public EnumAlertTemplate getTemplate()
         {
             return alertTemplate;
         }
-        
+
         @Override
         public SimpleParameterizedTemplate withLocale(Locale target, ICurrencyRateService currencyRate)
         {
             // Convert {money1, money2} using currency-rate service
-            
+
             BigDecimal rate = currencyRate.getRate(Locale.getDefault(), target);
-            
+
             if (money1 != null)
                 money1 = money1.multiply(rate);
-            
+
             if (money2 != null)
                 money2 = money2.multiply(rate);
-            
+
             return this;
-        }    
+        }
     }
 
     protected int priority;
@@ -222,9 +219,9 @@ public class Alert extends Message
     private final EnumAlertTemplate alertTemplate;
 
     private Long refDate;
-    
+
     private EnumDeviceType deviceType;
-    
+
 	private String description;
 
 	private String link;
@@ -301,13 +298,13 @@ public class Alert extends Message
     {
         this.refDate = refDate;
     }
-    
+
     @JsonIgnore
     public void setRefDate(DateTime refDate)
     {
         this.refDate = refDate.getMillis();
     }
-    
+
     @JsonProperty("alertCode")
     public String getAlertCode()
     {

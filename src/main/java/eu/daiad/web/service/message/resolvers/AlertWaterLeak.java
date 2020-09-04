@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.collections4.FluentIterable;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -17,7 +16,6 @@ import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 import eu.daiad.web.model.message.Alert.SimpleParameterizedTemplate;
 import eu.daiad.web.model.message.EnumAlertTemplate;
@@ -39,12 +37,12 @@ import eu.daiad.web.service.message.AbstractAlertResolver;
 public class AlertWaterLeak extends AbstractAlertResolver
 {
     public static final double VOLUME_THRESHOLD_PER_HOUR = 2.0; // lt
-    
+
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.METER);
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
@@ -71,8 +69,8 @@ public class AlertWaterLeak extends AbstractAlertResolver
 
         ParameterizedTemplate parameterizedTemplate = new SimpleParameterizedTemplate(
             refDate, EnumDeviceType.METER, EnumAlertTemplate.WATER_LEAK);
-        
-        MessageResolutionStatus<ParameterizedTemplate> result = 
+
+        MessageResolutionStatus<ParameterizedTemplate> result =
             new SimpleMessageResolutionStatus<>(parameterizedTemplate);
         return Collections.singletonList(result);
     }

@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.EnumTimeAggregation;
-import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.Message;
@@ -54,7 +53,7 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
 
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
-    { 
+    {
         @NotNull
         @DecimalMin("1E+0")
         private Double userAverageConsumptionPerSession;
@@ -62,11 +61,11 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
         @NotNull
         @DecimalMin("1E+0")
         private Double averageConsumptionPerSession;
-        
+
         @NotNull
         @DecimalMin("1E+2")
         private Integer annualSavings;
-        
+
         public Parameters()
         {}
 
@@ -80,7 +79,7 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
         {
             return this;
         }
-        
+
         @JsonProperty("userAverageConsumptionPerSession")
         public Double getUserAverageConsumptionPerSession()
         {
@@ -93,7 +92,7 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
         {
             this.userAverageConsumptionPerSession = userAverageConsumptionPerSession;
         }
-        
+
         public Parameters withUserAverageConsumptionPerSession(double userAverageConsumptionPerSession)
         {
             this.userAverageConsumptionPerSession = userAverageConsumptionPerSession;
@@ -117,13 +116,13 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
             this.averageConsumptionPerSession = averageConsumptionPerSession;
             return this;
         }
-        
+
         @JsonProperty("annualSavings")
         public Integer getAnnualSavings()
         {
             return annualSavings;
         }
-        
+
         @JsonProperty("annualSavings")
         public void setAnnualSavings(int annualSavings)
         {
@@ -135,22 +134,22 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
             this.annualSavings = annualSavings;
             return this;
         }
-        
+
         @Override
         @JsonIgnore
         public Map<String, Object> getParameters()
         {
             Map<String, Object> parameters = super.getParameters();
-           
+
             parameters.put("user_average_consumption_per_session", userAverageConsumptionPerSession);
-            
+
             parameters.put("average_consumption_per_pession", averageConsumptionPerSession);
-            
+
             parameters.put("annual_savings", annualSavings);
-            
+
             return parameters;
         }
-        
+
         @Override
         @JsonIgnore
         public EnumRecommendationTemplate getTemplate()
@@ -158,28 +157,28 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
             return EnumRecommendationTemplate.REDUCE_FLOW_WHEN_NOT_NEEDED;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
         Assert.state(deviceType == EnumDeviceType.AMPHIRO);
-        
+
         final int N = 3; // number of months to examine
         final Period period = Period.months(N);
         final EnumTimeAggregation granularity = EnumTimeAggregation.MONTH;
         final DateTime end = refDate.withDayOfMonth(1).withTimeAtStartOfDay();
-        
+
         Double averagePerSessionConsumption = statisticsService.getNumber(
                 end, period, EnumMeasurementField.AMPHIRO_VOLUME, EnumStatistic.AVERAGE_PER_SESSION)
             .getValue();
-        
+
         if (averagePerSessionConsumption == null)
             return Collections.emptyList();
-        
+
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
@@ -201,7 +200,7 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
             EnumDataField.VOLUME, EnumMetric.COUNT, Point.betweenTime(interval), new Sum());
         if (userConsumption == null || userNumberOfSessions == null)
             return Collections.emptyList();
-        
+
         double userAveragePerSessionConsumption = userConsumption / userNumberOfSessions;
         if (userAveragePerSessionConsumption > averagePerSessionConsumption) {
             // Todo - Calculate the number of sessions per year when available
@@ -213,14 +212,14 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
                 .withAverageConsumptionPerSession(averagePerSessionConsumption)
                 .withUserAverageConsumptionPerSession(userAveragePerSessionConsumption)
                 .withAnnualSavings(annualSavings.intValue());
-            
-            MessageResolutionStatus<ParameterizedTemplate> result = 
+
+            MessageResolutionStatus<ParameterizedTemplate> result =
                 new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
-        } 
+        }
         return Collections.emptyList();
     }
-    
+
     @Override
     public Set<EnumDeviceType> getSupportedDevices()
     {

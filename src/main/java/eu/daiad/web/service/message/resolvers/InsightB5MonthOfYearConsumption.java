@@ -1,25 +1,19 @@
 package eu.daiad.web.service.message.resolvers;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import static eu.daiad.web.model.query.Point.betweenTime;
+
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
-import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
-import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -28,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
-import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
@@ -41,14 +34,12 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
-import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
+import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
-
-import static eu.daiad.web.model.query.Point.betweenTime;
 
 
 @MessageGenerator(period = "P1M", dayOfMonth = 2, maxPerMonth = 1)
@@ -60,7 +51,7 @@ public class InsightB5MonthOfYearConsumption extends AbstractRecommendationResol
         implements ParameterizedTemplate
     {
         /** A minimum value for monthly volume consumption */
-        private static final String MIN_VALUE = "2E+1"; 
+        private static final String MIN_VALUE = "2E+1";
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -116,7 +107,7 @@ public class InsightB5MonthOfYearConsumption extends AbstractRecommendationResol
                     EnumRecommendationTemplate.INSIGHT_B5_SHOWER_MONTHLY_CONSUMPTION_DECR):
                 (incr?
                     EnumRecommendationTemplate.INSIGHT_B5_METER_MONTHLY_CONSUMPTION_INCR:
-                    EnumRecommendationTemplate.INSIGHT_B5_METER_MONTHLY_CONSUMPTION_DECR);    
+                    EnumRecommendationTemplate.INSIGHT_B5_METER_MONTHLY_CONSUMPTION_DECR);
         }
 
         @JsonIgnore
@@ -126,7 +117,7 @@ public class InsightB5MonthOfYearConsumption extends AbstractRecommendationResol
             Map<String, Object> parameters = super.getParameters();
 
             parameters.put("value", currentValue);
-            parameters.put("consumption", currentValue);     
+            parameters.put("consumption", currentValue);
 
             parameters.put("previous_value", previousValue);
             parameters.put("previous_consumption", previousValue);
@@ -143,10 +134,10 @@ public class InsightB5MonthOfYearConsumption extends AbstractRecommendationResol
             return this;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
@@ -167,7 +158,7 @@ public class InsightB5MonthOfYearConsumption extends AbstractRecommendationResol
             .user("user", accountKey)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
-        
+
         // Compute for target month
 
         query = queryBuilder
@@ -176,12 +167,12 @@ public class InsightB5MonthOfYearConsumption extends AbstractRecommendationResol
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
         interval = query.getTime().asInterval();
-        Double targetValue = (series != null)? 
+        Double targetValue = (series != null)?
             series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
             null;
         if (targetValue == null || targetValue < monthlyThreshold)
             return Collections.emptyList(); // nothing to compare to
-        
+
         // Compute for same month a year ago
 
         query = queryBuilder
@@ -190,23 +181,23 @@ public class InsightB5MonthOfYearConsumption extends AbstractRecommendationResol
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
         interval = query.getTime().asInterval();
-        Double previousValue = (series != null)? 
+        Double previousValue = (series != null)?
             series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
             null;
         if (previousValue == null || previousValue < monthlyThreshold)
             return Collections.emptyList(); // nothing to compare to
-        
+
         debug(
             "%s/%s: Computed consumption for %s compared to %s (a year ago): %.2f previous=%.2f",
              accountKey, deviceType,
              targetDate.toString("MM/YYYY"), targetDate.minusYears(1).toString("MM/YYYY"),
              targetValue, previousValue);
-        
+
         ParameterizedTemplate parameterizedTemplate =
             new Parameters(refDate, deviceType, targetValue, previousValue);
         MessageResolutionStatus<ParameterizedTemplate> result =
             new SimpleMessageResolutionStatus<>(parameterizedTemplate);
-        
+
         return Collections.singletonList(result);
     }
 

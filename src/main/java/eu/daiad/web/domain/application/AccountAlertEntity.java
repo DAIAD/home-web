@@ -1,10 +1,6 @@
 package eu.daiad.web.domain.application;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -17,7 +13,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -26,11 +21,7 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.Alert;
 import eu.daiad.web.model.message.Alert.ParameterizedTemplate;
 
 @Entity(name = "account_alert")
@@ -77,19 +68,19 @@ public class AccountAlertEntity
 	@Column(name = "receive_acknowledged_on")
 	@Type(type = "org.jadira.usertype.dateandtime.joda.PersistentDateTime")
 	private DateTime receiveAcknowledgedOn;
-	
+
 	@Column(name = "device_type", nullable = false)
     @Enumerated(EnumType.STRING)
     @NotNull
     private EnumDeviceType deviceType;
-	
+
 	@ManyToOne()
     @JoinColumn(name = "resolver_execution", nullable = false)
     @NotNull
 	private AlertResolverExecutionEntity resolverExecution;
-	
+
 	public AccountAlertEntity() {}
-	
+
 	public AccountEntity getAccount()
 	{
 		return account;
@@ -104,7 +95,7 @@ public class AccountAlertEntity
     {
         return alertTemplate;
     }
-	
+
 	public void setTemplate(AlertTemplateEntity alertTemplate)
     {
         this.alertTemplate = alertTemplate;
@@ -157,33 +148,33 @@ public class AccountAlertEntity
     {
         return resolverExecution;
     }
-    
+
     public DateTime getRefDate()
     {
         return resolverExecution.getRefDate();
     }
-    
+
     public String getResolverName()
     {
         return resolverExecution.getResolverName();
     }
-    
+
     public void setResolverExecution(AlertResolverExecutionEntity resolverExecution)
     {
         this.resolverExecution = resolverExecution;
     }
-    
+
     public AccountAlertParametersEntity getParameters()
     {
         return parameters;
     }
 
-    public ParameterizedTemplate getParameterizedTemplate() 
+    public ParameterizedTemplate getParameterizedTemplate()
         throws ClassNotFoundException, ClassCastException, IOException
     {
         return (parameters == null)? null : parameters.toParameterizedTemplate();
     }
-    
+
     public void setParameters(ParameterizedTemplate parameterizedTemplate)
     {
         if (parameterizedTemplate == null) {
@@ -196,6 +187,6 @@ public class AccountAlertEntity
             }
         }
     }
-    
-    
+
+
 }

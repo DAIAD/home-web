@@ -15,7 +15,6 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
 import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
-import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
@@ -58,29 +56,29 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 public class RecommendLowerTemperature extends AbstractRecommendationResolver
 {
     public static final double TEMPERATURE_HIGH_RATIO = 1.12;
-    
+
     public static final double VOLUME_THRESHOLD_RATIO = 2.50;
-        
+
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
-    
+
     public static class Parameters extends Message.AbstractParameters
     implements ParameterizedTemplate
     {
         @NotNull
         @DecimalMin("1E+1")
         private Double userAverageTemperature;
-        
+
         @NotNull
         @DecimalMin("1E+1")
         private Double averageTemperature;
-        
-        /** 
+
+        /**
          * An estimate for annual money savings if temperature is 1 degree lower
          */
         @NotNull
         @DecimalMin("1E+1")
         private BigDecimal annualSavings;
-        
+
         public Parameters()
         {}
 
@@ -106,31 +104,31 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
             this.userAverageTemperature = userAverageTemperature;
             return this;
         }
-        
+
         @JsonProperty("averageTemperature")
         public Double getAverageTemperature()
         {
             return averageTemperature;
         }
-        
+
         @JsonProperty("averageTemperature")
         public void setAverageTemperature(double averageTemperature)
         {
             this.averageTemperature = averageTemperature;
         }
-        
+
         public Parameters withAverageTemperature(double averageTemperature)
         {
             this.averageTemperature = averageTemperature;
             return this;
         }
-        
+
         @JsonProperty("annualSavings")
         public BigDecimal getAnnualSavings()
         {
             return annualSavings;
         }
-        
+
         @JsonProperty("annualSavings")
         public void setAnnualSavings(BigDecimal annualSavings)
         {
@@ -142,20 +140,20 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
             this.annualSavings = annualSavings;
             return this;
         }
-        
+
         public Parameters withAnnualSavings(double annualSavings)
         {
             return withAnnualSavings(
                 BigDecimal.valueOf(Math.round(annualSavings * 1E+2), +2));
         }
-        
+
         @JsonIgnore
         @DecimalMin("5.0")
         public Double getPercentAboveTemperature()
         {
             return 100.0 * (userAverageTemperature - averageTemperature) / averageTemperature;
         }
-        
+
         @Override
         public Parameters withLocale(Locale target, ICurrencyRateService currencyRate)
         {
@@ -163,25 +161,25 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
             annualSavings = annualSavings.multiply(rate);
             return this;
         }
-        
+
         @Override
         @JsonIgnore
         public Map<String, Object> getParameters()
         {
             Map<String, Object> parameters = super.getParameters();
-            
+
             parameters.put("user_average_temperature", userAverageTemperature);
-            
+
             parameters.put("average_temperature", averageTemperature);
-            
+
             parameters.put("annual_savings_1", annualSavings);
             parameters.put("annual_savings_2", annualSavings.multiply(BigDecimal.valueOf(2L)));
-            
+
             parameters.put("percent_above_temperature", getPercentAboveTemperature());
-            
+
             return parameters;
         }
-        
+
         @Override
         @JsonIgnore
         public EnumRecommendationTemplate getTemplate()
@@ -189,37 +187,37 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
             return EnumRecommendationTemplate.LOWER_TEMPERATURE;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Autowired
     IUserRepository userRepository;
-    
+
     @Autowired
     IPriceDataService priceData;
 
     @Autowired
     IEnergyCalculator energyCalculator;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
         Assert.state(deviceType == EnumDeviceType.AMPHIRO);
-        
+
         final int N = 3; // number of months to examine
         final Period period = Period.months(N);
         final EnumTimeAggregation granularity = EnumTimeAggregation.MONTH;
         final DateTime end = refDate.withDayOfMonth(1).withTimeAtStartOfDay();
-        
+
         Double averageTemperature = statisticsService.getNumber(
                 end, period, EnumMeasurementField.AMPHIRO_TEMPERATURE, EnumStatistic.AVERAGE_PER_SESSION)
             .getValue();
-            
+
         if (averageTemperature == null)
             return Collections.emptyList();
-        
+
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
@@ -233,17 +231,17 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
         SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
         if (series == null || series.isEmpty())
             return Collections.emptyList();
-        
+
         double thresholdConsumption = period.getMonths() *
             config.getVolumeThreshold(EnumDeviceType.AMPHIRO, EnumTimeUnit.MONTH);
-        
+
         Interval interval = query.getTime().asInterval();
         Double userConsumption = series.aggregate(
             EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval), new Sum());
         Double userAverageTemperature = series.aggregate(
             EnumDataField.TEMPERATURE, EnumMetric.AVERAGE, Point.betweenTime(interval), new Mean());
-       
-        boolean fire = 
+
+        boolean fire =
             userConsumption != null &&
             userAverageTemperature != null &&
             userAverageTemperature > TEMPERATURE_HIGH_RATIO * averageTemperature &&
@@ -255,17 +253,17 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
             final double pricePerKwh = priceData.getPricePerKwh(utility.getCountry());
             double annualSavings = numPeriodsPerYear * pricePerKwh *
                 energyCalculator.computeEnergyToRiseTemperature(1.0, userConsumption);
-            
+
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, deviceType)
                 .withUserAverageTemperature(userAverageTemperature)
                 .withAverageTemperature(averageTemperature)
                 .withAnnualSavings(annualSavings);
-            
-            MessageResolutionStatus<ParameterizedTemplate> result = 
+
+            MessageResolutionStatus<ParameterizedTemplate> result =
                 new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         }
-        
+
         return Collections.emptyList();
     }
     @Override

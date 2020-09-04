@@ -1,8 +1,10 @@
 package eu.daiad.web.model.message;
 
+import static eu.daiad.web.model.Priority.NORMAL_PRIORITY;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.unmodifiableList;
+
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,11 +12,6 @@ import java.util.Map;
 import org.springframework.util.Assert;
 
 import eu.daiad.web.model.Priority;
-
-import static java.util.Collections.unmodifiableList;
-import static java.util.Collections.singletonList;
-
-import static eu.daiad.web.model.Priority.*;
 
 public enum EnumAlertType
 {
@@ -39,26 +36,26 @@ public enum EnumAlertType
 	TOP_25_PERCENT_OF_SAVERS(19, NORMAL_PRIORITY, "P4"),
 	TOP_10_PERCENT_OF_SAVERS(20, NORMAL_PRIORITY, "P5")
 	;
-    
+
 	private final int value;
-	
+
 	private final Priority priority;
-	
+
 	/** The list of codes associated with this alert-type */
 	private final List<AlertCode> codes;
-	
-	private EnumAlertType(int value, Priority priority, String code1) 
+
+	private EnumAlertType(int value, Priority priority, String code1)
     {
         this.value = value;
         this.priority = priority;
         this.codes = singletonList(AlertCode.valueOf(code1));
     }
-	
-	private EnumAlertType(int value, Priority priority, String code1, String... aliasedCodes) 
+
+	private EnumAlertType(int value, Priority priority, String code1, String... aliasedCodes)
 	{
         this.value = value;
         this.priority = priority;
-                
+
         List<AlertCode> a = new ArrayList<>();
         a.add(AlertCode.valueOf(code1));
         for (String c: aliasedCodes)

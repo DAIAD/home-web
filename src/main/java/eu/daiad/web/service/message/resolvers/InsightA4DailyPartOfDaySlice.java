@@ -1,12 +1,6 @@
 package eu.daiad.web.service.message.resolvers;
 
-import java.util.List;
-import java.util.UUID;
-
-import eu.daiad.web.model.device.EnumDeviceType;
-import eu.daiad.web.model.message.MessageResolutionStatus;
-import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
-import eu.daiad.web.service.message.AbstractRecommendationResolver;
+import static eu.daiad.web.model.query.Point.betweenTime;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -24,7 +18,6 @@ import javax.validation.constraints.Size;
 
 import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
 import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -34,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
-import eu.daiad.web.model.EnumDayOfWeek;
 import eu.daiad.web.model.EnumPartOfDay;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
@@ -49,26 +41,23 @@ import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
-import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
+import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
 
-import static eu.daiad.web.model.query.Point.betweenTime;
-
-
 @MessageGenerator(period = "P1D")
 @Component
 @Scope("prototype")
 public class InsightA4DailyPartOfDaySlice extends AbstractRecommendationResolver
-{  
+{
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E+0"; 
+        private static final String MIN_VALUE = "1E+0";
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -114,7 +103,7 @@ public class InsightA4DailyPartOfDaySlice extends AbstractRecommendationResolver
 
         @JsonProperty("parts")
         public Map<EnumPartOfDay, Double> getParts()
-        {            
+        {
             return parts;
         }
 
@@ -124,7 +113,7 @@ public class InsightA4DailyPartOfDaySlice extends AbstractRecommendationResolver
         {
             return EnumSet.complementOf(EnumSet.copyOf(parts.keySet()));
         }
-        
+
         @NotNull
         @DecimalMax("1E-3")
         @JsonIgnore
@@ -163,10 +152,10 @@ public class InsightA4DailyPartOfDaySlice extends AbstractRecommendationResolver
         {
             EnumRecommendationTemplate t = null;
 
-            double y1 = parts.get(EnumPartOfDay.MORNING); 
+            double y1 = parts.get(EnumPartOfDay.MORNING);
             double y2 = parts.get(EnumPartOfDay.AFTERNOON);
             double y3 = parts.get(EnumPartOfDay.NIGHT);
-            
+
             if (deviceType == EnumDeviceType.AMPHIRO) {
                 if (y1 < y2) {
                     t = (y2 < y3) ?
@@ -200,9 +189,9 @@ public class InsightA4DailyPartOfDaySlice extends AbstractRecommendationResolver
             Map<String, Object> parameters = super.getParameters();
 
             parameters.put("value", totalValue);
-            parameters.put("consumption", totalValue); 
+            parameters.put("consumption", totalValue);
 
-            Double y1 = parts.get(EnumPartOfDay.MORNING); 
+            Double y1 = parts.get(EnumPartOfDay.MORNING);
             Double y2 = parts.get(EnumPartOfDay.AFTERNOON);
             Double y3 = parts.get(EnumPartOfDay.NIGHT);
 
@@ -231,7 +220,7 @@ public class InsightA4DailyPartOfDaySlice extends AbstractRecommendationResolver
             return this;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
 
@@ -240,7 +229,7 @@ public class InsightA4DailyPartOfDaySlice extends AbstractRecommendationResolver
         UUID accountKey, EnumDeviceType deviceType)
     {
         final double dailyThreshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);
-        
+
         // Build a common part of a data-service query
 
         DataQuery query;
@@ -252,7 +241,7 @@ public class InsightA4DailyPartOfDaySlice extends AbstractRecommendationResolver
             .user("user", accountKey)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
-        
+
         // Compute for every part-of-day for target day
 
         EnumMap<EnumPartOfDay, Double> parts = new EnumMap<>(EnumPartOfDay.class);
@@ -265,7 +254,7 @@ public class InsightA4DailyPartOfDaySlice extends AbstractRecommendationResolver
                 .build();
             queryResponse = dataService.execute(query);
             series = queryResponse.getFacade(deviceType);
-            Double y = (series != null)? 
+            Double y = (series != null)?
                 series.aggregate(
                     EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(r), new Sum()):
                 null;
@@ -289,12 +278,12 @@ public class InsightA4DailyPartOfDaySlice extends AbstractRecommendationResolver
              100 * parts.get(EnumPartOfDay.MORNING) / sumOfParts,
              100 * parts.get(EnumPartOfDay.AFTERNOON) / sumOfParts,
              100 * parts.get(EnumPartOfDay.NIGHT) / sumOfParts);
-        
+
         ParameterizedTemplate parameterizedTemplate = new Parameters(
                 refDate, deviceType, sumOfParts)
             .withParts(parts);
-        
-        MessageResolutionStatus<ParameterizedTemplate> result = 
+
+        MessageResolutionStatus<ParameterizedTemplate> result =
             new SimpleMessageResolutionStatus<>(EnumMessageLevel.LOG, parameterizedTemplate);
         return Collections.singletonList(result);
     }

@@ -28,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.daiad.web.annotate.message.MessageGenerator;
 import eu.daiad.web.model.EnumStatistic;
 import eu.daiad.web.model.EnumTimeAggregation;
-import eu.daiad.web.model.EnumTimeUnit;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.Message;
@@ -52,10 +51,10 @@ import eu.daiad.web.service.message.AbstractRecommendationResolver;
 @Scope("prototype")
 public class RecommendLessShowerTime extends AbstractRecommendationResolver
 {
-    public static final double DURATION_HIGH_RATIO = 1.50; 
-    
-    public static final double VOLUME_HIGH_RATIO = 1.15; 
-    
+    public static final double DURATION_HIGH_RATIO = 1.50;
+
+    public static final double VOLUME_HIGH_RATIO = 1.15;
+
     private static final Set<EnumDeviceType> supportedDevices = EnumSet.of(EnumDeviceType.AMPHIRO);
 
     public static class Parameters extends Message.AbstractParameters
@@ -64,40 +63,40 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
         @NotNull
         @DecimalMin("1E+0")
         private Double userAverageDuration;
-        
+
         @NotNull
         @DecimalMin("1E+1")
         private Double userAverageConsumption;
-        
+
         @NotNull
         @DecimalMin("1E+0")
         private Double averageDuration;
-        
+
         @NotNull
         @DecimalMin("1E+1")
         private Double averageConsumption;
-        
-        /** 
-         * An estimate for annual water savings if user spends 1 minute less per-shower 
+
+        /**
+         * An estimate for annual water savings if user spends 1 minute less per-shower
          */
         @NotNull
         @DecimalMin("1E+2")
         private Integer annualSavings;
-       
+
         public Parameters()
         {}
-        
+
         public Parameters(DateTime refDate, EnumDeviceType deviceType)
         {
             super(refDate, deviceType);
         }
-        
+
         @JsonProperty("userAverageDuration")
         public Double getUserAverageDuration()
         {
             return userAverageDuration;
         }
-        
+
         @JsonProperty("userAverageDuration")
         public void setUserAverageDuration(double userAverageDuration)
         {
@@ -109,7 +108,7 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
             this.userAverageDuration = userAverageDuration;
             return this;
         }
-        
+
         @JsonProperty("userAverageConsumption")
         public Double getUserAverageConsumption()
         {
@@ -121,7 +120,7 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
         {
             this.userAverageConsumption = userAverageConsumption;
         }
-        
+
         public Parameters withUserAverageConsumption(double userAverageConsumption)
         {
             this.userAverageConsumption = userAverageConsumption;
@@ -133,13 +132,13 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
         {
             return averageDuration;
         }
-        
+
         @JsonProperty("averageDuration")
         public void setAverageDuration(double averageDuration)
         {
             this.averageDuration = averageDuration;
         }
-        
+
         public Parameters withAverageDuration(double averageDuration)
         {
             this.averageDuration = averageDuration;
@@ -157,19 +156,19 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
         {
             this.averageConsumption = averageConsumption;
         }
-        
+
         public Parameters withAverageConsumption(double averageConsumption)
         {
             this.averageConsumption = averageConsumption;
             return this;
         }
-        
+
         @JsonProperty("annualSavings")
         public Integer getAnnualSavings()
         {
             return annualSavings;
         }
-        
+
         @JsonProperty("annualSavings")
         public void setAnnualSavings(int annualSavings)
         {
@@ -181,37 +180,37 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
             this.annualSavings = annualSavings;
             return this;
         }
-        
+
         @Override
         public Parameters withLocale(Locale target, ICurrencyRateService currencyRate)
         {
             return this;
         }
-        
+
         @Override
         @JsonIgnore
         public Map<String, Object> getParameters()
         {
             Map<String, Object> parameters = super.getParameters();
-            
+
             parameters.put("user_average_consumption", userAverageConsumption);
             parameters.put("user_average_duration", userAverageDuration);
-            
+
             parameters.put("average_consumption", averageConsumption);
             parameters.put("average_duration", averageDuration);
-            
+
             parameters.put("annual_savings_1", annualSavings);
             parameters.put("annual_savings_2", Integer.valueOf(annualSavings * 2));
-            
+
             parameters.put("percent_above_duration", Double.valueOf(
                 100.0 * (userAverageDuration - averageDuration) / averageDuration));
-            
+
             parameters.put("percent_above_consumption", Double.valueOf(
                 100.0 * (userAverageConsumption - averageConsumption) / averageConsumption));
-            
+
             return parameters;
         }
-        
+
         @Override
         @JsonIgnore
         public EnumRecommendationTemplate getTemplate()
@@ -219,32 +218,32 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
             return EnumRecommendationTemplate.LESS_SHOWER_TIME;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
-    {        
+    {
         Assert.state(deviceType == EnumDeviceType.AMPHIRO);
-        
+
         final int N = 3; // number of months to examine
         final Period period = Period.months(N);
         final EnumTimeAggregation granularity = EnumTimeAggregation.MONTH;
         final DateTime end = refDate.withDayOfMonth(1).withTimeAtStartOfDay();
-        
+
         Double averageDuration = statisticsService.getNumber(
-                end, period, EnumMeasurementField.AMPHIRO_DURATION, EnumStatistic.AVERAGE_PER_SESSION) 
+                end, period, EnumMeasurementField.AMPHIRO_DURATION, EnumStatistic.AVERAGE_PER_SESSION)
             .getValue();
-            
+
         Double averageConsumption = statisticsService.getNumber(
-                end, period, EnumMeasurementField.AMPHIRO_VOLUME, EnumStatistic.AVERAGE_PER_USER) 
+                end, period, EnumMeasurementField.AMPHIRO_VOLUME, EnumStatistic.AVERAGE_PER_USER)
             .getValue();
-        
+
         if (averageDuration == null || averageConsumption == null)
             return Collections.emptyList();
-        
+
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
@@ -258,7 +257,7 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
         SeriesFacade series = queryResponse.getFacade(EnumDeviceType.AMPHIRO);
         if (series == null || series.isEmpty())
             return Collections.emptyList();
-        
+
         Interval interval = query.getTime().asInterval();
         Double userConsumption = series.aggregate(
             EnumDataField.VOLUME, EnumMetric.SUM, Point.betweenTime(interval), new Sum());
@@ -268,12 +267,12 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
             userConsumption != null &&
             userAverageDuration != null &&
             userAverageDuration > averageDuration * DURATION_HIGH_RATIO &&
-            userConsumption > averageConsumption * VOLUME_HIGH_RATIO;     
+            userConsumption > averageConsumption * VOLUME_HIGH_RATIO;
         if (fire) {
             // Get a rough estimate for annual water savings if we spend 1 minute less
             final int numMonthsPerYear = 12;
             final double numPeriodsPerYear = Double.valueOf(numMonthsPerYear) / period.getMonths();
-            Double annualSavings = 
+            Double annualSavings =
                 numPeriodsPerYear * userConsumption *
                 (DateTimeConstants.SECONDS_PER_MINUTE / userAverageDuration);
             ParameterizedTemplate parameterizedTemplate = new Parameters(refDate, EnumDeviceType.AMPHIRO)
@@ -282,7 +281,7 @@ public class RecommendLessShowerTime extends AbstractRecommendationResolver
                 .withUserAverageConsumption(userConsumption)
                 .withUserAverageDuration(userAverageDuration)
                 .withAnnualSavings(annualSavings.intValue());
-            MessageResolutionStatus<ParameterizedTemplate> result = 
+            MessageResolutionStatus<ParameterizedTemplate> result =
                 new SimpleMessageResolutionStatus<>(parameterizedTemplate);
             return Collections.singletonList(result);
         }

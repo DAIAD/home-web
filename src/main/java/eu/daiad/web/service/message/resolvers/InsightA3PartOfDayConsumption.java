@@ -1,12 +1,11 @@
 package eu.daiad.web.service.message.resolvers;
 
+import static eu.daiad.web.model.query.Point.betweenTime;
+
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.validation.constraints.DecimalMin;
@@ -15,7 +14,6 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.math3.stat.descriptive.summary.Sum;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
 import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -25,29 +23,25 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import eu.daiad.web.annotate.message.MessageGenerator;
-import eu.daiad.web.model.EnumDayOfWeek;
+import eu.daiad.web.model.EnumPartOfDay;
 import eu.daiad.web.model.EnumTimeAggregation;
 import eu.daiad.web.model.EnumTimeUnit;
-import eu.daiad.web.model.EnumPartOfDay;
 import eu.daiad.web.model.device.EnumDeviceType;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 import eu.daiad.web.model.message.ScoringMessageResolutionStatus;
-import eu.daiad.web.model.message.SimpleMessageResolutionStatus;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
-import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
+import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
-
-import static eu.daiad.web.model.query.Point.betweenTime;
 
 @MessageGenerator(period = "P1D")
 @Component
@@ -55,12 +49,12 @@ import static eu.daiad.web.model.query.Point.betweenTime;
 public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolver
 {
     public static final double CHANGE_PERCENTAGE_THRESHOLD = 45.0;
-    
+
     public static class Parameters extends Message.AbstractParameters
         implements ParameterizedTemplate
     {
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E-1"; 
+        private static final String MIN_VALUE = "1E-1";
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -127,17 +121,17 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
         public EnumRecommendationTemplate getTemplate()
         {
             EnumRecommendationTemplate t = null;
-            
+
             boolean incr = (averageValue <= currentValue);
             boolean amphiro = (deviceType == EnumDeviceType.AMPHIRO);
-            
+
             switch (partOfDay) {
             case MORNING:
                 t = amphiro?
-                    (incr? 
-                        EnumRecommendationTemplate.INSIGHT_A3_SHOWER_MORNING_CONSUMPTION_INCR: 
+                    (incr?
+                        EnumRecommendationTemplate.INSIGHT_A3_SHOWER_MORNING_CONSUMPTION_INCR:
                         EnumRecommendationTemplate.INSIGHT_A3_SHOWER_MORNING_CONSUMPTION_DECR):
-                    (incr? 
+                    (incr?
                         EnumRecommendationTemplate.INSIGHT_A3_METER_MORNING_CONSUMPTION_INCR:
                         EnumRecommendationTemplate.INSIGHT_A3_METER_MORNING_CONSUMPTION_DECR);
                 break;
@@ -159,7 +153,7 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
                         EnumRecommendationTemplate.INSIGHT_A3_METER_NIGHT_CONSUMPTION_INCR:
                         EnumRecommendationTemplate.INSIGHT_A3_METER_NIGHT_CONSUMPTION_DECR);
                 break;
-            }  
+            }
             return t;
         }
 
@@ -167,10 +161,10 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
         @Override
         public Map<String, Object> getParameters()
         {
-            Map<String, Object> parameters = super.getParameters();  
+            Map<String, Object> parameters = super.getParameters();
 
             parameters.put("value", currentValue);
-            parameters.put("consumption", currentValue);     
+            parameters.put("consumption", currentValue);
 
             parameters.put("average_value", averageValue);
             parameters.put("average_consumption", averageValue);
@@ -189,10 +183,10 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
             return this;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
@@ -206,21 +200,21 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
         DataQuery query;
         DataQueryResponse queryResponse;
         SeriesFacade series;
-        
+
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())
             .user("user", accountKey)
             .source(EnumMeasurementDataSource.fromDeviceType(deviceType))
             .sum();
-        
+
         // For each part of day, compare consumption to past days
-        
+
         List<MessageResolutionStatus<ParameterizedTemplate>> results = new ArrayList<>();
-        
+
         for (EnumPartOfDay partOfDay: EnumPartOfDay.values()) {
             final double threshold = dailyThreshold * partOfDay.asFractionOfDay();
             final Interval r = partOfDay.toInterval(refDate);
-            
+
             // Compute for part-of-day for target day
 
             query = queryBuilder
@@ -228,16 +222,16 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
                 .build();
             queryResponse = dataService.execute(query);
             series = queryResponse.getFacade(deviceType);
-            Double targetValue = (series != null)? 
+            Double targetValue = (series != null)?
                 series.aggregate(
                     EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(r), new Sum()):
                 null;
             if (targetValue == null || targetValue < threshold)
                 continue; // skip part-of-day; nothing to compare to
-         
+
             // Compute for part-of-day for past N days
 
-            // Note: not so efficient to query for each partOfDay; 
+            // Note: not so efficient to query for each partOfDay;
             // query for the whole day (at HOUR granularity) and keep separate sums
             DateTime start = refDate;
             SummaryStatistics summary = new SummaryStatistics();
@@ -249,7 +243,7 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
                     .build();
                 queryResponse = dataService.execute(query);
                 series = queryResponse.getFacade(deviceType);
-                Double val = (series != null)? 
+                Double val = (series != null)?
                     series.aggregate(
                         EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(r1), new Sum()):
                     null;
@@ -258,7 +252,7 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
             }
             if (summary.getN() < N * F)
                 continue; // skip part-of-day; too few values
-            
+
             // Seems we have sufficient data for the past days
 
             double averageValue = summary.getMean();
@@ -272,13 +266,13 @@ public class InsightA3PartOfDayConsumption extends AbstractRecommendationResolve
                 "%s/%s: Computed consumption at %s of period P%dD to %s: %.2f μ=%.2f score=%.2f",
                  accountKey, deviceType, partOfDay, N, refDate.toString("dd/MM/YYYY"),
                  targetValue, averageValue, score);
-            
-            ParameterizedTemplate parameterizedTemplate = 
+
+            ParameterizedTemplate parameterizedTemplate =
                 new Parameters(refDate, deviceType, partOfDay, targetValue, averageValue);
             results.add(
                 new ScoringMessageResolutionStatus<>(score, parameterizedTemplate));
         }
-        
+
         return results;
     }
 

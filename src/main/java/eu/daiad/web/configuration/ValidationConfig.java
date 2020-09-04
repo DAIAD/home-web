@@ -1,7 +1,6 @@
 package eu.daiad.web.configuration;
 
 import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

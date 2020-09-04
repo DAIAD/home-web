@@ -1,10 +1,11 @@
 package eu.daiad.web.service.message.resolvers;
 
+import static eu.daiad.web.model.query.Point.betweenTime;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.validation.constraints.DecimalMin;
@@ -12,7 +13,6 @@ import javax.validation.constraints.NotNull;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
 import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -30,19 +30,16 @@ import eu.daiad.web.model.message.Message;
 import eu.daiad.web.model.message.MessageResolutionStatus;
 import eu.daiad.web.model.message.Recommendation.ParameterizedTemplate;
 import eu.daiad.web.model.message.ScoringMessageResolutionStatus;
-import eu.daiad.web.model.message.SimpleMessageResolutionStatus;
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.DataQueryBuilder;
 import eu.daiad.web.model.query.DataQueryResponse;
 import eu.daiad.web.model.query.EnumDataField;
-import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.EnumMeasurementDataSource;
+import eu.daiad.web.model.query.EnumMetric;
 import eu.daiad.web.model.query.SeriesFacade;
 import eu.daiad.web.service.ICurrencyRateService;
 import eu.daiad.web.service.IDataService;
 import eu.daiad.web.service.message.AbstractRecommendationResolver;
-
-import static eu.daiad.web.model.query.Point.betweenTime;
 
 @MessageGenerator(period = "P1D")
 @Component
@@ -53,7 +50,7 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
         implements ParameterizedTemplate
     {
         /** A minimum value for daily volume consumption */
-        private static final String MIN_VALUE = "1E+0"; 
+        private static final String MIN_VALUE = "1E+0";
 
         @NotNull
         @DecimalMin(MIN_VALUE)
@@ -107,7 +104,7 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
             Map<String, Object> parameters = super.getParameters();
 
             parameters.put("value", currentValue);
-            parameters.put("consumption", currentValue);     
+            parameters.put("consumption", currentValue);
 
             parameters.put("average_value", averageValue);
             parameters.put("average_consumption", averageValue);
@@ -139,10 +136,10 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
             return this;
         }
     }
-    
+
     @Autowired
     IDataService dataService;
-    
+
     @Override
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
@@ -151,7 +148,7 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
         final int N = 40;       // number of past days to examine
         final double F = 0.6;   // a threshold ratio of non-nulls for collected values
         final double dailyThreshold = config.getVolumeThreshold(deviceType, EnumTimeUnit.DAY);
-        
+
         // Build a common part of a data-service query
 
         DataQuery query;
@@ -166,21 +163,21 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
             .sum();
 
         // Compute for target day
-        
+
         DateTime start = refDate.withTimeAtStartOfDay();
-        
+
         query = queryBuilder
             .sliding(start, +1, EnumTimeUnit.DAY, EnumTimeAggregation.DAY)
             .build();
         queryResponse = dataService.execute(query);
         series = queryResponse.getFacade(deviceType);
         interval = query.getTime().asInterval();
-        Double targetValue = (series != null)? 
+        Double targetValue = (series != null)?
             series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
             null;
         if (targetValue == null || targetValue < dailyThreshold)
             return Collections.emptyList(); // nothing to compare to
-        
+
         // Compute for past N days
 
         SummaryStatistics summary = new SummaryStatistics();
@@ -192,7 +189,7 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
             queryResponse = dataService.execute(query);
             series = queryResponse.getFacade(deviceType);
             interval = query.getTime().asInterval();
-            Double val = (series != null)? 
+            Double val = (series != null)?
                 series.get(EnumDataField.VOLUME, EnumMetric.SUM, betweenTime(interval)):
                 null;
             if (val != null)
@@ -200,7 +197,7 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
         }
         if (summary.getN() < N * F)
             return Collections.emptyList(); // too few values
-        
+
         // Seems we have sufficient data for the past days
 
         double averageValue = summary.getMean();
@@ -216,10 +213,10 @@ public class InsightA2DailyConsumption extends AbstractRecommendationResolver
                 "%.2f μ=%.2f σ=%.2f x*=%.2f score=%.2f",
              accountKey, deviceType, N, refDate.toString("dd/MM/YYYY"),
              targetValue, averageValue, sd, normValue, score);
-        
-        ParameterizedTemplate parameterizedTemplate = 
+
+        ParameterizedTemplate parameterizedTemplate =
             new Parameters(refDate, deviceType, targetValue, averageValue);
-        MessageResolutionStatus<ParameterizedTemplate> result = 
+        MessageResolutionStatus<ParameterizedTemplate> result =
             new ScoringMessageResolutionStatus<>(score, parameterizedTemplate);
         return Collections.singletonList(result);
     }
