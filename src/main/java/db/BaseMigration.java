@@ -26,6 +26,7 @@ public abstract class BaseMigration extends BaseSpringJdbcMigration
 
         b.setDataSource(flywayConfiguration.getDataSource());
         b.setPackagesToScan("eu.daiad.web.domain.application");
+        b.setPackagesToScan("eu.daiad.web.domain.admin");
         b.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         b.setJpaProperties(new Properties());
         b.setPersistenceUnitName("default-migration");

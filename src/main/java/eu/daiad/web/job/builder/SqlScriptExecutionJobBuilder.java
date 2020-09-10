@@ -6,7 +6,6 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersIncrementer;
 import org.springframework.batch.core.Step;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import eu.daiad.web.job.task.SqlScriptExecutionTasklet;
@@ -32,7 +31,6 @@ public class SqlScriptExecutionJobBuilder extends BaseJobBuilder implements IJob
      * Data source for executing SQL commands.
      */
     @Autowired
-    @Qualifier("applicationDataSource")
     private DataSource dataSource;
 
     private Step executeScripts() {

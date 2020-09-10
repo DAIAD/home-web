@@ -21,7 +21,7 @@ import eu.daiad.web.repository.BaseRepository;
 @Repository
 public class JpaLogEventRepository extends BaseRepository implements ILogEventRepository {
 
-	@PersistenceContext(unitName = "default")
+	@PersistenceContext
 	EntityManager entityManager;
 
 	/**

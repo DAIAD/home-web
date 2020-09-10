@@ -14,11 +14,11 @@ import eu.daiad.web.domain.application.RecommendationTemplateTranslationEntity;
 import eu.daiad.web.model.message.EnumRecommendationTemplate;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class RecommendationTemplateTranslationRepository
     implements IRecommendationTemplateTranslationRepository
 {
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     @Override

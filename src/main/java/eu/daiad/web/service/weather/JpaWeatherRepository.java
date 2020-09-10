@@ -21,10 +21,10 @@ import eu.daiad.web.domain.application.WeatherServiceEntity;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class JpaWeatherRepository extends BaseRepository implements IWeatherRepository {
 
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     @Override

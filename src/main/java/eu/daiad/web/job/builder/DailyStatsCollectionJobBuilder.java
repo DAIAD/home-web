@@ -53,13 +53,13 @@ public class DailyStatsCollectionJobBuilder extends BaseJobBuilder implements IJ
     /**
      * Entity manager for the application database.
      */
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     private EntityManager entityManager;
 
     /**
      * Entity manager for the administration database.
      */
-    @PersistenceContext(unitName = "management")
+    @PersistenceContext
     private EntityManager adminEntityManager;
 
     private Step computeStats() {

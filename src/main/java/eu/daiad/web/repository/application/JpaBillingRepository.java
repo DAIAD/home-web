@@ -22,13 +22,13 @@ import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class JpaBillingRepository extends BaseRepository implements IBillingRepository {
 
     /**
      * Entity manager for persisting data.
      */
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
 

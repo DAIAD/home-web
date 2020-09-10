@@ -47,7 +47,7 @@ import eu.daiad.web.repository.application.IMeterForecastingDataRepository;
  * Service that provides methods for importing smart water meter readings to HBASE.
  */
 @Service
-@Transactional("managementTransactionManager")
+@Transactional
 public class WaterMeterDataLoaderService extends BaseService implements IWaterMeterDataLoaderService {
 
     /**
@@ -68,7 +68,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
     /**
      * Entity manager for persisting upload meta data.
      */
-    @PersistenceContext(unitName = "management")
+    @PersistenceContext
     EntityManager entityManager;
 
     /**

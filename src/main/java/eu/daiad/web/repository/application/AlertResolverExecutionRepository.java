@@ -17,13 +17,13 @@ import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class AlertResolverExecutionRepository extends BaseRepository
     implements IAlertResolverExecutionRepository
 {
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
-    
+
     @Override
     public AlertResolverExecutionEntity findOne(int rid)
     {
@@ -45,13 +45,13 @@ public class AlertResolverExecutionRepository extends BaseRepository
                     ((interval != null)? " AND a.refDate >= :start AND a.refDate <= :end" : "") + " " +
                 "ORDER BY a.refDate DESC",
             AlertResolverExecutionEntity.class);
-        
+
         q.setParameter("name", resolverName);
         if (interval != null) {
             q.setParameter("start", interval.getStart());
             q.setParameter("end", interval.getEnd());
         }
-        
+
         return q.getResultList();
     }
 
@@ -69,16 +69,16 @@ public class AlertResolverExecutionRepository extends BaseRepository
                 "WHERE a.resolverName = :name AND a.finished IS NOT NULL" +
                     ((interval != null)? " AND a.refDate >= :start AND a.refDate <= :end" : ""),
             Integer.class);
-        
+
         q.setParameter("name", resolverName);
         if (interval != null) {
             q.setParameter("start", interval.getStart());
             q.setParameter("end", interval.getEnd());
         }
-        
+
         return q.getResultList();
     }
-    
+
     @Override
     public AlertResolverExecutionEntity create(AlertResolverExecutionEntity r)
     {
@@ -90,7 +90,7 @@ public class AlertResolverExecutionRepository extends BaseRepository
     public AlertResolverExecutionEntity createWith(
         DateTime refDate, String resolverName, UtilityEntity target, DateTime started)
     {
-        AlertResolverExecutionEntity r = 
+        AlertResolverExecutionEntity r =
             new AlertResolverExecutionEntity(refDate, resolverName, target);
         r.setStarted(started);
         return create(r);
@@ -100,7 +100,7 @@ public class AlertResolverExecutionRepository extends BaseRepository
     public AlertResolverExecutionEntity createWith(
         DateTime refDate, String resolverName, GroupEntity target, DateTime started)
     {
-        AlertResolverExecutionEntity r = 
+        AlertResolverExecutionEntity r =
             new AlertResolverExecutionEntity(refDate, resolverName, target);
         r.setStarted(started);
         return create(r);
@@ -126,7 +126,7 @@ public class AlertResolverExecutionRepository extends BaseRepository
         }
         return r;
     }
-    
+
     @Override
     public void delete(int rid)
     {

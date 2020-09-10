@@ -14,11 +14,11 @@ import eu.daiad.web.domain.application.AlertTemplateTranslationEntity;
 import eu.daiad.web.model.message.EnumAlertTemplate;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class AlertTemplateTranslationRepository
     implements IAlertTemplateTranslationRepository
 {
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     @Override

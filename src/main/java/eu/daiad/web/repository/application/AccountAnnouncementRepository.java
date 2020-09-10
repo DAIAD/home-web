@@ -24,13 +24,13 @@ import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class AccountAnnouncementRepository extends BaseRepository
     implements IAccountAnnouncementRepository
 {
     public static final int DEFAULT_LIMIT = 50;
 
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     @Autowired
@@ -310,13 +310,13 @@ public class AccountAnnouncementRepository extends BaseRepository
         Announcement message = announcementRepository.newMessage(a, locale);
         if (message == null)
             return null;
-        
+
         // Overwrite announcement ID  with account-announcement ID
         message.setId(r.getId());
-        
+
         if (r.getCreatedOn() != null)
             message.setCreatedOn(r.getCreatedOn());
-        
+
         if (r.getAcknowledgedOn() != null)
             message.setAcknowledgedOn(r.getAcknowledgedOn());
 

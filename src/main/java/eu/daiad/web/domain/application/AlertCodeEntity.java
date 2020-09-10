@@ -21,8 +21,10 @@ public class AlertCodeEntity
     @NotNull
     private AlertTypeEntity type;
 
-    private AlertCodeEntity() {}
- 
+    protected AlertCodeEntity() {
+
+    }
+
     public AlertCodeEntity(AlertCode code, AlertTypeEntity typeEntity)
     {
         this.code = code.toString();

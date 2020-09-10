@@ -22,8 +22,6 @@ import eu.daiad.web.model.error.ApplicationException;
 @Plugin(name = "ErrorCodeFilter", category = Node.CATEGORY, elementType = Filter.ELEMENT_TYPE, printObject = true)
 public class ErrorCodeFilter extends AbstractFilter {
 
-	private static final long serialVersionUID = 5708767168420025448L;
-
 	private final List<String> categories;
 
 	protected ErrorCodeFilter(final List<String> categories) {
@@ -33,8 +31,9 @@ public class ErrorCodeFilter extends AbstractFilter {
 	}
 
 	@Override
-	public Result filter(final Logger logger, final Level level, final Marker marker, final Message msg,
-					final Throwable t) {
+	public Result filter(
+        final Logger logger, final Level level, final Marker marker, final Message msg, final Throwable t
+    ) {
 		if (t instanceof ApplicationException) {
 			if (categories.contains(((ApplicationException) t).getCode().getClass().getSimpleName())) {
 				return Result.ACCEPT;

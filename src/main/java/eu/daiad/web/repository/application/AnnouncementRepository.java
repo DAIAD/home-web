@@ -18,11 +18,11 @@ import eu.daiad.web.model.message.Announcement;
 import eu.daiad.web.model.message.Message;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class AnnouncementRepository
     implements IAnnouncementRepository
 {
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     public static final int DEFAULT_PRIORITY = 5;

@@ -66,10 +66,10 @@ import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository()
-@Transactional("applicationTransactionManager")
+@Transactional
 public class JpaProfileRepository extends BaseRepository implements IProfileRepository {
 
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     @Autowired

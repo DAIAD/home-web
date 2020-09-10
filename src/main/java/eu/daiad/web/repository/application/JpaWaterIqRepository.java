@@ -29,13 +29,13 @@ import eu.daiad.web.repository.BaseRepository;
 * Provides methods for updating and querying user Water IQ status.
 */
 @Repository("jpaWaterIqRepository")
-@Transactional("applicationTransactionManager")
+@Transactional
 public class JpaWaterIqRepository extends BaseRepository implements IWaterIqRepository {
 
     /**
      *  Java Persistence entity manager.
      */
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     /**

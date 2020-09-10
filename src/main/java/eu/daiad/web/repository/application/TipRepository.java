@@ -20,13 +20,13 @@ import eu.daiad.web.domain.application.TipEntity;
 import eu.daiad.web.model.message.Tip;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class TipRepository
     implements ITipRepository
 {
     public static final String DEFAULT_CATEGORY_NAME = "general-tips";
 
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     @Override

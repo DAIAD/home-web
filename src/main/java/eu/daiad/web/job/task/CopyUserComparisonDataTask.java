@@ -53,7 +53,6 @@ public class CopyUserComparisonDataTask extends BaseTask implements StoppableTas
      * Data source for executing SQL commands.
      */
     @Autowired
-    @Qualifier("applicationDataSource")
     private DataSource dataSource;
 
     /**

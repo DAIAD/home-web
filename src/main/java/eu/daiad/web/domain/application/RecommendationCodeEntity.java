@@ -21,7 +21,9 @@ public class RecommendationCodeEntity
     @NotNull
     private RecommendationTypeEntity type;
 
-    private RecommendationCodeEntity() {}
+    protected RecommendationCodeEntity() {
+
+    }
 
     public RecommendationCodeEntity(RecommendationCode code, RecommendationTypeEntity typeEntity)
     {

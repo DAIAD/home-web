@@ -11,7 +11,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.task.TaskExecutor;
 
 /**
- * 
+ *
  * Configures Spring Batch.
  *
  */
@@ -28,15 +28,15 @@ public class BatchConfig {
 
 	/**
 	 * Registers a new {@link JobLauncher} bean.
-	 * 
+	 *
 	 * @return the job launcher.
 	 */
 	@Bean
 	public JobLauncher jobLauncher() {
 		final SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
 
-		jobLauncher.setJobRepository(this.jobRepository);
-		jobLauncher.setTaskExecutor(this.taskExecutor);
+		jobLauncher.setJobRepository(jobRepository);
+		jobLauncher.setTaskExecutor(taskExecutor);
 
 		return jobLauncher;
 	}

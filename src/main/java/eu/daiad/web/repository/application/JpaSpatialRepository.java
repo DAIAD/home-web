@@ -31,7 +31,7 @@ public class JpaSpatialRepository extends BaseRepository implements ISpatialRepo
     /**
      * Java Persistence entity manager.
      */
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     /**

@@ -145,11 +145,6 @@ public class AlertDailyWaterBudget extends AbstractAlertResolver
 
     private static class NearBudgetParameters extends BasicParameters
     {
-        public NearBudgetParameters()
-        {
-            super();
-        }
-
         public NearBudgetParameters(
             DateTime refDate, EnumDeviceType deviceType, double value, double budget, int percentThreshold)
         {
@@ -168,10 +163,6 @@ public class AlertDailyWaterBudget extends AbstractAlertResolver
 
     private static class ExceededBudgetParameters extends BasicParameters
     {
-        public ExceededBudgetParameters()
-        {
-            super();
-        }
 
         public ExceededBudgetParameters(
             DateTime refDate, EnumDeviceType deviceType, double value, double budget, int percentThreshold)

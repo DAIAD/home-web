@@ -70,7 +70,7 @@ import eu.daiad.web.repository.BaseRepository;
  * Provides methods for managing user accounts.
  */
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class JpaUserRepository extends BaseRepository implements IUserRepository
 {
     /**
@@ -99,7 +99,7 @@ public class JpaUserRepository extends BaseRepository implements IUserRepository
     /**
      *  Java Persistence entity manager.
      */
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     /**

@@ -805,10 +805,4 @@ public class DefaultMessageGeneratorService
         if (logger.isInfoEnabled())
             logger.info(String.format(f, args));
     }
-
-	private static void debug(String f, Object ...args)
-    {
-        if (logger.isDebugEnabled())
-            logger.debug(String.format(f, args));
-    }
 }

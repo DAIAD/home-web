@@ -21,13 +21,13 @@ import eu.daiad.web.model.message.Tip;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class AccountTipRepository extends BaseRepository
     implements IAccountTipRepository
 {
     public static final int DEFAULT_LIMIT = 20;
 
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     @Override
@@ -255,19 +255,19 @@ public class AccountTipRepository extends BaseRepository
     public AccountTipEntity createWith(AccountEntity account, TipEntity tip)
     {
         // Ensure we have persistent entities
-        
+
         if (!entityManager.contains(account))
             account = entityManager.find(AccountEntity.class, account.getId());
-        
+
         if (!entityManager.contains(tip))
             tip = entityManager.find(TipEntity.class, tip.getId());
-        
+
         // Create
-        
+
         AccountTipEntity e = new AccountTipEntity(account, tip);
         return create(e);
     }
-    
+
     @Override
     public AccountTipEntity createWith(AccountEntity account, int tipId)
     {

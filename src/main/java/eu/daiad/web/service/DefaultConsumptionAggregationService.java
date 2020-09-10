@@ -14,7 +14,6 @@ import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -50,23 +49,13 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	@Autowired
 	IDataService dataService;
 
-	private DateTimeZone defaultTimezone;
-
-	@Value("${daiad.default-timezone:Europe/Athens}")
-	public void setDefaultTimezone(String name) {
-	    defaultTimezone = DateTimeZone.forID(name);
-	}
-
 	private static abstract class Aggregator
 	{
 	    protected final EnumMeasurementField measurementField;
 
-	    protected final EnumStatistic statistic;
-
-        protected Aggregator(EnumMeasurementField field, EnumStatistic statistic)
+        protected Aggregator(EnumMeasurementField field)
         {
             this.measurementField = field;
-            this.statistic = statistic;
         }
 
         protected DataQueryBuilder newQueryBuilder(UtilityInfo utility, DateTime refDate, Period period)
@@ -122,7 +111,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 
         public SummingAggregator(EnumMeasurementField measurementField, EnumStatistic statistic)
         {
-            super(measurementField, statistic);
+            super(measurementField);
 
             Assert.isTrue(statistic == EnumStatistic.SUM);
 
@@ -163,7 +152,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	{
         public AveragingPerUserAggregator(EnumMeasurementField measurementField, EnumStatistic statistic)
         {
-            super(measurementField, statistic);
+            super(measurementField);
 
             Assert.isTrue(statistic == EnumStatistic.AVERAGE_PER_USER);
 
@@ -204,7 +193,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 	{
 	    public AveragingPerSessionAggregator(EnumMeasurementField measurementField, EnumStatistic statistic)
         {
-            super(measurementField, statistic);
+            super(measurementField);
 
             Assert.isTrue(statistic == EnumStatistic.AVERAGE_PER_SESSION);
 
@@ -254,7 +243,7 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
 
 	    public PercentileOfUsersAggregator(EnumMeasurementField measurementField, EnumStatistic statistic)
         {
-            super(measurementField, statistic);
+            super(measurementField);
 
             // Check statistic and map it to a ratio
 

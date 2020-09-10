@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.apache.commons.lang.StringUtils;
@@ -32,7 +33,6 @@ import org.springframework.batch.core.configuration.support.ReferenceJobFactory;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.launch.NoSuchJobException;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -64,7 +64,7 @@ import eu.daiad.web.service.BaseService;
  * Default implementation of {@link ISchedulerService} that provides methods for querying, scheduling and launching jobs.
  */
 @Service
-public class DefaultSchedulerService extends BaseService implements ISchedulerService, InitializingBean {
+public class DefaultSchedulerService extends BaseService implements ISchedulerService {
 
     /**
      * Logger instance for writing events using the configured logging API.
@@ -136,8 +136,12 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
      */
     private Collection<JobExecution> activeExecutions = Collections.synchronizedList(new ArrayList<JobExecution>());
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
+    /**
+     * Updates job status for after a system restart
+     * @throws Exception
+     */
+    @PostConstruct
+    public void init() throws Exception {
         try {
             updateScheduler();
         } catch (Exception ex) {

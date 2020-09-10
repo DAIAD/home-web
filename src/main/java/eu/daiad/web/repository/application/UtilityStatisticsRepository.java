@@ -23,7 +23,7 @@ import eu.daiad.web.model.group.Group;
 import eu.daiad.web.model.query.EnumMeasurementField;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class UtilityStatisticsRepository
     implements IUtilityStatisticsRepository
 {
@@ -62,7 +62,7 @@ public class UtilityStatisticsRepository
         }
     }
 
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     private EntityManager entityManager;
 
     private PopulationGroup resolveGroup(UUID groupKey)

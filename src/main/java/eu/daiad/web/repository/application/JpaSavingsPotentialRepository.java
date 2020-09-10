@@ -43,13 +43,13 @@ import eu.daiad.web.repository.BaseRepository;
  * Provides methods for accessing savings potential and water IQ data.
  */
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class JpaSavingsPotentialRepository extends BaseRepository implements ISavingsPotentialRepository, InitializingBean {
 
     /**
      * Java Persistence entity manager.
      */
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     /**

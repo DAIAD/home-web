@@ -2,8 +2,6 @@ package eu.daiad.web.configuration;
 
 import java.util.concurrent.Executor;
 
-import org.springframework.batch.core.JobParametersIncrementer;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,9 +25,6 @@ public class SchedulerConfig implements SchedulingConfigurer {
 
 	@Value("${thread-name-prefix}")
 	private String threadNamePrefix;
-
-	@Autowired
-	private JobParametersIncrementer jobParametersIncrementer;
 
 	/**
 	 * Registers {@link Executor} bean.

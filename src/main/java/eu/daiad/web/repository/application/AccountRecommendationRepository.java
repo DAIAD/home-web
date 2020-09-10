@@ -40,7 +40,7 @@ import eu.daiad.web.repository.BaseRepository;
 import eu.daiad.web.service.ICurrencyRateService;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class AccountRecommendationRepository extends BaseRepository
     implements IAccountRecommendationRepository
 {
@@ -48,7 +48,7 @@ public class AccountRecommendationRepository extends BaseRepository
 
     private static final Log logger = LogFactory.getLog(AccountRecommendationRepository.class);
 
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     @Autowired

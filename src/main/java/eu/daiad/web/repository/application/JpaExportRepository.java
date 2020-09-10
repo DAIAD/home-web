@@ -24,13 +24,13 @@ import eu.daiad.web.model.export.ExportFile;
  * Provides methods for managing exported data files
  */
 @Repository
-@Transactional("managementTransactionManager")
+@Transactional
 public class JpaExportRepository implements IExportRepository {
 
     /**
      * Entity manager for persisting export meta data.
      */
-    @PersistenceContext(unitName = "management")
+    @PersistenceContext
     EntityManager entityManager;
 
     /**

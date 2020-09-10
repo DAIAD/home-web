@@ -24,9 +24,9 @@ import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("applicationTransactionManager")
-public class JpaUtilityRepository extends BaseRepository 
-    implements IUtilityRepository 
+@Transactional
+public class JpaUtilityRepository extends BaseRepository
+    implements IUtilityRepository
 {
 
     private final String COUNTER_USER = "user";
@@ -35,11 +35,8 @@ public class JpaUtilityRepository extends BaseRepository
 
     private final String COUNTER_AMPHIRO = "amphiro";
 
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
-
-    @PersistenceContext(unitName = "management")
-    EntityManager adminEntityManager;
 
     @Override
     public List<UtilityInfo> getUtilities() {
@@ -92,7 +89,7 @@ public class JpaUtilityRepository extends BaseRepository
 
         return members;
     }
-    
+
     @Override
     public List<UUID> getMembers(UUID utilityKey)
     {
@@ -101,7 +98,7 @@ public class JpaUtilityRepository extends BaseRepository
         q.setParameter("utilityKey", utilityKey);
         return q.getResultList();
     }
-    
+
     @Override
     public List<UUID> getMembers(int id)
     {
@@ -110,7 +107,7 @@ public class JpaUtilityRepository extends BaseRepository
         q.setParameter("id", id);
         return q.getResultList();
     }
-    
+
     @Override
     public Map<String, Counter> getCounters(int utilityId) {
         Map<String, Counter> counters = new HashMap<String, Counter>();
@@ -118,7 +115,7 @@ public class JpaUtilityRepository extends BaseRepository
         DateTime start = new DateTime();
         DateTime end = start.minusDays(7);
 
-        TypedQuery<DailyCounterEntity> counterQuery = adminEntityManager.createQuery("select c from daily_counter c "
+        TypedQuery<DailyCounterEntity> counterQuery = entityManager.createQuery("select c from daily_counter c "
                         + "where c.utilityId = :utilityId and c.createdOn >= :end and c.createdOn <= :start "
                         + "order by c.name, c.createdOn desc", DailyCounterEntity.class);
 
@@ -175,14 +172,14 @@ public class JpaUtilityRepository extends BaseRepository
         TypedQuery<UtilityEntity> q = entityManager.createQuery(
             "FROM utility u WHERE u.key = :key", UtilityEntity.class);
         q.setParameter("key", key);
-        
+
         UtilityEntity r;
         try {
             r = q.getSingleResult();
         } catch (NoResultException x) {
             r = null;
         }
-        
+
         return r;
     }
 }

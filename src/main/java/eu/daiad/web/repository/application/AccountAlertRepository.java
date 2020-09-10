@@ -14,7 +14,6 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,23 +39,23 @@ import eu.daiad.web.repository.BaseRepository;
 import eu.daiad.web.service.ICurrencyRateService;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class AccountAlertRepository extends BaseRepository
     implements IAccountAlertRepository
 {
     public static final int DEFAULT_LIMIT = 50;
 
     private static final Log logger = LogFactory.getLog(AccountAlertRepository.class);
-    
-    @PersistenceContext(unitName = "default")
+
+    @PersistenceContext
     EntityManager entityManager;
 
     @Autowired
     IAlertTemplateTranslationRepository translationRepository;
-    
+
     @Autowired
     ICurrencyRateService currencyRateService;
-    
+
     @Override
     public AccountAlertEntity findOne(int id)
     {
@@ -326,7 +325,7 @@ public class AccountAlertRepository extends BaseRepository
 
     @Override
     public List<AccountAlertEntity> findByAccountAndExecution(UUID accountKey, int xid)
-    { 
+    {
         TypedQuery<AccountAlertEntity> query = entityManager.createQuery(
             "SELECT a FROM account_alert a " +
                 "WHERE a.resolverExecution.id = :xid AND a.account.key = :accountKey",
@@ -394,7 +393,7 @@ public class AccountAlertRepository extends BaseRepository
         query.setParameter("accountKey", accountKey);
         return query.getSingleResult().intValue();
     }
-    
+
     @Override
     public AccountAlertEntity create(AccountAlertEntity e)
     {
@@ -429,7 +428,7 @@ public class AccountAlertRepository extends BaseRepository
 
     @Override
     public AccountAlertEntity createWith(
-        AccountEntity account, 
+        AccountEntity account,
         ParameterizedTemplate parameterizedTemplate,
         AlertResolverExecutionEntity resolverExecution,
         EnumDeviceType deviceType)
@@ -437,22 +436,22 @@ public class AccountAlertRepository extends BaseRepository
         // Ensure we have a persistent AccountEntity instance
         if (!entityManager.contains(account))
             account = entityManager.find(AccountEntity.class, account.getId());
-        
+
         // Find entity mapping to target template
-        
+
         EnumAlertTemplate template = parameterizedTemplate.getTemplate();
         AlertTemplateEntity templateEntity =
             entityManager.find(AlertTemplateEntity.class, template.getValue());
-        
+
         // Create
-        
+
         AccountAlertEntity r = new AccountAlertEntity();
         r.setAccount(account);
         r.setTemplate(templateEntity);
         r.setParameters(parameterizedTemplate);
         r.setDeviceType(deviceType);
         r.setResolverExecution(resolverExecution);
-        
+
         return create(r);
     }
 
@@ -510,7 +509,7 @@ public class AccountAlertRepository extends BaseRepository
 
         // Retrieve generation-time parameters (as a parameterized template)
 
-        ParameterizedTemplate parameterizedTemplate = null; 
+        ParameterizedTemplate parameterizedTemplate = null;
         try {
             parameterizedTemplate = r.getParameterizedTemplate();
         } catch (ClassCastException | ClassNotFoundException | IOException ex) {
@@ -519,22 +518,22 @@ public class AccountAlertRepository extends BaseRepository
                 r.getId(), ex.getMessage()));
             parameterizedTemplate = null;
         }
-        
+
         // Format
-        
-        String title = translation.getTitle(); 
+
+        String title = translation.getTitle();
         String description = translation.getDescription();
         if (parameterizedTemplate != null) {
-            // Make underlying parameters aware of target locale    
+            // Make underlying parameters aware of target locale
             parameterizedTemplate = parameterizedTemplate.withLocale(locale, currencyRateService);
             // Format messages (interpolate parameters)
             Map<String, Object> parameters = parameterizedTemplate.getParameters();
             title = (new MessageFormat(title, locale)).format(parameters);
             description = (new MessageFormat(description, locale)).format(parameters);
         }
-        
+
         // Build a DTO object with formatted messages
-        
+
         Alert message = new Alert(r.getId(), template);
         message.setLocale(locale.getLanguage());
         message.setTitle(title);

@@ -44,13 +44,13 @@ import eu.daiad.web.repository.BaseRepository;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class JpaFavouriteRepository extends BaseRepository implements IFavouriteRepository {
 
     @Autowired
     private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
 
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     @Override

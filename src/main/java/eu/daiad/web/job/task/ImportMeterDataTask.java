@@ -47,7 +47,7 @@ public class ImportMeterDataTask extends BaseTask implements StoppableTasklet {
     /**
      * Entity manager for persisting upload meta data.
      */
-    @PersistenceContext(unitName = "management")
+    @PersistenceContext
     EntityManager entityManager;
 
     /**

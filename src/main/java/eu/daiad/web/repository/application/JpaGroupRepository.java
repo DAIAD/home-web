@@ -42,12 +42,12 @@ import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class JpaGroupRepository extends BaseRepository implements IGroupRepository {
 
     private static final Log logger = LogFactory.getLog(JpaGroupRepository.class);
 
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
 

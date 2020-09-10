@@ -34,13 +34,13 @@ import eu.daiad.web.model.group.EnumGroupType;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class JpaCommonsRepository extends BaseRepository implements ICommonsRepository {
 
     /**
      * Entity manager for persisting data.
      */
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     /**

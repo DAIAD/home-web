@@ -161,22 +161,6 @@ public class CachingConsumptionStatisticsService
     // Helpers
     //
 
-    private static void error(String f, Object ...args)
-    {
-        logger.error(String.format(f, args));
-    }
-
-    private static void warn(String f, Object ...args)
-    {
-        logger.warn(String.format(f, args));
-    }
-
-    private static void info(String f, Object ...args)
-    {
-        if (logger.isInfoEnabled())
-            logger.info(String.format(f, args));
-    }
-
     private static void debug(String f, Object ...args)
     {
         if (debug && logger.isDebugEnabled())

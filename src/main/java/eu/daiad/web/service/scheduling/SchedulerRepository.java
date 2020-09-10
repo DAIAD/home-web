@@ -15,7 +15,6 @@ import org.joda.time.DateTime;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -30,17 +29,16 @@ import eu.daiad.web.model.scheduling.ExecutionQueryResult;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("managementTransactionManager")
+@Transactional
 public class SchedulerRepository extends BaseRepository implements ISchedulerRepository {
 
-    @PersistenceContext(unitName = "management")
+    @PersistenceContext
     EntityManager entityManager;
 
     @Value("${spring.batch.table-prefix}")
     private String batchSchemaPrefix;
 
     @Autowired
-    @Qualifier("managementDataSource")
     private DataSource dataSource;
 
     @Override

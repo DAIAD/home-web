@@ -22,7 +22,7 @@ public class JpaReportRepository extends BaseRepository implements IReportReposi
     /**
      * Java Persistence entity manager.
      */
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     /**

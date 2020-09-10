@@ -17,11 +17,11 @@ import eu.daiad.web.domain.application.UtilityEntity;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class RecommendationResolverExecutionRepository extends BaseRepository
     implements IRecommendationResolverExecutionRepository
 {
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
     
     @Override

@@ -76,7 +76,7 @@ public class UserService extends BaseService implements IUserService {
     private IGoogleReCaptchaService googleReCaptchaService;
 
     @Override
-    @Transactional("applicationTransactionManager")
+    @Transactional
     public UUID createUser(UserRegistrationRequest request) throws ApplicationException {
         try {
             Account account = request.getAccount();
@@ -162,7 +162,7 @@ public class UserService extends BaseService implements IUserService {
     }
 
     @Override
-    @Transactional("applicationTransactionManager")
+    @Transactional
     public void changePassword(String username, String password) throws ApplicationException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) authentication.getPrincipal();
@@ -196,7 +196,7 @@ public class UserService extends BaseService implements IUserService {
     }
 
     @Override
-    @Transactional("applicationTransactionManager")
+    @Transactional
     public void grantRole(String username, EnumRole role) throws ApplicationException {
         // Check authenticated user role
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -226,7 +226,7 @@ public class UserService extends BaseService implements IUserService {
     }
 
     @Override
-    @Transactional("applicationTransactionManager")
+    @Transactional
     public void revokeRole(String username, EnumRole role) throws ApplicationException {
         // Check authenticated user role
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

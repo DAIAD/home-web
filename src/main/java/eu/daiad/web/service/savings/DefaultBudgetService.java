@@ -11,7 +11,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.core.Authentication;
@@ -58,7 +57,7 @@ import eu.daiad.web.service.scheduling.ISchedulerService;
  * Provides methods for computing and querying budgets.
  */
 @Service
-public class DefaultBudgetService extends BaseService implements IBudgetService, InitializingBean {
+public class DefaultBudgetService extends BaseService implements IBudgetService {
 
     /**
      * Logger instance for writing events using the configured logging API.
@@ -110,12 +109,8 @@ public class DefaultBudgetService extends BaseService implements IBudgetService,
     /**
      * Object mapper for serializing scenario parameters.
      */
+    @Autowired
     private ObjectMapper objectMapper;
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        objectMapper = jackson2ObjectMapperBuilder.build();
-    }
 
     /**
      * Creates a new budget.

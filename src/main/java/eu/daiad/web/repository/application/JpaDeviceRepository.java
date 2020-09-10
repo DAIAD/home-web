@@ -48,7 +48,7 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.BaseRepository;
 
 @Repository()
-@Transactional("applicationTransactionManager")
+@Transactional
 public class JpaDeviceRepository extends BaseRepository implements IDeviceRepository {
 
     @Value("${security.white-list}")
@@ -56,7 +56,7 @@ public class JpaDeviceRepository extends BaseRepository implements IDeviceReposi
 
     private DefaultAmphiroProperties defaultAmphiroProperties;
 
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     public JpaDeviceRepository(DefaultAmphiroProperties defaultAmphiroProperties) {

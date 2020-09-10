@@ -46,13 +46,13 @@ import eu.daiad.web.service.savings.ConsumerSelectionUtils;
 import eu.daiad.web.service.scheduling.ISchedulerService;
 
 @Repository
-@Transactional("applicationTransactionManager")
+@Transactional
 public class JpaBudgetRepository extends BaseRepository implements IBudgetRepository, InitializingBean {
 
     /**
      * Java Persistence entity manager.
      */
-    @PersistenceContext(unitName = "default")
+    @PersistenceContext
     EntityManager entityManager;
 
     /**
