@@ -46,7 +46,6 @@
             <DefaultRolloverStrategy max="100" />
         </RollingFile>
 
-
         <RollingFile name="AmphiroSessionIgnoreFile" filename="${baseDir}/amphiro-session-ignore.log"
             filepattern="${baseDir}/amphiro-session-ignore-%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss};%m%n" />
@@ -55,7 +54,7 @@
             </Policies>
             <DefaultRolloverStrategy max="100" />
         </RollingFile>
-
+        
         <RollingFile name="SendMailFile" filename="${baseDir}/send-mail.log"
             filepattern="${baseDir}/send-mail-%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss};%m%n" />

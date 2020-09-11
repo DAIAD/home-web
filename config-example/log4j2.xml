@@ -46,9 +46,17 @@
             <DefaultRolloverStrategy max="100" />
         </RollingFile>
 
-
         <RollingFile name="AmphiroSessionIgnoreFile" filename="${baseDir}/amphiro-session-ignore.log"
             filepattern="${baseDir}/amphiro-session-ignore-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss};%m%n" />
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="100" />
+        </RollingFile>
+
+        <RollingFile name="AmphiroSessionRealTimeFile" filename="${baseDir}/amphiro-session-realtime.log"
+            filepattern="${baseDir}/amphiro-session-realtime-%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss};%m%n" />
             <Policies>
                 <SizeBasedTriggeringPolicy size="100 MB" />
@@ -84,7 +92,12 @@
             additivity="false">
             <AppenderRef ref="AmphiroSessionIgnoreFile" />
         </Logger>
-
+        
+        <Logger name="AmphiroSessionRealTimeLogger" level="INFO"
+            additivity="false">
+            <AppenderRef ref="AmphiroSessionRealTimeFile" />
+        </Logger>
+        
         <Logger name="SendMailLogger" level="INFO"
             additivity="false">
             <AppenderRef ref="SendMailFile" />
