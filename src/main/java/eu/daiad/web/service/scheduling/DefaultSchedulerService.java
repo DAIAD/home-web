@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -134,7 +135,7 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
      * A collection of all running jobs. The service periodically checks all
      * active executions and removes completed jobs from this collection.
      */
-    private Collection<JobExecution> activeExecutions = Collections.synchronizedList(new ArrayList<JobExecution>());
+    private List<JobExecution> activeExecutions = Collections.synchronizedList(new ArrayList<JobExecution>());
 
     /**
      * Updates job status for after a system restart
@@ -582,10 +583,19 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     @Override
     public boolean stop(Long executionId) {
         try {
-            if (activeExecutions.contains(executionId)) {
-                activeExecutions.remove(executionId);
-            }
-            return jobOperator.stop(executionId);
+        	// TODO: Check job execution id value
+			JobExecution jobExecution = activeExecutions.stream()
+				.filter(e -> Objects.equals(e.getId(), executionId))
+				.findFirst()
+				.orElse(null);
+			
+			if (jobExecution != null) {
+				activeExecutions.remove(jobExecution);
+				
+	            return jobOperator.stop(executionId);
+			}
+
+			return false;
         } catch (Exception ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }

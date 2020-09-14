@@ -54,7 +54,6 @@ import eu.daiad.web.repository.application.IAccountRecommendationRepository;
 import eu.daiad.web.repository.application.IAccountTipRepository;
 import eu.daiad.web.repository.application.IAlertResolverExecutionRepository;
 import eu.daiad.web.repository.application.IDeviceRepository;
-import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.IRecommendationResolverExecutionRepository;
 import eu.daiad.web.repository.application.ITipRepository;
 import eu.daiad.web.repository.application.IUserRepository;
@@ -113,9 +112,6 @@ public class DefaultMessageGeneratorService
 	private IUserRepository userRepository;
 
 	@Autowired
-	private IGroupRepository groupRepository;
-
-	@Autowired
 	@Qualifier("cachingConsumptionStatisticsService")
 	private IConsumptionStatisticsService statisticsService;
 
@@ -164,8 +160,8 @@ public class DefaultMessageGeneratorService
 	    private Target(UtilityInfo utility)
 	    {
 	        this.utility = utility;
-	        this.targetUtility = true;
-	        this.accountKeys = utilityRepository.getMembers(utility.getId());
+	        targetUtility = true;
+	        accountKeys = utilityRepository.getMembers(utility.getId());
 	    }
 
 	    /**
@@ -174,7 +170,7 @@ public class DefaultMessageGeneratorService
 	    public Target(UtilityInfo utility, List<UUID> accountKeys)
 	    {
 	        this.utility = utility;
-	        this.targetUtility = false; // targets a subset of this utility
+	        targetUtility = false; // targets a subset of this utility
 	        this.accountKeys = ListUtils.intersection(
 	            accountKeys,
 	            utilityRepository.getMembers(utility.getId())
@@ -281,13 +277,13 @@ public class DefaultMessageGeneratorService
 
 	        // Compute sliding intervals ending on (not including) reference date
 
-	        this.refCurrentDay = new Interval(
+	        refCurrentDay = new Interval(
 	            end.withTimeAtStartOfDay(), end);
 
-	        this.refCurrentWeek = new Interval(
+	        refCurrentWeek = new Interval(
 	            end.withDayOfWeek(DateTimeConstants.MONDAY).withTimeAtStartOfDay(), end);
 
-	        this.refCurrentMonth = new Interval(
+	        refCurrentMonth = new Interval(
 	            end.withDayOfMonth(1).withTimeAtStartOfDay(), end);
         }
 

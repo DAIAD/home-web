@@ -12,7 +12,6 @@ import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -46,7 +45,6 @@ import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IBudgetRepository;
 import eu.daiad.web.repository.application.IGroupRepository;
-import eu.daiad.web.repository.application.ISavingsPotentialRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
 import eu.daiad.web.service.BaseService;
 import eu.daiad.web.service.IDataService;
@@ -77,12 +75,6 @@ public class DefaultBudgetService extends BaseService implements IBudgetService 
     private IBudgetRepository budgetRepository;
 
     /**
-     * Repository for accessing savings scenario data.
-     */
-    @Autowired
-    private ISavingsPotentialRepository savingsPotentialRepository;
-
-    /**
      * Repository for accessing utility data.
      */
     @Autowired
@@ -99,12 +91,6 @@ public class DefaultBudgetService extends BaseService implements IBudgetService 
      */
     @Autowired
     private IDataService dataService;
-
-    /**
-     * A builder used to create {@link ObjectMapper} instances for serializing scenario parameters.
-     */
-    @Autowired
-    private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
 
     /**
      * Object mapper for serializing scenario parameters.
@@ -138,7 +124,7 @@ public class DefaultBudgetService extends BaseService implements IBudgetService 
      */
     @Override
     public void scheduleSnapshotCreation(UUID key, int year, int month) {
-        Map<String, String> jobParameters = new HashMap<String, String>();
+        Map<String, String> jobParameters = new HashMap<>();
 
         // Set budget key
         String parameterKey = BudgetProcessingJobBuilder.STEP_BUDGET_PROCESSING +
@@ -282,7 +268,7 @@ public class DefaultBudgetService extends BaseService implements IBudgetService 
      */
     @Override
     public List<Budget> findActive() {
-        List<Budget> result = new ArrayList<Budget>();
+        List<Budget> result = new ArrayList<>();
 
         try {
             for (BudgetEntity entity : budgetRepository.getActiveBudgets()) {
@@ -318,7 +304,7 @@ public class DefaultBudgetService extends BaseService implements IBudgetService 
      */
     @Override
     public List<BudgetSnapshot> findPendingSnapshots() {
-        List<BudgetSnapshot> snapshots = new ArrayList<BudgetSnapshot>();
+        List<BudgetSnapshot> snapshots = new ArrayList<>();
 
         for (BudgetSnapshotEntity entity : budgetRepository.findPendingSnapshots()) {
             snapshots.add(new BudgetSnapshot(entity));

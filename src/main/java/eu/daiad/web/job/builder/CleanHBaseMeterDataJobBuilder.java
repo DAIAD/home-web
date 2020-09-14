@@ -28,7 +28,6 @@ import eu.daiad.web.model.meter.WaterMeterMeasurementQueryResult;
 import eu.daiad.web.model.utility.UtilityInfo;
 import eu.daiad.web.repository.application.IDeviceRepository;
 import eu.daiad.web.repository.application.IMeterDataRepository;
-import eu.daiad.web.repository.application.IUserRepository;
 import eu.daiad.web.repository.application.IUtilityRepository;
 
 /**
@@ -53,12 +52,6 @@ public class CleanHBaseMeterDataJobBuilder extends BaseJobBuilder implements IJo
      */
     @Autowired
     private IUtilityRepository utilityRepository;
-
-    /**
-     * Repository for accessing user data.
-     */
-    @Autowired
-    private IUserRepository userRepository;
 
     /**
      * Repository for accessing device data.

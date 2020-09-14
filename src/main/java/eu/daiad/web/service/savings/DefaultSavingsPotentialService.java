@@ -31,7 +31,6 @@ import eu.daiad.web.model.query.savings.TemporalSavingsConsumerSelectionFilter;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.repository.application.IGroupRepository;
 import eu.daiad.web.repository.application.ISavingsPotentialRepository;
-import eu.daiad.web.repository.application.ISpatialRepository;
 import eu.daiad.web.service.BaseService;
 import eu.daiad.web.service.scheduling.Constants;
 import eu.daiad.web.service.scheduling.ISchedulerService;
@@ -54,12 +53,6 @@ public class DefaultSavingsPotentialService extends BaseService implements ISavi
      */
     @Autowired
     private IGroupRepository groupRepository;
-
-    /**
-     * Repository for accessing spatial data.
-     */
-    @Autowired
-    private ISpatialRepository spatialRepository;
 
     /**
      * Repository for accessing savings potential scenario data.
@@ -97,7 +90,7 @@ public class DefaultSavingsPotentialService extends BaseService implements ISavi
         try {
             key = savingsPotentialRepository.create(user.getId(), name, parameters);
 
-            Map<String, String> jobParameters = new HashMap<String, String>();
+            Map<String, String> jobParameters = new HashMap<>();
 
             // Set execution mode to SAVINGS
             String parameterKey = Constants.PARAMETER_NAME_DELIMITER +
@@ -136,7 +129,7 @@ public class DefaultSavingsPotentialService extends BaseService implements ISavi
         try {
             savingsPotentialRepository.reset(key);
 
-            Map<String, String> jobParameters = new HashMap<String, String>();
+            Map<String, String> jobParameters = new HashMap<>();
 
             // Set execution mode to SAVINGS
             String parameterKey = Constants.PARAMETER_NAME_DELIMITER +

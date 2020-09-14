@@ -108,7 +108,8 @@ public class DebugMessageController extends BaseRestController
         public abstract String toHeaderLine();
     }
 
-    public static class AccountTipPrinter extends AccountMessagePrinter
+    @SuppressWarnings("serial")
+	public static class AccountTipPrinter extends AccountMessagePrinter
     {
         private static final RecordMapper<AccountMessage<Tip>> recordMapper;
 
@@ -142,7 +143,8 @@ public class DebugMessageController extends BaseRestController
         }
     }
 
-    public static class AccountAlertPrinter extends AccountMessagePrinter
+    @SuppressWarnings("serial")
+	public static class AccountAlertPrinter extends AccountMessagePrinter
     {
         private static final RecordMapper<AccountMessage<Alert>> recordMapper;
 
@@ -180,6 +182,7 @@ public class DebugMessageController extends BaseRestController
         }
     }
 
+    @SuppressWarnings("serial")
     public static class AccountAnnouncementPrinter extends AccountMessagePrinter
     {
         private static final RecordMapper<AccountMessage<Announcement>> recordMapper;
@@ -214,6 +217,7 @@ public class DebugMessageController extends BaseRestController
         }
     }
 
+    @SuppressWarnings("serial")
     public static class AccountRecommendationPrinter extends AccountMessagePrinter
     {
         private static final RecordMapper<AccountMessage<Recommendation>> recordMapper;
