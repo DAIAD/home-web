@@ -36,7 +36,7 @@ public class ReloadRecommendationTemplate extends BaseMigration
         for (EnumRecommendationTemplate template: EnumRecommendationTemplate.values()) {
             EnumRecommendationType type = template.getType();
             RecommendationTypeEntity typeEntity = em.find(RecommendationTypeEntity.class, type.getValue());
-            Assert.state(typeEntity !=  null);
+            Assert.state(typeEntity !=  null, "[Assertion failed] - Type entity not found");
             RecommendationTemplateEntity templateEntity = new RecommendationTemplateEntity(template);
             templateEntity.setType(typeEntity);
             em.persist(templateEntity);

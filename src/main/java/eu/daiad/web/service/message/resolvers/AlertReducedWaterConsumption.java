@@ -159,7 +159,7 @@ public class AlertReducedWaterConsumption extends AbstractAlertResolver
         Interval interval = null;
 
         AccountEntity account = userRepository.getAccountByKey(accountKey);
-        Assert.state(account != null);
+        Assert.state(account != null, "[Assertion failed] - Account not found");
 
         DataQueryBuilder queryBuilder = new DataQueryBuilder()
             .timezone(refDate.getZone())

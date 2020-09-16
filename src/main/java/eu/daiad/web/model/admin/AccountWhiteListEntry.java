@@ -1,8 +1,7 @@
 package eu.daiad.web.model.admin;
 
 import org.joda.time.DateTime;
-
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import eu.daiad.web.model.EnumGender;
 

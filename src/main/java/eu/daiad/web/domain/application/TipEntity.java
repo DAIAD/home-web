@@ -1,5 +1,7 @@
 package eu.daiad.web.domain.application;
 
+import java.util.Base64;
+
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -17,7 +19,6 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-import org.springframework.security.crypto.codec.Base64;
 
 @Entity(name = "tip")
 @Table(schema = "public", name = "tip")
@@ -149,7 +150,7 @@ public class TipEntity
     {
         // Assume that image is base64 encoded
         if (imageEncoded != null && !imageEncoded.isEmpty())
-            this.image = Base64.decode(imageEncoded.getBytes());
+            this.image = Base64.getDecoder().decode(imageEncoded.getBytes());
         else
             this.image = null;
     }

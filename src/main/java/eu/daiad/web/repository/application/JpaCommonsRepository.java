@@ -11,10 +11,9 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
+import org.locationtech.jts.geom.Geometry;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.GroupCommonsEntity;

@@ -90,16 +90,17 @@ public class SendMailTask extends BaseTask implements StoppableTasklet {
                         AccountEntity account = userRepository.getAccountByUsername(s.getUsername());
 
                         if ((account != null) && (account.getProfile().isSendMailEnabled())) {
+							// Skip user if locale is not set
+							if (StringUtils.isBlank(account.getLocale())) {
+								continue;
+							}
+                            
                             MailTemplateModel model = new MailTemplateModel(account, account.getProfile());
 
-                            Message message = new Message(template, model);
-
-                            // Set locale
-                            if (StringUtils.isBlank(account.getLocale())) {
-                                // Skip user if locale is not set
-                                continue;
-                            }
-                            message.setLocale(account.getLocale());
+							Message message = new Message(account.getLocale());
+							
+							message.setTemplate(template);
+							message.setVariable("model", model);
 
                             // Set subject
                             message.setSubject(messageSource.getMessage(subject, null, null, new Locale(account.getLocale())));

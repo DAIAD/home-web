@@ -6,10 +6,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.locationtech.jts.geom.Geometry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
 import eu.daiad.web.model.device.Device;

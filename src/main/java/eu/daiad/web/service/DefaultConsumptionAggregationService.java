@@ -113,14 +113,15 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
         {
             super(measurementField);
 
-            Assert.isTrue(statistic == EnumStatistic.SUM);
+            Assert.isTrue(statistic == EnumStatistic.SUM, "[Assertion failed] - Statistic type must be SUM");
 
             // Check that summing is meaningful for this (field, statistic)
             EnumDataField field = measurementField.getField();
             Assert.isTrue(
                 field == EnumDataField.VOLUME ||
                 field == EnumDataField.DURATION ||
-                field == EnumDataField.ENERGY);
+                field == EnumDataField.ENERGY, 
+                "[Assertion failed] - Data field type not supported");
         }
 
         @Override
@@ -154,14 +155,15 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
         {
             super(measurementField);
 
-            Assert.isTrue(statistic == EnumStatistic.AVERAGE_PER_USER);
+            Assert.isTrue(statistic == EnumStatistic.AVERAGE_PER_USER, "[Assertion failed] - Statistic type must be AVERAGE_PER_USER");
 
             // Check that averaging-per-user is meaningful for this (field, statistic)
             EnumDataField field = measurementField.getField();
             Assert.isTrue(
                 field == EnumDataField.VOLUME ||
                 field == EnumDataField.DURATION ||
-                field == EnumDataField.ENERGY);
+                field == EnumDataField.ENERGY, 
+                "[Assertion failed] - Data field type not supported");
         }
 
         @Override
@@ -195,11 +197,11 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
         {
             super(measurementField);
 
-            Assert.isTrue(statistic == EnumStatistic.AVERAGE_PER_SESSION);
+            Assert.isTrue(statistic == EnumStatistic.AVERAGE_PER_SESSION, "[Assertion failed] - Statistic type must be AVERAGE_PER_SESSION");
 
             // Check that averaging-per-session is meaningful for this (field, statistic)
             EnumDeviceType deviceType = measurementField.getDeviceType();
-            Assert.isTrue(deviceType == EnumDeviceType.AMPHIRO);
+            Assert.isTrue(deviceType == EnumDeviceType.AMPHIRO, "[Assertion failed] - Device type must be AMPHIRO");
         }
 
         @Override
@@ -275,7 +277,8 @@ public class DefaultConsumptionAggregationService implements IConsumptionAggrega
             Assert.isTrue(
                 field == EnumDataField.VOLUME ||
                 field == EnumDataField.DURATION ||
-                field == EnumDataField.ENERGY);
+                field == EnumDataField.ENERGY, 
+                "[Assertion failed] - Data field type is not supported");
         }
 
 	    private List<UUID> getAccountKeys(UtilityInfo utility)

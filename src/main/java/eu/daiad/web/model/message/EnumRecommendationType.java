@@ -64,7 +64,7 @@ public enum EnumRecommendationType
     private static final Map<Integer, EnumRecommendationType> intToTypeMap = new HashMap<>();
     static {
         for (EnumRecommendationType type: EnumRecommendationType.values()) {
-            Assert.state(!intToTypeMap.containsKey(type.value));
+            Assert.state(!intToTypeMap.containsKey(type.value), "[Assertion failed] - Database is inconsistent");
             intToTypeMap.put(type.value, type);
         }
     }

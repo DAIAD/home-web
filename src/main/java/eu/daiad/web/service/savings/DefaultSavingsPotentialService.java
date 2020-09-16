@@ -6,9 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -40,7 +38,7 @@ import eu.daiad.web.service.scheduling.ISchedulerService;
  * methods for computing and querying savings potential scenarios.
  */
 @Service
-public class DefaultSavingsPotentialService extends BaseService implements ISavingsPotentialService, InitializingBean {
+public class DefaultSavingsPotentialService extends BaseService implements ISavingsPotentialService {
 
     /**
      * Service for querying, scheduling and launching jobs.
@@ -60,21 +58,8 @@ public class DefaultSavingsPotentialService extends BaseService implements ISavi
     @Autowired
     private ISavingsPotentialRepository savingsPotentialRepository;
 
-    /**
-     * A builder used to create {@link ObjectMapper} instances for serializing scenario parameters.
-     */
     @Autowired
-    private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
-
-    /**
-     * Object mapper for serializing scenario parameters.
-     */
     private ObjectMapper objectMapper;
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        objectMapper = jackson2ObjectMapperBuilder.build();
-    }
 
     /**
      * Creates a new savings potential scenario

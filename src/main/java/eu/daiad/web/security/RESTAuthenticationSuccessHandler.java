@@ -11,7 +11,6 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -36,7 +35,7 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 	private final Log logger = LogFactory.getLog(this.getClass());
 
     @Autowired
-    private Jackson2ObjectMapperBuilder objectMapperBuilder;
+    private ObjectMapper objectMapper;
 
 	@Autowired
 	private IProfileRepository profileRepository;
@@ -87,8 +86,7 @@ public class RESTAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
 				response.setHeader("Cache-Control", "no-cache");
 				response.setStatus(HttpStatus.OK.value());
 
-				ObjectMapper mapper = objectMapperBuilder.build();
-				response.getWriter().print(mapper.writeValueAsString(authenticationResponse));
+				response.getWriter().print(objectMapper.writeValueAsString(authenticationResponse));
 			} catch (Exception ex) {
 				logger.error(ex);
 			}

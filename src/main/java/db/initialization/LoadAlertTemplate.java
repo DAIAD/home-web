@@ -33,7 +33,8 @@ public class LoadAlertTemplate extends BaseMigration
             Assert.state(
                 template != null &&
                 template.getValue() == templateEntity.getValue() &&
-                template.getType() == typeEntity.getType()
+                template.getType() == typeEntity.getType(), 
+                "[Assertion failed] - Database is inconsistent"
             );
             found.add(template);
         }
@@ -43,7 +44,7 @@ public class LoadAlertTemplate extends BaseMigration
         for (EnumAlertTemplate template: EnumSet.complementOf(found)) {
             EnumAlertType type = template.getType();
             AlertTypeEntity typeEntity = em.find(AlertTypeEntity.class, type.getValue());
-            Assert.state(typeEntity !=  null);
+            Assert.state(typeEntity !=  null, "[Assertion failed] - Database is inconsistent");
             AlertTemplateEntity templateEntity = new AlertTemplateEntity(template);
             templateEntity.setType(typeEntity);
             em.persist(templateEntity);

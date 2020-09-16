@@ -38,7 +38,7 @@ public abstract class AbstractMessageResolver <P extends Message.Parameters>
     @Override
     public void setup(Configuration config, IGeneratorContext generatorContext)
     {
-        Assert.state(config != null);
+        Assert.state(config != null, "[Assertion failed] - Configuration is not set");
         this.config = config;
 
         this.refDate = generatorContext.getRefDate();

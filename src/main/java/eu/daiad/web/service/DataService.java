@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.locationtech.jts.geom.Geometry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;

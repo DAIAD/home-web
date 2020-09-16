@@ -36,7 +36,7 @@ public class ReloadAlertTemplate extends BaseMigration
         for (EnumAlertTemplate template: EnumAlertTemplate.values()) {
             EnumAlertType type = template.getType();
             AlertTypeEntity typeEntity = em.find(AlertTypeEntity.class, type.getValue());
-            Assert.state(typeEntity !=  null);
+            Assert.state(typeEntity !=  null, "[Assertion failed] - Type entity not found");
             AlertTemplateEntity templateEntity = new AlertTemplateEntity(template);
             templateEntity.setType(typeEntity);
             em.persist(templateEntity);

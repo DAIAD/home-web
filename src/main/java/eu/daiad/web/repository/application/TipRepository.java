@@ -201,7 +201,7 @@ public class TipRepository
         DateTime now = DateTime.now();
 
         int rid = r.getId();
-        Assert.state(rid > 0);
+        Assert.state(rid > 0, "[Assertion failed] - Tip id is not valid");
 
         if (!entityManager.contains(r))
             r = findOne(rid);

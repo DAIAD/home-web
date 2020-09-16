@@ -66,7 +66,7 @@ public enum EnumAlertType
 	private static final Map<Integer, EnumAlertType> intToTypeMap = new HashMap<>();
 	static {
 		for (EnumAlertType type : EnumAlertType.values()) {
-		    Assert.state(!intToTypeMap.containsKey(type.value));
+		    Assert.state(!intToTypeMap.containsKey(type.value), "[Assertion failed] - Database is inconsistent");
 			intToTypeMap.put(type.value, type);
 		}
 	}

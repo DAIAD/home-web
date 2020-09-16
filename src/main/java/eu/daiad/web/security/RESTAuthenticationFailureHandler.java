@@ -11,7 +11,6 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
@@ -31,7 +30,7 @@ public class RESTAuthenticationFailureHandler extends SimpleUrlAuthenticationFai
 	protected MessageSource messageSource;
 
     @Autowired
-    private Jackson2ObjectMapperBuilder objectMapperBuilder;
+    private ObjectMapper objectMapper;
 
 	private String getMessage(String code) {
 		return messageSource.getMessage(code, null, code, null);
@@ -54,8 +53,7 @@ public class RESTAuthenticationFailureHandler extends SimpleUrlAuthenticationFai
 				String messageKey = SharedErrorCode.AUTHENTICATION.getMessageKey();
 				RestResponse r = new RestResponse(messageKey, getMessage(messageKey));
 
-				ObjectMapper mapper = objectMapperBuilder.build();
-				response.getWriter().print(mapper.writeValueAsString(r));
+				response.getWriter().print(objectMapper.writeValueAsString(r));
 			} catch (Exception ex) {
 				logger.warn(ex);
 			}

@@ -12,13 +12,12 @@ import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
 import org.joda.time.Days;
+import org.locationtech.jts.geom.Geometry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AccountWhiteListEntity;

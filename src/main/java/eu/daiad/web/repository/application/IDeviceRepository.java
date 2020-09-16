@@ -4,8 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
-
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.DeviceAmphiroDefaultConfigurationEntity;
 import eu.daiad.web.model.KeyValuePair;

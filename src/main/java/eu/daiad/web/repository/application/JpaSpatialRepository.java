@@ -8,10 +8,9 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.lang.StringUtils;
+import org.locationtech.jts.geom.Geometry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
-
-import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AreaGroupEntity;

@@ -1,17 +1,17 @@
 package eu.daiad.web.model.user;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Past;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
-import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.joda.time.DateTime;
+import org.locationtech.jts.geom.Geometry;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.model.EnumGender;
 

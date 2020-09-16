@@ -98,7 +98,7 @@ public enum EnumRecommendationTemplate
     private static final Map<Integer, EnumRecommendationTemplate> intToTemplateMap = new HashMap<>();
     static {
         for (EnumRecommendationTemplate template: EnumRecommendationTemplate.values()) {
-            Assert.state(!intToTemplateMap.containsKey(template.value));
+            Assert.state(!intToTemplateMap.containsKey(template.value), "[Assertion failed] - Database is inconsistent");
             intToTemplateMap.put(template.value, template);
         }
     }

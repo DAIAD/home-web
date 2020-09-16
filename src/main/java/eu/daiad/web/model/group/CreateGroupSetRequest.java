@@ -2,7 +2,7 @@ package eu.daiad.web.model.group;
 
 import java.util.UUID;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 public class CreateGroupSetRequest {
 

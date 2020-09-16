@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
+import org.locationtech.jts.geom.Geometry;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.vividsolutions.jts.geom.Geometry;
 
 public abstract class Group {
 

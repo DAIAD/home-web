@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -12,7 +13,6 @@ import javax.persistence.TypedQuery;
 
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
@@ -41,14 +41,13 @@ import eu.daiad.web.model.query.NamedDataQuery;
 import eu.daiad.web.model.security.AuthenticatedUser;
 import eu.daiad.web.model.security.EnumRole;
 import eu.daiad.web.repository.BaseRepository;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Repository
 @Transactional
 public class JpaFavouriteRepository extends BaseRepository implements IFavouriteRepository {
 
     @Autowired
-    private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
+    private ObjectMapper objectMapper;
 
     @PersistenceContext
     EntityManager entityManager;
@@ -366,11 +365,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void insertFavouriteQuery(NamedDataQuery namedDataQuery, AccountEntity account) {
-
         try {
-
-            ObjectMapper objectMapper = jackson2ObjectMapperBuilder.build();
-
             TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> queryCheck = entityManager.createQuery(
                             "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.name = :name",
                             eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);
@@ -422,11 +417,7 @@ public class JpaFavouriteRepository extends BaseRepository implements IFavourite
 
     @Override
     public void updateFavouriteQuery(NamedDataQuery namedDataQuery, AccountEntity account) {
-
         try {
-
-            ObjectMapper objectMapper = jackson2ObjectMapperBuilder.build();
-
             TypedQuery<eu.daiad.web.domain.application.DataQueryEntity> queryCheck = entityManager.createQuery(
                             "SELECT d FROM data_query d WHERE d.owner.id = :accountId and d.name = :name",
                             eu.daiad.web.domain.application.DataQueryEntity.class).setFirstResult(0).setMaxResults(1);

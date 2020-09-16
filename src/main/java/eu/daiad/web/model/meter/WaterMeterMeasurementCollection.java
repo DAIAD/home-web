@@ -19,7 +19,7 @@ public class WaterMeterMeasurementCollection extends DeviceMeasurementCollection
     public WaterMeterMeasurementCollection(List<WaterMeterMeasurement> measurements) {
         this.measurements = measurements;
 
-        Assert.notNull(this.measurements);
+        Assert.notNull(this.measurements, "[Assertion failed] - Argument is not set");
     }
 
     public List<WaterMeterMeasurement> getMeasurements() {

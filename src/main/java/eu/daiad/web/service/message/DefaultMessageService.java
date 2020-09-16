@@ -358,7 +358,7 @@ public class DefaultMessageService
         Announcement announcement = request.getAnnouncement();
 
         String lang = announcement.getLocale();
-        Assert.state(lang != null && !lang.isEmpty());
+        Assert.state(lang != null && !lang.isEmpty(), "[Assertion failed] - Database is inconsistent");
 
         // 1. Create announcement
 

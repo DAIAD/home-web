@@ -49,28 +49,28 @@ public class ComputedNumber extends Number
     @Override
     public int intValue()
     {
-        Assert.state(value != null);
+        Assert.state(value != null, "[Assertion failed] - Value is not set");
         return value.intValue();
     }
 
     @Override
     public long longValue()
     {
-        Assert.state(value != null);
+        Assert.state(value != null, "[Assertion failed] - Value is not set");
         return value.longValue();
     }
 
     @Override
     public float floatValue()
     {
-        Assert.state(value != null);
+        Assert.state(value != null, "[Assertion failed] - Value is not set");
         return value.floatValue();
     }
 
     @Override
     public double doubleValue()
     {
-        Assert.state(value != null);
+        Assert.state(value != null, "[Assertion failed] - Value is not set");
         return value.doubleValue();
     }
     

@@ -3,8 +3,7 @@ package eu.daiad.web.model.spatial;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
-
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
 

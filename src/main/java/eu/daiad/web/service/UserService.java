@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import eu.daiad.web.logging.MappedDiagnosticContextKeys;
-import eu.daiad.web.logging.MappedDiagnosticContextValues;
 import eu.daiad.web.model.EnumApplication;
 import eu.daiad.web.model.KeyValuePair;
 import eu.daiad.web.model.admin.AccountWhiteListEntry;
@@ -132,8 +131,7 @@ public class UserService extends BaseService implements IUserService {
             return userKey;
         } catch (ApplicationException ex) {
             if (ex.getCode().equals(UserErrorCode.USERNANE_NOT_AVAILABLE)) {
-                if (MDC.get(MappedDiagnosticContextKeys.USERNAME)
-                                .equals(MappedDiagnosticContextValues.UNKNOWN_USERNAME)) {
+                if (MDC.get(MappedDiagnosticContextKeys.USERNAME).equals("-")) {
                     MDC.put(MappedDiagnosticContextKeys.USERNAME, request.getAccount().getUsername());
                 }
             }
@@ -287,7 +285,7 @@ public class UserService extends BaseService implements IUserService {
         String url = baseSiteUrl + "password/reset/" + token.getToken().toString() + "/";
 
         // Send email
-        Message message = new Message();
+        Message message = new Message(user.getLocale());
 
         message.setSubject(messageSource.getMessage("ResetPassword.Mail.Subject", null, "Password Reset", new Locale(user.getLocale())));
 
@@ -298,7 +296,7 @@ public class UserService extends BaseService implements IUserService {
         }
 
         message.setLocale(user.getLocale());
-        message.setModel(new PasswordResetMailModel(user, url, token.getPin()));
+        message.getVariables().put("model", new PasswordResetMailModel(user, url, token.getPin()));
 
         switch(application) {
             case HOME:

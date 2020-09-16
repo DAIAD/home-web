@@ -22,8 +22,7 @@ import javax.persistence.Table;
 import org.apache.commons.net.util.Base64;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import eu.daiad.web.model.profile.EnumMobileMode;
 import eu.daiad.web.model.profile.EnumWebMode;

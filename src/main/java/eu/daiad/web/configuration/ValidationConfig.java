@@ -12,8 +12,9 @@ public class ValidationConfig
     @Bean(name = "defaultBeanValidator")
     Validator validator()
     {
-        LocalValidatorFactoryBean b = new LocalValidatorFactoryBean();
-        b.afterPropertiesSet();
-        return b.getValidator();
+		try (LocalValidatorFactoryBean b = new LocalValidatorFactoryBean()) {
+			b.afterPropertiesSet();
+			return b.getValidator();
+		}
     }
 }

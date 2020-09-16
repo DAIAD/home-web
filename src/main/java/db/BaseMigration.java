@@ -6,27 +6,30 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 
-import org.flywaydb.core.api.migration.spring.BaseSpringJdbcMigration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
 import org.hibernate.jpa.HibernatePersistenceProvider;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 
-public abstract class BaseMigration extends BaseSpringJdbcMigration
+public abstract class BaseMigration extends BaseJavaMigration
 {
     private EntityManager entityManager = null;
 
-    protected EntityManager getEntityManager()
+    protected EntityManager buildEntityManager(Context context)
     {
-        if (entityManager != null)
+        if (entityManager != null) {
             return entityManager;
+        }
 
         LocalContainerEntityManagerFactoryBean b =
             new LocalContainerEntityManagerFactoryBean();
 
-        b.setDataSource(flywayConfiguration.getDataSource());
-        b.setPackagesToScan("eu.daiad.web.domain.application");
-        b.setPackagesToScan("eu.daiad.web.domain.admin");
+        b.setDataSource(context.getConfiguration().getDataSource());
+        b.setPackagesToScan(
+    		"eu.daiad.web.domain.admin",
+    		"eu.daiad.web.domain.application"
+		);
         b.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         b.setJpaProperties(new Properties());
         b.setPersistenceUnitName("default-migration");
@@ -40,9 +43,9 @@ public abstract class BaseMigration extends BaseSpringJdbcMigration
     }
 
     @Override
-    public void migrate(JdbcTemplate jdbcTemplate)
+    public void migrate(Context context)
     {
-        EntityManager em = getEntityManager();
+        EntityManager em = buildEntityManager(context);
         EntityTransaction t = em.getTransaction();
         t.begin();
         try {

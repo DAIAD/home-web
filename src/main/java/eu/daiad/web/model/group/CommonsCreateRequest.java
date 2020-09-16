@@ -1,6 +1,7 @@
 package eu.daiad.web.model.group;
 
-import com.vividsolutions.jts.geom.Geometry;
+
+import org.locationtech.jts.geom.Geometry;
 
 import eu.daiad.web.model.AuthenticatedRequest;
 

@@ -6,12 +6,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.locationtech.spatial4j.io.jackson.ShapesAsGeoJSONModule;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
-import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
@@ -52,7 +52,7 @@ public class CustomLoginUrlAuthenticationEntryPoint extends LoginUrlAuthenticati
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
 
         // Add additional modules to JSON parser
-        builder.modules(new JodaModule(), new JtsModule());
+        builder.modules(new JodaModule(), new ShapesAsGeoJSONModule());
 
         return builder.build();
     }

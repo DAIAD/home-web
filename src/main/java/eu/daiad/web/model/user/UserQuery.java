@@ -1,7 +1,8 @@
 package eu.daiad.web.model.user;
 
+import org.locationtech.jts.geom.Geometry;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.vividsolutions.jts.geom.Geometry;
 
 public class UserQuery {
 

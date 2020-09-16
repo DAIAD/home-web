@@ -3,7 +3,6 @@ package eu.daiad.web.service.mail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import javax.mail.Address;
 import javax.mail.MessagingException;
@@ -15,11 +14,9 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.spring4.SpringTemplateEngine;
 
 import eu.daiad.web.model.error.ApplicationException;
 import eu.daiad.web.model.error.MailErrorCode;
@@ -35,17 +32,18 @@ public class DefaultMailService implements IMailService {
      * Logger instance for writing events using the configured logging API.
      */
     private static final Log logger = LogFactory.getLog(DefaultMailService.class);
-
+    
     /**
      * Name of the logger for send mail operations.
      */
-    protected static final String LOGGER_SEND_MAIL = "SendMailLogger";
-
+    private static final String LOGGER_SEND_MAIL = "SEND_MAIL";
+    
     /**
      * Logger for logging send mail operations
      */
-    protected static final Log sendMailLogger = LogFactory.getLog(LOGGER_SEND_MAIL);
-
+    private static final Log sendMailLogger = LogFactory.getLog(LOGGER_SEND_MAIL);
+    
+    
     /**
      * Message source for localizing error messages.
      */
@@ -55,7 +53,7 @@ public class DefaultMailService implements IMailService {
     /**
      * True if mail system is enabled; Otherwise False
      */
-    @Value("${daiad.mail.enabled}")
+    @Value("${daiad.mail.enabled:false}")
     private boolean isMailSystemEnabled;
 
     /**
@@ -75,24 +73,17 @@ public class DefaultMailService implements IMailService {
      * auto-configuration.
      */
     @Autowired
-    private JavaMailSenderImpl mailSender;
+    private JavaMailSender mailSender;
 
     /**
-     * An instance of @{link SpringTemplateEngine} as configured in @{link
-     * MailConfig}.
+     * An instance of @{link MailTemplateEngine}
      */
     @Autowired
-    private SpringTemplateEngine templateEngine;
+    private MailTemplateEngine templateEngine;
 
-    /**
-     * Sends a mail. The mail content is generated from a template. Data is
-     * provided using an object. The content of the mail is localized.
-     *
-     * @param message the message to be sent
-     */
     @Override
     public void send(Message message) {
-        if (!isMailSystemEnabled) {
+        if (!this.isMailSystemEnabled) {
             logger.warn(String.format("Send mail request to recipient [%s] has failed. Mail system is disabled.",
                             StringUtils.join(message.getRecipients(), ',')));
 
@@ -102,22 +93,27 @@ public class DefaultMailService implements IMailService {
         try {
             // Set default sender
             if (message.getSender() == null) {
-                message.setSender(mailSenderDefaultAddress, mailSenderDefaultName);
+                message.setSender(this.mailSenderDefaultAddress, this.mailSenderDefaultName);
             }
 
-            MimeMessage mimeMessage = createMimeMessage(message);
+            final MimeMessage mimeMessage = this.createMimeMessage(message);
 
-            logMessage(mimeMessage);
-            mailSender.send(mimeMessage);
-        } catch (ApplicationException appEx) {
+            this.logMessage(mimeMessage);
+            this.mailSender.send(mimeMessage);
+        } catch (final ApplicationException appEx) {
             throw appEx;
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             MailErrorCode code = MailErrorCode.SENT_FAILED;
 
             String pattern = messageSource.getMessage(code.getMessageKey(), null, code.getMessageKey(), null);
 
             throw ApplicationException.wrap(ex, code, pattern);
         }
+    }
+    
+    @Override
+    public String render(EnumOutputFormat format, Message message) throws IllegalArgumentException {
+        return this.templateEngine.render(format, message);
     }
 
     /**
@@ -129,7 +125,7 @@ public class DefaultMailService implements IMailService {
      * @throws MessagingException if message creation fails.
      */
     private MimeMessage createMimeMessage(Message message) throws MessagingException, IOException {
-        final MimeMessage mimeMessage = mailSender.createMimeMessage();
+        final MimeMessage mimeMessage = this.mailSender.createMimeMessage();
 
         final MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
@@ -141,7 +137,7 @@ public class DefaultMailService implements IMailService {
             mimeMessageHelper.setFrom(message.getSender().getAddress(), message.getSender().getName());
         }
 
-        for (EmailAddress recipient : message.getRecipients()) {
+        for (final EmailAddress recipient : message.getRecipients()) {
             if (StringUtils.isBlank(recipient.getName())) {
                 mimeMessageHelper.addTo(recipient.getAddress());
             } else {
@@ -149,34 +145,12 @@ public class DefaultMailService implements IMailService {
             }
         }
 
-        String htmlContent = renderTemplate(message.getLocale(), message.getTemplate(), message.getModel());
+        // TODO: Implement both TEXTand HTML template rendering
+        final String htmlContent = this.render(EnumOutputFormat.HTML, message);
+
         mimeMessageHelper.setText(htmlContent, true);
 
         return mimeMessage;
-    }
-
-    /**
-     * Renders the HTML body of a mail using a template. When constructing the
-     * name of the template, the locale is appended to {@code template},
-     * separated by a comma (,).
-     *
-     * @param locale the locale of the recipient.
-     * @param template the template name.
-     * @param model the model passed to the view during the rendering process.
-     * @return the rendered text.
-     */
-    private String renderTemplate(String locale, String template, Object model) {
-        if(StringUtils.isBlank(locale)) {
-            locale = Locale.ENGLISH.toString();
-        }
-
-        final Context ctx = new Context(new Locale(locale));
-
-        ctx.setVariable("model", model);
-
-        template = template + "-" + locale;
-
-        return templateEngine.process(template, ctx);
     }
 
     /**
@@ -186,22 +160,21 @@ public class DefaultMailService implements IMailService {
      */
     private void logMessage(MimeMessage message) {
         try {
-            List<String> recipients = new ArrayList<String>();
-            for (Address address : message.getAllRecipients()) {
+            final List<String> recipients = new ArrayList<String>();
+            for (final Address address : message.getAllRecipients()) {
                 recipients.add(address.toString());
             }
 
-            String text = String.format("Mail sent to [%s] with subject [%s].",StringUtils.join(recipients,  ","), message.getSubject());
+            final String text = String.format("Mail sent to [%s] with subject [%s].",StringUtils.join(recipients,  ","), message.getSubject());
 
             sendMailLogger.info(text);
-        } catch(MessagingException ex) {
-            MailErrorCode code = MailErrorCode.LOG_FAILED;
+        } catch(final MessagingException ex) {
+        	final MailErrorCode code = MailErrorCode.LOG_FAILED;
 
-            String pattern = messageSource.getMessage(code.getMessageKey(), null, code.getMessageKey(), null);
+        	String pattern = messageSource.getMessage(code.getMessageKey(), null, code.getMessageKey(), null);
 
             throw ApplicationException.wrap(ex, code, pattern);
         }
-
     }
 
 }

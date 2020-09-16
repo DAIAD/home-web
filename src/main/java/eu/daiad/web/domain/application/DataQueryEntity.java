@@ -1,11 +1,13 @@
 package eu.daiad.web.domain.application;
 
-import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import java.io.IOException;
+import java.util.List;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -17,6 +19,8 @@ import javax.persistence.Table;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
+import org.locationtech.spatial4j.io.jackson.ShapesAsGeoJSONModule;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -26,10 +30,6 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import eu.daiad.web.model.query.DataQuery;
 import eu.daiad.web.model.query.EnumQueryFavouriteType;
-import java.util.List;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Entity(name = "data_query")
 @Table(schema = "public", name = "data_query")
@@ -125,7 +125,7 @@ public class DataQueryEntity {
         }
         
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
-        builder.modules(new JodaModule(), new JtsModule());
+        builder.modules(new JodaModule(), new ShapesAsGeoJSONModule());
         ObjectMapper objectMapper = builder.build();
         List<DataQuery> queries = objectMapper.readValue(query, new TypeReference<List<DataQuery>>(){});
 

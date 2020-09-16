@@ -23,8 +23,7 @@ import javax.persistence.Version;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import eu.daiad.web.model.group.EnumGroupType;
 

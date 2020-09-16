@@ -9,7 +9,6 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -25,7 +24,7 @@ import eu.daiad.web.util.AjaxUtils;
 public class RESTLogoutSuccessHandler implements LogoutSuccessHandler {
 
     @Autowired
-    private Jackson2ObjectMapperBuilder objectMapperBuilder;
+    private ObjectMapper objectMapper;
 
 	@Override
 	public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -47,8 +46,7 @@ public class RESTLogoutSuccessHandler implements LogoutSuccessHandler {
 				response.setHeader(CsrfConstants.RESPONSE_TOKEN_NAME, token.getToken());
 			}
 
-			ObjectMapper mapper = objectMapperBuilder.build();
-			response.getWriter().print(mapper.writeValueAsString(new RestResponse()));
+			response.getWriter().print(objectMapper.writeValueAsString(new RestResponse()));
 		} else {
 			response.sendRedirect("/");
 		}

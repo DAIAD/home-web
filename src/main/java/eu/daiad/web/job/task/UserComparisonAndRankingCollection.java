@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 /**
  * Stores data about comparisons and rankings for a group of users.

@@ -211,7 +211,7 @@ public class AccountAnnouncementRepository extends BaseRepository
     @Override
     public AccountAnnouncementEntity createWith(AccountEntity account, AnnouncementEntity announcement)
     {
-        Assert.state(account != null && announcement != null);
+        Assert.state(account != null && announcement != null, "[Assertion failed] - Argument value(s) is(are) not set");
 
         // Ensure we have a persistent entities
 

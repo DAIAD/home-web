@@ -12,9 +12,7 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +45,7 @@ import eu.daiad.web.service.scheduling.ISchedulerService;
 
 @Repository
 @Transactional
-public class JpaBudgetRepository extends BaseRepository implements IBudgetRepository, InitializingBean {
+public class JpaBudgetRepository extends BaseRepository implements IBudgetRepository {
 
     /**
      * Java Persistence entity manager.
@@ -61,15 +59,7 @@ public class JpaBudgetRepository extends BaseRepository implements IBudgetReposi
     @Autowired
     private ISchedulerService schedulerService;
 
-    /**
-     * A builder used to create {@link ObjectMapper} instances for serializing budget parameters.
-     */
     @Autowired
-    private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
-
-    /**
-     * Object mapper for serializing budget parameters.
-     */
     private ObjectMapper objectMapper;
 
     /**
@@ -77,11 +67,6 @@ public class JpaBudgetRepository extends BaseRepository implements IBudgetReposi
      */
     @Autowired
     private ConsumerSelectionUtils consumerSelectionUtils;
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        objectMapper = jackson2ObjectMapperBuilder.build();
-    }
 
     /**
      * Creates a new budget.

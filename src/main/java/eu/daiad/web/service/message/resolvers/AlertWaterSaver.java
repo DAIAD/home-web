@@ -168,7 +168,7 @@ public class AlertWaterSaver extends AbstractAlertResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        Assert.state(deviceType == EnumDeviceType.METER);
+        Assert.state(deviceType == EnumDeviceType.METER, "[Assertion failed] - Device type must be METER");
 
         final Period period = Period.months(1);
         final EnumTimeAggregation granularity = EnumTimeAggregation.MONTH;

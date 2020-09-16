@@ -1,11 +1,11 @@
 package eu.daiad.web.configuration;
 
+import org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.task.TaskExecutor;
@@ -18,7 +18,7 @@ import org.springframework.core.task.TaskExecutor;
 @Configuration
 @EnableBatchProcessing
 @PropertySource("${batch.properties}")
-public class BatchConfig {
+public class BatchProcessingConfig extends DefaultBatchConfigurer{
 
 	@Autowired
 	private JobRepository jobRepository;
@@ -26,13 +26,8 @@ public class BatchConfig {
 	@Autowired
 	private TaskExecutor taskExecutor;
 
-	/**
-	 * Registers a new {@link JobLauncher} bean.
-	 *
-	 * @return the job launcher.
-	 */
-	@Bean
-	public JobLauncher jobLauncher() {
+	@Override
+	public JobLauncher getJobLauncher() {
 		final SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
 
 		jobLauncher.setJobRepository(jobRepository);

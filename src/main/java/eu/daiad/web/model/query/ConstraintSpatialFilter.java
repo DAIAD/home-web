@@ -1,7 +1,8 @@
 package eu.daiad.web.model.query;
 
+import org.locationtech.jts.geom.Geometry;
+
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.vividsolutions.jts.geom.Geometry;
 
 public class ConstraintSpatialFilter extends SpatialFilter {
 

@@ -10,7 +10,6 @@ public class Ranking {
 	@JsonDeserialize(using = EnumDataField.Deserializer.class)
 	private EnumDataField field = EnumDataField.VOLUME;
 
-	@JsonDeserialize(using = EnumMetric.Deserializer.class)
 	private EnumMetric metric = EnumMetric.SUM;
 
 	private Integer limit;

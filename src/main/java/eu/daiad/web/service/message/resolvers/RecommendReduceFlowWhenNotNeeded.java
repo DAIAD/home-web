@@ -165,7 +165,7 @@ public class RecommendReduceFlowWhenNotNeeded extends AbstractRecommendationReso
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        Assert.state(deviceType == EnumDeviceType.AMPHIRO);
+        Assert.state(deviceType == EnumDeviceType.AMPHIRO, "[Assertion failed] - The device type must be AMPHIRO");
 
         final int N = 3; // number of months to examine
         final Period period = Period.months(N);

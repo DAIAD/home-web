@@ -204,7 +204,7 @@ public class RecommendLowerTemperature extends AbstractRecommendationResolver
     public List<MessageResolutionStatus<ParameterizedTemplate>> resolve(
         UUID accountKey, EnumDeviceType deviceType)
     {
-        Assert.state(deviceType == EnumDeviceType.AMPHIRO);
+        Assert.state(deviceType == EnumDeviceType.AMPHIRO, "[Assertion failed] - Device type must be AMPHIRO");
 
         final int N = 3; // number of months to examine
         final Period period = Period.months(N);

@@ -67,7 +67,7 @@ public class UtilityStatisticsRepository
 
     private PopulationGroup resolveGroup(UUID groupKey)
     {
-        Assert.state(groupKey != null);
+        Assert.state(groupKey != null,"[Assertion failed] - Group key is not set");
 
         TypedQuery<GroupEntity> q = entityManager.createQuery(
             "FROM group g WHERE g.key = :key", GroupEntity.class);
@@ -86,7 +86,7 @@ public class UtilityStatisticsRepository
 
     private PopulationGroup resolveUtility(UUID utilityKey)
     {
-        Assert.state(utilityKey != null);
+        Assert.state(utilityKey != null, "[Assertion failed] - Utility key is not set");
 
         TypedQuery<Integer> q = entityManager.createQuery(
             "SELECT u.id FROM utility u WHERE u.key = :key", Integer.class);
@@ -104,8 +104,8 @@ public class UtilityStatisticsRepository
     private TypedQuery<UtilityStatisticsEntity> buildQuery(
         PopulationGroup g, DateTime refDate, Period period, EnumMeasurementField field, EnumStatistic statistic)
     {
-        Assert.state(g != null && g.getUtilityId() > 0);
-        Assert.state(refDate != null);
+        Assert.state(g != null && g.getUtilityId() > 0, "[Assertion failed] - Utility is not set or the id is invalid");
+        Assert.state(refDate != null, "[Assertion failed] - Reference date is not set");
 
         refDate = refDate.withTimeAtStartOfDay();
 

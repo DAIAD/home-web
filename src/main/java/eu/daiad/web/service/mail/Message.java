@@ -1,90 +1,91 @@
 package eu.daiad.web.service.mail;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.Getter;
+import lombok.Setter;
+
 public class Message {
 
-    private EmailAddress sender;
+	@Getter
+	private String locale;
 
-    private EmailAddress[] recipients;
+	@NotNull
+	@Getter
+	private EmailAddress sender;
 
-    private String Subject;
+	@NotEmpty
+	@Getter
+	private List<EmailAddress> recipients;
 
-    private String locale;
+	@Getter
+	@Setter
+	private String Subject;
 
-    private String template;
+	@NotEmpty
+	@Getter
+	@Setter
+	private String template;
 
-    private Object model;
+	public Message(String locale) {
+		this.locale = locale;
+	}
 
-    public Message() {
+	@Getter
+	private final Map<String, Object> variables = new HashMap<>();
 
-    }
+	@JsonProperty
+	public void setSender(EmailAddress sender) {
+		this.sender = sender;
+	}
 
-    public Message(Object model) {
-        this.model = model;
-    }
+	public void setSender(String address) {
+		this.sender = new EmailAddress(address);
+	}
 
-    public Message(String template, Object model) {
-        this.template = template;
-        this.model = model;
-    }
+	public void setSender(String address, String name) {
+		this.sender = new EmailAddress(address, name);
+	}
 
-    public EmailAddress getSender() {
-        return sender;
-    }
+	@JsonProperty
+	public void setRecipients(List<EmailAddress> recipients) {
+		this.recipients = recipients;
+	}
 
-    public void setSender(EmailAddress sender) {
-        this.sender = sender;
-    }
+	public void setRecipients(String address) {
+		this.recipients = Arrays.asList(new EmailAddress(address));
+	}
 
-    public void setSender(String address, String name) {
-        sender = new EmailAddress(address, name);
-    }
+	public void setRecipients(String address, String name) {
+		this.recipients = Arrays.asList(new EmailAddress(address, name));
+	}
 
-    public EmailAddress[] getRecipients() {
-        return recipients;
-    }
+	@JsonProperty
+	public void setLocale(String locale) {
+		this.locale = locale;
+	}
+	
+	@JsonIgnore
+	public void setLocale(Locale locale) {
+		this.locale = locale.toString();
+	}
 
-    public void setRecipients(EmailAddress[] recipients) {
-        this.recipients = recipients;
-    }
+	public void setVariable(String key, Object value) {
+		if (this.variables.containsKey(key)) {
+			throw new IllegalArgumentException(String.format("Key {0} already exists", key));
+		}
 
-    public void setRecipients(String address, String name) {
-        recipients = new EmailAddress[] { new EmailAddress(address, name) };
-    }
-
-    public void setRecipients(String address) {
-        recipients = new EmailAddress[] { new EmailAddress(address) };
-    }
-
-    public String getSubject() {
-        return Subject;
-    }
-
-    public void setSubject(String subject) {
-        Subject = subject;
-    }
-
-    public String getLocale() {
-        return locale;
-    }
-
-    public void setLocale(String locale) {
-        this.locale = locale;
-    }
-
-    public String getTemplate() {
-        return template;
-    }
-
-    public void setTemplate(String template) {
-        this.template = template;
-    }
-
-    public Object getModel() {
-        return model;
-    }
-
-    public void setModel(Object model) {
-        this.model = model;
-    }
+		this.variables.put(key, value);
+	}
 
 }

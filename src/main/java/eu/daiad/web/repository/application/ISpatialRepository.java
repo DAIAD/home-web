@@ -3,7 +3,7 @@ package eu.daiad.web.repository.application;
 import java.util.List;
 import java.util.UUID;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AreaGroupEntity;
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;

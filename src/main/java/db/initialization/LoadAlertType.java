@@ -27,7 +27,7 @@ public class LoadAlertType extends BaseMigration
         EnumSet<EnumAlertType> found = EnumSet.noneOf(EnumAlertType.class);
         for (AlertTypeEntity e: q.getResultList()) {
             EnumAlertType t = e.getType();
-            Assert.state(t != null && t.getValue() == e.getValue());
+            Assert.state(t != null && t.getValue() == e.getValue(), "[Assertion failed] - Database is inconsistent");
             found.add(t);
         }
 

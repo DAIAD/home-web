@@ -18,8 +18,7 @@ import javax.persistence.Version;
 
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 @Entity(name = "area_group_item")
 @Table(schema = "public", name = "area_group_item")

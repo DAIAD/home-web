@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.support.incrementer.DataFieldMaxValueIncrementer;
-import org.springframework.jdbc.support.incrementer.PostgreSQLSequenceMaxValueIncrementer;
+import org.springframework.jdbc.support.incrementer.PostgresSequenceMaxValueIncrementer;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,7 +27,7 @@ public class DataSourceJobParametersIncrementer implements JobParametersIncremen
     @Autowired
     private DataSource dataSource;
 
-    private PostgreSQLSequenceMaxValueIncrementer incrementer = new PostgreSQLSequenceMaxValueIncrementer();
+    private PostgresSequenceMaxValueIncrementer incrementer = new PostgresSequenceMaxValueIncrementer();
 
     @Override
     public void afterPropertiesSet() throws Exception {

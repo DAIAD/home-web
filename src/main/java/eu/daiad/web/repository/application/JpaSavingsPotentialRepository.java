@@ -12,9 +12,7 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +42,7 @@ import eu.daiad.web.repository.BaseRepository;
  */
 @Repository
 @Transactional
-public class JpaSavingsPotentialRepository extends BaseRepository implements ISavingsPotentialRepository, InitializingBean {
+public class JpaSavingsPotentialRepository extends BaseRepository implements ISavingsPotentialRepository {
 
     /**
      * Java Persistence entity manager.
@@ -52,21 +50,8 @@ public class JpaSavingsPotentialRepository extends BaseRepository implements ISa
     @PersistenceContext
     EntityManager entityManager;
 
-    /**
-     * A builder used to create {@link ObjectMapper} instances for serializing scenario parameters.
-     */
     @Autowired
-    private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
-
-    /**
-     * Object mapper for serializing scenario parameters.
-     */
     private ObjectMapper objectMapper;
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        objectMapper = jackson2ObjectMapperBuilder.build();
-    }
 
     /**
      * Creates a new savings potential scenario

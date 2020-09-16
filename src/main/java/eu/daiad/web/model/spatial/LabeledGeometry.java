@@ -2,8 +2,9 @@ package eu.daiad.web.model.spatial;
 
 import java.util.UUID;
 
+import org.locationtech.jts.geom.Geometry;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;
 

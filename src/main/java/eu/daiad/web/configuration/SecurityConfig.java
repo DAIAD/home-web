@@ -7,11 +7,9 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -21,7 +19,7 @@ import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import eu.daiad.web.logging.MappedDiagnosticContextFilter;
+import eu.daiad.web.logging.filter.MappedDiagnosticContextFilter;
 import eu.daiad.web.security.CsrfTokenResponseHeaderBindingFilter;
 import eu.daiad.web.security.CustomAccessDeniedHandler;
 import eu.daiad.web.security.CustomAuthenticationProvider;
@@ -34,7 +32,6 @@ import eu.daiad.web.security.RESTLogoutSuccessHandler;
  * Configures application security.
  */
 @Configuration
-@Order(SecurityProperties.ACCESS_OVERRIDE_ORDER)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     /**

@@ -33,7 +33,8 @@ public class LoadRecommendationTemplate extends BaseMigration
             Assert.state(
                 template != null && 
                 template.getValue() == templateEntity.getValue() && 
-                template.getType() == typeEntity.getType()
+                template.getType() == typeEntity.getType(), 
+                "[Assertion failed] - Database is inconsistent"
             );
             found.add(template);
         }
@@ -43,7 +44,7 @@ public class LoadRecommendationTemplate extends BaseMigration
         for (EnumRecommendationTemplate template: EnumSet.complementOf(found)) {
             EnumRecommendationType type = template.getType();
             RecommendationTypeEntity typeEntity = em.find(RecommendationTypeEntity.class, type.getValue());
-            Assert.state(typeEntity !=  null);
+            Assert.state(typeEntity !=  null, "[Assertion failed] - Database is inconsistent");
             RecommendationTemplateEntity templateEntity = new RecommendationTemplateEntity(template);
             templateEntity.setType(typeEntity);
             em.persist(templateEntity);    

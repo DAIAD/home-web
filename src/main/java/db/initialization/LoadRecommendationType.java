@@ -27,7 +27,7 @@ public class LoadRecommendationType extends BaseMigration
         EnumSet<EnumRecommendationType> found = EnumSet.noneOf(EnumRecommendationType.class);
         for (RecommendationTypeEntity e: q.getResultList()) {
             EnumRecommendationType t = e.getType();
-            Assert.state(t != null && t.getValue() == e.getValue());
+            Assert.state(t != null && t.getValue() == e.getValue(), "[Assertion failed] - Database is inconsistent");
             found.add(t);
         }
 

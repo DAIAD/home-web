@@ -144,7 +144,7 @@ public class CachingConsumptionStatisticsService
         UUID utilityKey, LocalDateTime refDate, Period period, EnumMeasurementField field, EnumStatistic statistic)
     {
         UtilityInfo info = utilityRepository.getUtilityByKey(utilityKey);
-        Assert.state(info != null);
+        Assert.state(info != null, "[Assertion failed] - Utility not found");
 
         DateTimeZone tz = DateTimeZone.forID(info.getTimezone());
         return computeNumberIfNeeded(utilityKey, refDate.toDateTime(tz), period, field, statistic);

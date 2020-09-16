@@ -12,6 +12,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.locationtech.jts.geom.Geometry;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.StoppableTasklet;
@@ -19,8 +20,6 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-
-import com.vividsolutions.jts.geom.Geometry;
 
 import eu.daiad.web.domain.application.AccountEntity;
 import eu.daiad.web.domain.application.AreaGroupMemberEntity;

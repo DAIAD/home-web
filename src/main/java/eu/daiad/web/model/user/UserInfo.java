@@ -2,7 +2,7 @@ package eu.daiad.web.model.user;
 
 import java.util.UUID;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import eu.daiad.web.model.EnumGender;
 

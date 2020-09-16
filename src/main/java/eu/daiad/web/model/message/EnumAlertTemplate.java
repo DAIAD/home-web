@@ -69,7 +69,7 @@ public enum EnumAlertTemplate
     private static final Map<Integer, EnumAlertTemplate> intToTemplateMap = new HashMap<>();
     static {
         for (EnumAlertTemplate template: EnumAlertTemplate.values()) {
-            Assert.state(!intToTemplateMap.containsKey(template.value));
+            Assert.state(!intToTemplateMap.containsKey(template.value), "[Assertion failed] - Database is inconsistent");
             intToTemplateMap.put(template.value, template);
         }
     }
