@@ -58,6 +58,7 @@
     "develop": "NODE_ENV=development grunt develop"
   },
   "devDependencies": {
+    "apidoc": "0.17.6",
     "babel": "~6.5.2",
     "babel-cli": "~6.16.0",
     "babel-core": "~6.17.0",
