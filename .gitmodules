@@ -1,6 +1,0 @@
-[submodule "src/main/resources/public/assets/js/src/home"]
-	path = src/main/resources/public/assets/js/src/home
-	url = https://github.com/DAIAD/web-client-home.git
-[submodule "src/main/resources/public/assets/js/src/utility"]
-	path = src/main/resources/public/assets/js/src/utility
-	url = https://github.com/DAIAD/web-client-utility.git
