@@ -119,11 +119,17 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         http.authorizeRequests().anyRequest().fullyAuthenticated();
 
         // Configure form based authentication for the web application
-        http.formLogin().loginPage("/login").usernameParameter("username").passwordParameter("password")
-                        .successHandler(authenticationSuccessHandler).failureHandler(authenticationFailureHandler);
+        http.formLogin()
+        	.loginPage("/login")
+            .successHandler(authenticationSuccessHandler)
+            .failureHandler(authenticationFailureHandler);
 
         // Configure logout page for the web application
-        http.logout().logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler);
+        http.logout()
+        	.logoutUrl("/logout")
+        	.logoutSuccessHandler(logoutSuccessHandler)
+        	.invalidateHttpSession(true)
+            .clearAuthentication(true);
 
         http.exceptionHandling().accessDeniedHandler(accessDeniedHandler).authenticationEntryPoint(
                         new CustomLoginUrlAuthenticationEntryPoint("/login", forceHttps));
