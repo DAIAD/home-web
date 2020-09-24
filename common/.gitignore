@@ -1,0 +1,17 @@
+logs/
+target/
+build/
+lib/
+
+**/*.*~
+**/*.~
+
+**/*.log
+
+.settings/
+.project
+.classpath
+
+*.tar.gz
+*.zip
+*.rar
