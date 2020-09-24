@@ -1,0 +1,6 @@
+[submodule "utility/src/main/frontend"]
+	path = utility/src/main/frontend
+	url = https://github.com/DAIAD/web-client-utility.git
+[submodule "home/src/main/frontend"]
+	path = home/src/main/frontend
+	url = https://github.com/DAIAD/web-client-home.git
