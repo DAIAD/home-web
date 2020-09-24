@@ -3,6 +3,7 @@ package eu.daiad.common.service.mail;
 import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.stereotype.Service;
@@ -17,10 +18,16 @@ public class ThymeleafMailTemplateEngine implements MailTemplateEngine {
     private final SpringTemplateEngine templateEngine;
 
     private final ApplicationContext applicationContext;
-
-    public ThymeleafMailTemplateEngine(ApplicationContext applicationContext) {
+    
+    private final String templatePrefix;
+    
+    public ThymeleafMailTemplateEngine(
+		ApplicationContext applicationContext,
+		@Value("${daiad.mail.template.prefix}") String templatePrefix
+	) {
         this.applicationContext = applicationContext;
-
+        this.templatePrefix = templatePrefix;
+        		
         this.templateEngine = this.thymeleafTemplateEngine();
     }
 
@@ -37,12 +44,12 @@ public class ThymeleafMailTemplateEngine implements MailTemplateEngine {
 
         switch (format) {
             case TEXT :
-                final String textTemplate = this.getEffectiveTemplateName(message.getTemplate(), ".txt");
+                final String textTemplate = this.getEffectiveTemplateName(message, ".txt");
 
                 return this.templateEngine.process(textTemplate, ctx);
 
             case HTML :
-                final String htmlTemplate = this.getEffectiveTemplateName(message.getTemplate(), ".html");
+                final String htmlTemplate = this.getEffectiveTemplateName(message, ".html");
 
                 return this.templateEngine.process(htmlTemplate, ctx);
 
@@ -51,8 +58,14 @@ public class ThymeleafMailTemplateEngine implements MailTemplateEngine {
         }
     }
 
-    private String getEffectiveTemplateName(String name, String suffix) {
-        Assert.isTrue(!StringUtils.isBlank(name), "Template name must not be null or empty");
+    private String getEffectiveTemplateName(Message message, String suffix) {
+    	final String template = message.getTemplate();
+    	final String locale = message.getLocale().toLowerCase();
+    	
+        Assert.isTrue(!StringUtils.isBlank(template), "Template name must not be null or empty");
+        
+        String name =  template + "-" + locale;
+        
         if (name.endsWith(suffix)) {
             return name;
         }
@@ -61,14 +74,14 @@ public class ThymeleafMailTemplateEngine implements MailTemplateEngine {
 
     private ResourceBundleMessageSource emailMessageSource() {
         final ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
-        messageSource.setBasename("classpath:/mail-messages");
+        messageSource.setBasename("classpath:/messages-mail");
         return messageSource;
     }
 
     private SpringResourceTemplateResolver thymeleafTemplateResolver() {
         final SpringResourceTemplateResolver templateResolver = new SpringResourceTemplateResolver();
         templateResolver.setApplicationContext(this.applicationContext);
-        templateResolver.setPrefix("classpath:/mail/templates/");
+        templateResolver.setPrefix(this.templatePrefix);
         templateResolver.setSuffix(".html");
         templateResolver.setTemplateMode("HTML");
         templateResolver.setCharacterEncoding("UTF-8");

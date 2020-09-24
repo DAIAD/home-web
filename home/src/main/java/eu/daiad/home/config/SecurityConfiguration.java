@@ -31,7 +31,7 @@ import eu.daiad.home.security.RESTLogoutSuccessHandler;
 @Configuration
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
-    private static final String[] AUTHORIZED_PATHS = {
+    private static final String[] PUBLIC_PATHS = {
         "/",
         "/login",
         "/logout",
@@ -89,7 +89,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         // Allow anonymous access to selected requests
-        http.authorizeRequests().antMatchers(AUTHORIZED_PATHS).permitAll();
+        http.authorizeRequests().antMatchers(PUBLIC_PATHS).permitAll();
         if(documentationRequiresAuthentication) {
             http.authorizeRequests().antMatchers(DOCUMENTATION_PATH).access("hasRole('ROLE_ADMIN')");
         } else {
