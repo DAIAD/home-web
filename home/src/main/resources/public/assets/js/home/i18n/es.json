@@ -1,0 +1,398 @@
+{
+  "locale": {
+    "en": "English",
+    "el": "Ελληνικά",
+    "es": "Español",
+    "de": "Deutsche"
+  },
+  "countries": {
+    "United Kingdom": "Reino Unido",
+    "Greece": "Grecia",
+    "Spain": "España"
+  },
+  "timezones": {
+    "Europe/London": "UTC",
+    "Europe/Athens": "Atenas",
+    "Europe/Madrid": "Madrid"
+  },
+   "errors": {
+    "SharedErrorCode": {
+      "AUTHENTICATION": "La autentificación ha fallado. Inténtalo de nuevo",
+      "PARSE_ERROR": "Ups, ha ocurrido un error. Reinicia la página o contáctanos si el error persiste",
+    "UNKNOWN": "Ups, ha ocurrido un error. Reinicia la página o contáctanos si el error persiste"
+    }, 
+    "unknownError": "Ups, ha ocurrido un error. Reinicia la página o contáctanos si el error persiste",
+    "Not Found": "API no encontrado",
+    "Internal Server Error": "Ups, ha ocurrido un error. Reinicia la página o contáctanos si el error persiste",
+    "Forbidden": "Llevas mucho tiempo inactivo. Refresca la página",
+    "fileWrongType": "Error en el formato de archivo. Sólo admite .png o .jpeg",
+    "fileExceedSize": "Archivo demasiado grande. Tamaño máximo 2MB",
+    "fileUploadError": "Error en la carga del archivo",
+    "noPassword": "Falta contraseña",
+    "passwordMismatch": "Contraseña diferente. Asegúrate de haber introducido la misma contraseña",
+    "passwordTooShort": "Contraseña demasiado corta. Mínimo 8 caracteres",
+    "CaptchaErrorCode.CAPTCHA_VERIFICATION_ERROR": "Error en el Captcha. Por favor, confirma que no eres un robot",
+    "PasswordErrorCode.WEAK_PASSWORD": "Tu contraseña es corta. Mínimo 8 caracteres"
+  },
+  "info": {
+    "passwordMailSent": "Acabamos de enviarte un email a tu correo"
+  },
+  "forms": {
+    "create": "Crear",
+    "update": "Actualizar",
+    "delete": "Borrar",
+    "leave": "Salir",
+    "join": "Unirse",
+    "cancel": "Cancelar",
+    "add": "Añadir",
+    "set": "Grupo",
+    "yes": "Sí",
+    "no": "No",
+    "back": "Atrás",
+    "noname": "Sin nombre",
+    "select": "Seleccionar",
+    "confirm-title": "Confirmar título",
+    "confirm": "Estás seguro que quieres {action} {item}?",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "clear": "Limpiar",
+    "download": "Descargar",
+    "saved": "Guardado"
+  },
+  "loginForm": {
+    "login": {
+      "failure": "La autentificación ha fallado. Inténtalo de nuevo."
+    },
+    "button": {
+      "signin": "Iniciar Sesión",
+      "signout": "Cerrar Sesión",
+      "reset-request": "Reiniciar",
+      "reset-submit": "Reenviar"
+    },
+    "placeholder": {
+      "username": "Usuario",
+      "password": "Contraseña",
+      "password-confirm": "Confirmar Contraseña"
+    },
+    "forgotPassword": "¿Has olvidado tu contraseña?"
+  },
+  "section": {
+    "dashboard": "Inicio",
+    "history":"Estadísticas",
+    "explore":"Explora",
+    "forecast":"Previsión",
+    "shower": "Ducha",
+    "shower-aggregated": "Todas las duchas",
+    "commons": "Comunidades",
+    "notifications": "Notificaciones",
+    "reports" : "Informes",
+    "alerts": "Alertas",
+    "recommendations": "Recomendaciones",
+    "tips": "Consejos",
+    "settings": "Opciones",
+    "profile": "Perfil",
+    "members": "Miembros",
+    "devices": "Dispositivos",
+    "commonsManage": {
+      "edit": "Editar",
+      "new": "Nuevo",
+      "join": "Unirse" 
+    },
+    "membersManage": {
+      "edit": "Editar",
+      "create": "Nuevo"
+    },
+    "login": "Iniciar Sesión",
+    "reset": "Reiniciar Contraseña"
+  },
+  "common": {
+    "sortby": "Limitado",
+    "found": "Encontrado",
+    "chart": "Gráfico",
+    "user": "Usuario",
+    "date": "Fecha",
+    "time": "Tiempo",
+    "me": "Yo",
+    "average": "PROMEDIO",
+    "total": "TOTAL"
+  },
+  "dashboard": {
+    "hello": "¡Hola {name}!",
+    "add": "Añadir widget",
+    "add-widget-placeholder": "Introduce título...",
+    "save": "¿Guardar cambios?"
+  },
+  "widget": {
+    "shower-average": "Ducha promedio",
+    "consumption": "consumo",
+    "no-tips": "Lo siento, no hay consejos disponibles ahora mismo",
+    "explore": "Ver más",
+    "explore-showers": "Ver todas las duchas",
+    "explore-last-shower": "Ver detalles",
+    "explore-swm": "Ver más",
+    "explore-comparisons": "Ver comparaciones",
+    "explore-common": "Explorar comunidad",
+    "empty-or-no-fav-common": "No te has unido a ninguna comunidad aún",
+    "titles": {
+      "totalVolumeStatAmphiro": "Consumo en la ducha (medida)",
+      "totalVolumeChartAmphiro": "Consumo en la ducha (progreso)",
+      "totalVolumeStatSWM": "Agua (medida)",
+      "totalVolumeChartSWM": "Agua (progreso)",
+      "totalEnergyStat": "Energía (medida)",
+      "totalEnergyChart": " Energía (progreso)",
+      "totalTemperatureStat": "Temperatura (Medida)",
+      "totalTemperatureChart": " Temperatura (Progreso)",
+      "last": "Última ducha",
+      "efficiencyEnergy": "Eficiencia energética",
+      "ranking": "Ranking de duchas",
+      "breakdown": "Desglose de la ducha",
+      "forecast": "Previsión - Próximo mes",
+      "pricing": "Coste - Este trimestre",
+      "comparison": "Comparación – Mes anterior",
+      "budget": "Presupuesto Mensual",
+      "wateriqStat": "Calificación – Mes anterior",
+      "wateriqChart": "Comparación de calificación – Mes anterior",
+      "commons": "Comparación con la comunidad",
+      "tip": "Nuevo Consejo"
+    },
+    "descriptions": {
+      "totalVolumeStatAmphiro": "Un widget con el consumo total durante tus últimas 10 duchas. Puedes modificarlo para ver 20 o 50.",
+      "totalVolumeChartAmphiro": "Un widget con el consumo de tus últimas 10 duchas. Puedes modificarlo para ver 20 o 50.",
+      "totalVolumeStatSWM": "Un widget con el consumo total por miembro del hogar para el último mes. Puedes modificarlo para verlo de forma diaria, semanal o anual.",
+      "totalVolumeChartSWM": "Un widget con el progreso por miembro del hogar para el último mes. Puedes modificarlo para verlo de forma diaria, semanal o anual.",
+      "totalEnergyStat": "Un widget con el consumo energético total durante tus últimas 10 duchas. Puedes modificarlo para ver 20 o 50.",
+      "totalEnergyChart": "Un widget con el consumo energético de tus últimas 10 duchas. Puedes modificarlo para ver 20 o 50.",
+      "totalTemperatureStat": "Un widget con la temperatura de tus últimas 10 duchas. Puedes modificarlo para ver 20 o 50.",
+      "totalTemperatureChart": "Un widget con la variación de temperatura de tus últimas 10 duchas. Puedes modificarlo para ver 20 o 50.",      
+      "last": "Un widget con la última ducha de todos tus dispositivos.",
+      "efficiencyEnergy": "Un widget con eficiencia energética en tus últimas 10 duchas. Puedes modificarlo para ver 20 o 50.",
+      "ranking": "Un widget con un ranking de los miembros basado en su consumo medio de agua.",
+      "breakdown": "Un widget con vuestros consumos de agua por miembro.", 
+      "forecast": "Un widget con la estimación de tu consumo de agua para el próximo mes.",
+      "pricing": "Un widget con tu consumo mensual incluyendo bloques de precio.",
+      "comparison": "Un widget comparando tu consumo con el del resto, como tus vecinos o tu ciudad durante el mes pasado.",
+      "budget": "Un widget que muestra tu consumo basado en tu presupuesto diario.",
+      "wateriqStat": "Un widget que muestra tu calificación del mes pasado.",
+      "wateriqChart": "Un widget que muestra tu calificación del pasado mes con respecto a la ciudad, tus vecinos y a los usuarios similares a ti.",
+      "commons": "Un widget que muestra tus consumos en relación con tu comunidad favorita durante este mes. Puedes modificarlo para ver los datos por semanas o meses. Puedes seleccionar tu comunidad favorita en Opciones.",
+      "tip": "Un widget que tiene un consejo para ayudarte a reducir tu consumo."
+    }
+  },
+  "shower": {
+    "details": "Detalles de la ducha"
+  },
+  "history": {
+    "showers": "Duchas",
+    "duration": "Duración",
+    "volume": "Volumen",
+    "total": "Volumen total",
+    "temperature": "Temperatura",
+    "energy": "Energía",
+    "count": "Duchas totales",
+    "device": "Dispositivo",
+    "id": "ID",
+    "real": "Real",
+    "statistics": "Estadísticas",
+    "wateriq": "Calificación",
+    "cost": "Coste",
+    "breakdown": "Desglose del consumo ",
+    "forecast": "Previsión",
+    "breakdownUse": "Uso",
+    "member-filter": "Todos",
+    "compare-against": "Comparar con",
+    "consumption-min": "Mínimo consumo. ¡Bien hecho!",
+    "consumption-min-short": "Mínimo consumo",
+    "consumption-max": "Máximo consumo",
+    "consumption-max-short": "Máximo consumo",
+    "in-detail": "En detalle",
+    "volumeDetails": "Total de agua consumida en esta ducha",
+    "temperatureDetails": "Temperatura media",
+    "energyDetails": "Energía estimada en esta ducha",
+    "countDetails": "Número total de duchas",
+    "forecastDetails": "Estimaciones de previsión...",
+    "durationDetails": "Duración de la ducha",
+    "wateriqDetails": "Tu Calificación de agua es...",
+    "totalDetails": "Volumen total...",
+    "costDetails": "Cálculo de costes...",
+    "limitedData": "Ups, Datos limitados...",
+    "inPicturesHover-volume": "Aproximadamente {number} veces el volumen de {scale}!",
+    "inPicturesHover-energy": "Aproximadamente {number} veces la energía de {scale}!",
+    "bottle": "una botella",
+    "bucket": "un cubo",
+    "pool": "una piscina",
+    "light-bulb": "una bombilla",
+    "home-energy": "una casa",
+    "city": "una ciudad",
+    "shower-delete": "Borrar ducha"
+  },
+  "periods": {
+    "custom": "Personalizar",
+    "year": "Año",
+    "trimester": "Trimestre",
+    "month": "Mes",
+    "week": "Semana",
+    "day": "Día",
+    "hour": "Hora",
+    "ten": "Últ. 10",
+    "twenty": "Últ. 20",
+    "fifty": "Últ. 50",
+    "all": "Todas"
+  },
+  "comparisons": {
+    "all": "Ciudad",
+    "nearest": "Vecinos",
+    "similar": "Similares",
+    "user": "Tú",
+    "last": "{comparison}",
+    "common": "{comparison}",
+    "member": "{comparison}",
+    "better-AMPHIRO": "{percent}% mejor que las {period} duchas anteriores",
+    "worse-AMPHIRO": "{percent}% peor que las {period} duchas anteriores",
+    "better-last-AMPHIRO": "{percent}% mejor que la ducha anterior",
+    "worse-last-AMPHIRO": "{percent}% peor que la ducha anterior",
+    "better-METER": "{percent}% mejor que {period}", 
+    "worse-METER": "{percent}% peor que {period} ", 
+    "year": "el año pasado",
+    "month": "el mes pasado",
+    "week": "la semana pasada",
+    "day": "el día anterior",
+    "hour": "la hora anterior",
+    "no-data": "No hay datos para comparar",
+    "wateriq-best": "{month} es el mejor ({value}) de los últimos seis meses",
+    "wateriq-worst": "{month} es el peor ({value}) de los últimos seis meses",
+    "wateriq-no-data": "Tu calificación no está calculada aún"
+  },
+  "breakdown": {
+    "shower": "Ducha",
+    "bath": "Baño",
+    "washing-machine": "Lavadora",
+    "other": "Otros"
+  },
+  "notifications": {
+    "showAll": "Ver todas",
+    "alerts": "Alertas",
+    "recommendations": "Recomendaciones",
+    "tips": "Consejos"
+  },
+  "profile": {
+    "locale": "Idioma",
+    "username": "Nombre de usuario" ,
+    "email": "Correo electrónico",
+    "firstname": "Nombre",
+    "lastname": "Apellido",
+    "fullname": "Nombre",
+    "address": "Direccion",
+    "zip": "Código postal",
+    "country": "País",
+    "timezone": "Zona horaria",
+    "changePassword": "Cambiar contraseña",
+    "unit": {
+      "label": "Unidad de medida",
+      "default": "Seleccione unidad de medida",
+      "METRIC": "Metric",
+      "IMPERIAL": "Imperial"
+    }
+  },
+  "member": {
+    "name": "Nombre",
+    "age": "Edad",
+    "gender": "Sexo",
+    "placeholder-name": "Nombre",
+    "placeholder-age": "Edad",
+    "placeholder-gender": "Sexo",
+    "MALE": "Hombre",
+    "FEMALE": "Mujer"
+  },
+  "devices": {
+    "amphiro": "Dispositivo de ducha",
+    "amphiros": "Amphiros",
+    "meter": "Telelectura",
+    "meters": "Contadores de telelectura",
+    "properties": "Propiedades",
+    "no-properties": "No hay propiedades",
+    "name": {
+      "label": "Nombre del Dispositivo"
+    },
+    "key": {
+      "label": "Clave del Dispositivo"
+    },
+    "mac": {
+      "label": "Dirección Mac"
+    },
+    "model": {
+      "label": "Modelo"
+    },
+    "manufacturer": {
+      "label": "Fabricante"
+    },
+    "serial": {
+      "label": "Serie"
+    },
+    "registeredOn": {
+      "label": "Registrado"
+    },
+    "heating-system": {
+      "label": "Sistema de calefacción",
+      "default": "Seleccione sistema de calefacción",
+      "0": "Electricidad",
+      "1": "Gasoil",
+      "2": "Gas"
+    },
+    "heating-efficiency": {
+      "label": "Eficiencia de calefacción",
+      "help": "Porcentaje de eficiencia de calefacción"
+    },
+    "cost-energy": {
+      "label": "Coste energético",
+      "help": "El coste por KWh en euros"
+    },
+    "cost-water": {
+      "label": "Coste de agua",
+      "help": "El coste por metro cúbico en euros"
+    },
+    "share-of-solar": {
+      "label": "Cuota de la energía solar",
+      "help": " "
+    }
+  },
+   "commonsManage": {
+    "name": "Nombre",
+    "members": "Miembros",
+    "description": "Descripción",
+    "placeholder-name": "Nombre de comunidad",
+    "placeholder-description": "Descripción de comunidad",
+    "setFavorite": "Comunidad favorita",
+    "resetFavorite": "Resetear comunidad favorita",
+    "empty": "No se han encontrado comunidades"
+  },
+  "commons": {
+    "list": "Mis comunidades",
+    "details": "Detalles",
+    "members": "Miembros",
+    "created": "Creado",
+    "updated": "Última actualización",
+    "empty": "Aún no te has unido a ninguna comunidad",
+    "noCommons": "No hay niembros en esta comunidad aún",
+    "myCommons": "Mis Comunidades",
+    "ranking": "Ranking",
+    "date-joined": "Fecha de unión",
+    "placeholder-search-members": "Buscar miembros...",
+    "select-info": "Clickea arriba para compararte con tres usuarios ",
+    "memberSince": "Miembro desde"
+  },
+  "reports": {
+    "report": "Informe",
+    "period": "Periodo",
+    "empty": "No hay informes este año",
+    "created": "Creado",
+    "size": "Tamaño"
+  },
+  "404": {
+    "title": "Razones para no estar aquí",
+    "link": "Volver"
+  },
+  "footer": {
+    "contact": "Contactar",
+    "terms": "Términos del servicio"
+  }
+}

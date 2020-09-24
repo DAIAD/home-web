@@ -1,0 +1,105 @@
+{
+  "name": "DAIAD@home Action API Interface",
+  "title": "DAIAD@home Action API Interface",
+  "description": "",
+  "url": "https://home.daiad.eu/",
+  "header": {
+    "title": "Introduction",
+    "filename": "./header.md"
+  },
+  "order": [
+    "Authentication",
+    "Login",
+    "Logout",
+
+    "User",
+    "PasswordChange",
+    "ResetPasswordTokenRequest",
+    "ResetPasswordTokenRedeem",
+
+    "Profile",
+    "ProfileLoad",
+    "ProfileSave",
+    "HouseholdSave",
+    "GetComparison",
+    "Deactivate",
+
+    "Data",
+    "DataQuery",
+    "ForecastQuery",
+
+    "Search",
+    "MeterStatus",
+    "MeterMeasurements",
+    "Sessions",
+    "Session",
+
+    "Message",
+    "MessageList",
+    "MessageAcknowledge",
+    "TipList",
+    "TipEnable",
+    "TipSave",
+    "TipDelete",
+    "AnnouncementBroadcast",
+    "AnnouncementDelete",
+    "AnnouncementHistory",
+    "AnnouncementDetails",
+    "AlertReceivers",
+    "RecommendationReceivers",
+
+    "Commons",
+    "CommonsCreate",
+    "CommonsUpdate",
+    "CommonsDelete",
+    "CommonsGet",
+    "CommonsJoin",
+    "CommonsLeave",
+    "CommonsSearch",
+    "CommonsMembers",
+    "CommonsMembership",
+
+    "Billing",
+    "PriceBracketCurrent",
+    "PriceBracketHistory",
+
+    "WaterCalculator",
+
+    "Weather",
+
+    "Reporting",
+    "YearReportStatus",
+    "CurrentUserReportStatus",
+    "CurrentUserReport",
+    "UserReportStatus",
+    "UserReport",
+
+    "Spatial",
+    "Groups",
+    "Areas",
+    "UserArea",
+
+    "Savings",
+    "SavingsCreate",
+    "SavingsRefresh",
+    "SavingsFind",
+    "SavingsQuery",
+    "SavingsExplore",
+    "SavingsDelete",
+
+    "Budget",
+    "BudgetCreate",
+    "BudgetDelete",
+    "BudgetActivate",
+    "BudgetDeactivate",
+    "BudgetSchedule",
+    "BudgetFind",
+    "BudgetQuery",
+    "BudgetExploreCluster",
+    "BudgetExploreConsumer"
+  ],
+  "template": {
+    "withCompare": false,
+    "withGenerator": false
+  }
+}

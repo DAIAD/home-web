@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title th:remove="all">Reset Password</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<style>
+.content {
+	width: 600px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.inner-content {
+	width: 600px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.header {
+	background: #f8f8f8;
+	border-color: #e7e7e7;
+	height: 40px;
+	text-align: center;
+}
+
+p {
+	font-size: 16px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+a.reset {
+	color: #265A84;
+	background-color: #fff;
+	display: inline-block;
+	padding: 6px 12px;
+	margin-bottom: 0;
+	font-size: 17px;
+	font-weight: 400;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	line-height: 1.42857143;
+	text-align: center;
+	vertical-align: middle;
+	-ms-touch-action: manipulation;
+	touch-action: manipulation;
+	cursor: pointer;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	background-image: none;
+	border: 1px solid #265A84;
+	border-radius: 4px;
+	text-decoration: none;
+}
+
+span.pin {
+	font-weight: bold;
+}
+
+div.footer {
+	border-top: 1px solid #ccc;
+	font-size: 12px;
+	text-align: center;
+	padding-top: 10px;
+}
+
+div.footer p {
+	font-size: small;
+}
+</style>
+</head>
+<body>
+	<div class="content">
+		<div class="header">
+			<img alt="DAIAD"
+				src="https://app.dev.daiad.eu/assets/images/shared/daiad-logo.svg"
+				style="margin-top: 15px;" />
+		</div>
+
+		<div class="inner-content">
+			<p>
+				Estimado <span th:text="${model.account.firstname}">{firstname}</span>,
+			</p>
+			<p>
+				¡Muchas gracias por ser parte del piloto DAIAD!
+			</p>
+			<p>
+				Tu participación e interés nos ayudan a mejorar DAIAD, ofreciendo experiencias más interesantes  y mejorando la eficiencia del agua en el mundo. Cuantos más comentarios nos hagas, más podremos mejorar.
+			</p>
+			<p>
+				Por tanto, nos gustaría que completaras este pequeño formulario de satisfacción acerca del DAIAD:
+			</p>
+			<div style="text-align: center;">
+				<a class="reset" th:href="|https://docs.google.com/forms/d/e/1FAIpQLSdHgCsEOX740zOxDFA2K47XQHN69MZ676y7CMQ6s8FaUt9J7Q/viewform?entry.1415124665=${model.account.username}&amp;entry.33578227|">
+					<span>Comenzar formulario</span>
+				</a>
+			</div>
+			<p>
+				No necesitarás más de 5 minutos, y nos permitirá obtener información importante acerca de tus impresiones y percepciones sobre el DAIAD.
+			</p>
+			<p>
+				¡Muchas gracias de nuevo por ser parte de la familia DAIAD!
+			</p>
+			<br />
+			<p>
+				Un cordial saludo,
+			</p>
+			<p>
+				El equipo DAIAD
+			</p>
+			<br />
+			<p>
+				Democratizing Water Consumption Monitoring
+			</p>
+			<p>
+				<a href="http://www.daiad.eu">www.daiad.eu</a>
+			</p>
+		</div>
+	</div>
+</body>
+</html>
