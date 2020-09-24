@@ -1,0 +1,15 @@
+{
+  "name": "DAIAD Scheduler API",
+  "version": "1.0.0",
+  "title": "DAIAD Scheduler API",
+  "description": "This document describes the DAIAD Scheduler API",
+  "url" : "https://localhost:9081/api",
+  "order": [
+    "Scheduler",
+    "GetJobs"
+  ],
+  "template": {
+    "withCompare": true,
+    "withGenerator": false
+  }
+}
