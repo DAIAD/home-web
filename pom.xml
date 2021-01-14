@@ -39,7 +39,7 @@
         <hbase.version>1.0.0</hbase.version>
         <geotools.version>14.2</geotools.version>
         <hibernate-spatial.version>5.1.0.Final</hibernate-spatial.version>
-        <apache.poi.version>3.14</apache.poi.version>
+        <apache.poi.version>4.1.2</apache.poi.version>
         <apache.csv.version>1.1</apache.csv.version>
         <org.jadira.usertype.version>5.0.0.GA</org.jadira.usertype.version>
         <dependency.locations.enabled>false</dependency.locations.enabled>
