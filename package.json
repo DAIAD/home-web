@@ -21,7 +21,7 @@
     "leaflet": "1.0.2",
     "leaflet-draw": "0.4.4",
     "leaflet.heat": "0.2.0",
-    "lodash": "~4.0.1",
+    "lodash": "~4.17.21",
     "moment": "^2.16.0",
     "moment-timezone": "^0.5.4",
     "numeral": "^1.5.3",
