@@ -36,6 +36,7 @@ src/main/resources/log4j.properties
 src/main/resources/log4j2.xml
 src/main/resources/log4j2-test.xml
 src/main/resources/config
+src/main/resources/config.properties
 
 src/main/java/eu/daiad/web/controller/api/ScratchController.java
 
