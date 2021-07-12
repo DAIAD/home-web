@@ -1,97 +1,54 @@
 package eu.daiad.common.model.loader;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+@ToString
 public class FileProcessingStatus {
 
-    private String filename;
+	@Getter
+	@Setter
+	private String filename;
 
-    private long totalRows = 0;
+	@Getter
+	@Setter
+	private long totalRows = 0;
 
-    private long processedRows = 0;
+	@Getter
+	private long processedRows = 0;
 
-    private long skippedRows = 0;
+	@Getter
+	private long skippedRows = 0;
 
-    private long ignoredRows = 0;
+	@Getter
+	private long ignoredRows = 0;
 
-    private Long minTimestamp;
+	@Getter
+	@Setter
+	private Long minTimestamp;
 
-    private Long maxTimestamp;
+	@Getter
+	@Setter
+	private Long maxTimestamp;
 
-    private long negativeDifference = 0;
+	@Getter
+	private long negativeDifference = 0;
 
-    public long getNegativeDifference() {
-        return negativeDifference;
-    }
+	public void process() {
+		processedRows++;
+	}
 
-    public long getTotalRows() {
-        return totalRows;
-    }
+	public void skip() {
+		skippedRows++;
+	}
 
-    public void setTotalRows(long totalRows) {
-        this.totalRows = totalRows;
-    }
+	public void ignore() {
+		ignoredRows++;
+	}
 
-    public long getProcessedRows() {
-        return processedRows;
-    }
-
-    public void setProcessedRows(long processedRows) {
-        this.processedRows = processedRows;
-    }
-
-    public long getSkippedRows() {
-        return skippedRows;
-    }
-
-    public void setSkippedRows(long skippedRows) {
-        this.skippedRows = skippedRows;
-    }
-
-    public long getIgnoredRows() {
-        return ignoredRows;
-    }
-
-    public void setIgnoredRows(long ignoredRows) {
-        this.ignoredRows = ignoredRows;
-    }
-
-    public void processRow() {
-        processedRows++;
-    }
-
-    public void skipRow() {
-        skippedRows++;
-    }
-
-    public void ignoreRow() {
-        ignoredRows++;
-    }
-
-    public Long getMinTimestamp() {
-        return minTimestamp;
-    }
-
-    public void setMinTimestamp(Long minTimestamp) {
-        this.minTimestamp = minTimestamp;
-    }
-
-    public Long getMaxTimestamp() {
-        return maxTimestamp;
-    }
-
-    public void setMaxTimestamp(Long maxTimestamp) {
-        this.maxTimestamp = maxTimestamp;
-    }
-
-    public void increaseNegativeDifference() {
-        negativeDifference++;
-    }
-
-    public String getFilename() {
-        return filename;
-    }
-
-    public void setFilename(String filename) {
-        this.filename = filename;
-    }
+	public void negativeDiff() {
+		negativeDifference++;
+	}
 
 }

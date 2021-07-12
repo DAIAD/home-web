@@ -200,7 +200,7 @@ public class SavingsPotentialDataLoaderService extends BaseService implements IS
 
         String[] tokens = StringUtils.split(line, ";");
         if (tokens.length != 4) {
-            status.skipRow();
+            status.skip();
             return;
         }
 
@@ -209,7 +209,7 @@ public class SavingsPotentialDataLoaderService extends BaseService implements IS
                     Double.parseDouble(tokens[2]),
                     Double.parseDouble(tokens[3].substring(0, tokens[3].length() - 1)));
 
-        status.processRow();
+        status.process();
     }
 
     /**
@@ -234,7 +234,7 @@ public class SavingsPotentialDataLoaderService extends BaseService implements IS
 
         String[] tokens = StringUtils.split(line, ";");
         if (tokens.length != 5) {
-            status.skipRow();
+            status.skip();
             return;
         }
 
@@ -245,7 +245,7 @@ public class SavingsPotentialDataLoaderService extends BaseService implements IS
                   tokens[3],
                   Double.parseDouble(tokens[4]));
 
-        status.processRow();
+        status.process();
     }
 
     /**

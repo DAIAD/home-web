@@ -1,4 +1,4 @@
-package eu.daiad.utility.service;
+package eu.daiad.common.service;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,13 +36,13 @@ import eu.daiad.common.model.error.ImportErrorCode;
 import eu.daiad.common.model.error.SharedErrorCode;
 import eu.daiad.common.model.loader.EnumUploadFileType;
 import eu.daiad.common.model.loader.FileProcessingStatus;
+import eu.daiad.common.model.meter.WaterMeterDataRow;
 import eu.daiad.common.model.meter.WaterMeterForecast;
 import eu.daiad.common.model.meter.WaterMeterForecastCollection;
 import eu.daiad.common.model.meter.WaterMeterMeasurementCollection;
 import eu.daiad.common.model.meter.WaterMeterStatusQueryResult;
 import eu.daiad.common.repository.application.IMeterDataRepository;
 import eu.daiad.common.repository.application.IMeterForecastingDataRepository;
-import eu.daiad.common.service.BaseService;
 
 /**
  * Service that provides methods for importing smart water meter readings to HBASE.
@@ -60,7 +60,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
      * Logger instance for writing events using the configured logging API.
      */
     private static final Log logger = LogFactory.getLog(WaterMeterDataLoaderService.class);
-
+	
     /**
      * Date format pattern.
      */
@@ -175,7 +175,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
      * @throws ApplicationException in case validation fails or an I/O exception occurs.
      */
     private FileProcessingStatus parseMeterData(String filename, String timezone) throws ApplicationException {
-        MeterDataRow row;
+    	WaterMeterDataRow row;
         String line = "";
         int lineIndex = 0;
         int chunkSize = 0;
@@ -200,9 +200,8 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         DateTimeFormatter formatter = DateTimeFormat.forPattern(dateFormatPattern).withZone(DateTimeZone.forID(timezone));
 
         try {
-            List<MeterDataRow> rows = new ArrayList<MeterDataRow>();
+            List<WaterMeterDataRow> rows = new ArrayList<WaterMeterDataRow>();
 
-            // Count rows
             scan = new Scanner(new File(filename));
 
             while (scan.hasNextLine()) {
@@ -226,16 +225,16 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                     }
                     // Update and import row data
                     if(doImport) {
-                        importMeterDataToHBase(status, rows);
+                        importMeterDataToHBase(rows, status, false);
 
-                        rows = new ArrayList<MeterDataRow>();
+                        rows = new ArrayList<WaterMeterDataRow>();
                         chunkSize = 0;
                     }
                 }
 
                 switch (tokens.length) {
                     case 3:
-                        row = new MeterDataRow();
+                        row = new WaterMeterDataRow();
                         row.serial = tokens[0];
 
                         try {
@@ -243,7 +242,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                         } catch (Exception ex) {
                             logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
                                                        tokens[1], lineIndex, filename), ex);
-                            status.skipRow();
+                            status.skip();
                             continue;
                         }
 
@@ -252,7 +251,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                         } catch (Exception ex) {
                             logger.error(String.format("Failed to parse volume [%s] in line [%d] from file [%s].",
                                                        tokens[2], lineIndex, filename), ex);
-                            status.skipRow();
+                            status.skip();
                             continue;
                         }
 
@@ -261,7 +260,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                         lastSerial = row.serial;
                         break;
                     case 6:
-                        row = new MeterDataRow();
+                        row = new WaterMeterDataRow();
                         row.serial = tokens[2];
 
                         try {
@@ -269,7 +268,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                         } catch (Exception ex) {
                             logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
                                                        tokens[3], lineIndex, filename), ex);
-                            status.skipRow();
+                            status.skip();
                             continue;
                         }
 
@@ -278,7 +277,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                         } catch (Exception ex) {
                             logger.error(String.format("Failed to parse volume [%s] in line [%d] from file [%s].",
                                                        tokens[4], lineIndex, filename), ex);
-                            status.skipRow();
+                            status.skip();
                             continue;
                         }
 
@@ -297,7 +296,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
                         break;
                     default:
                         // Row format is not supported
-                        status.skipRow();
+                        status.skip();
                 }
             }
 
@@ -307,7 +306,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
             status.setTotalRows(lineIndex);
 
             // Update and import row data
-            importMeterDataToHBase(status, rows);
+            importMeterDataToHBase(rows, status, false);
 
             if ((status.getProcessedRows() > 0) && ((status.getIgnoredRows() / status.getProcessedRows()) > 0.05)) {
                 throw createApplicationException(ImportErrorCode.TOO_MANY_ERRORS)
@@ -326,22 +325,17 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         return status;
     }
 
-    /**
-     * Validates, processes and imports a list of meter readings to HBASE.
-     *
-     * @param status statistics about the process execution.
-     * @param rows the data to import.
-     */
-    private void importMeterDataToHBase(FileProcessingStatus status, List<MeterDataRow> rows) {
+    @Override
+    public void importMeterDataToHBase(List<WaterMeterDataRow> rows, FileProcessingStatus status, boolean ignoreNegativeDiff) {
         if(rows.isEmpty()) {
             return;
         }
 
         // Sort data rows by date time
-        Collections.sort(rows, new Comparator<MeterDataRow>() {
+        Collections.sort(rows, new Comparator<WaterMeterDataRow>() {
 
             @Override
-            public int compare(MeterDataRow r1, MeterDataRow r2) {
+            public int compare(WaterMeterDataRow r1, WaterMeterDataRow r2) {
                 int result = r1.serial.compareTo(r2.serial);
 
                 if (result == 0) {
@@ -371,23 +365,31 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         for (int i = 0, count = rows.size(); i < count; i++) {
             // Set difference for the first row for every unique serial number
             if ((i == 0) || (!rows.get(i).serial.equals(rows.get(i - 1).serial))) {
-                WaterMeterStatusQueryResult meterStatus = waterMeterMeasurementRepository.getStatusBefore(new String[] { rows.get(i).serial },
-                                                                                                          rows.get(i).timestamp - 1);
+                WaterMeterStatusQueryResult meterStatus = waterMeterMeasurementRepository.getStatusBefore(
+            		new String[] { rows.get(i).serial },
+        			rows.get(i).timestamp - 1
+    			);
 
                 if ((meterStatus == null) || (meterStatus.getDevices().isEmpty())) {
                     rows.get(i).difference = 0f;
                 } else {
                     rows.get(i).difference = rows.get(i).volume - meterStatus.getDevices().get(0).getVolume();
 
-                    if (rows.get(i).difference < 0) {
-                        status.increaseNegativeDifference();
-                    }
-                }
+					if (rows.get(i).difference < 0) {
+						status.negativeDiff();
+						if (ignoreNegativeDiff) {
+							rows.get(i).difference = 0f;
+						}
+					}
+				}
             } else if ((rows.get(i).serial.equals(rows.get(i - 1).serial)) && (rows.get(i).difference == null)) {
                 rows.get(i).difference = rows.get(i).volume - rows.get(i - 1).volume;
 
                 if (rows.get(i).difference < 0) {
-                    status.increaseNegativeDifference();
+                    status.negativeDiff();
+					if (ignoreNegativeDiff) {
+						rows.get(i).difference = 0f;
+					}
                 }
             }
 
@@ -395,13 +397,16 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
             if ((i != 0) && (rows.get(i).difference != null) && (rows.get(i).serial.equals(rows.get(i - 1).serial))) {
                 rows.get(i).difference = rows.get(i).volume - rows.get(i - 1).volume;
                 if (rows.get(i).difference < 0) {
-                    status.increaseNegativeDifference();
+                    status.negativeDiff();
+					if (ignoreNegativeDiff) {
+						rows.get(i).difference = 0f;
+					}
                 }
             }
         }
 
         // Import rows to HBASE
-        for (MeterDataRow row : rows) {
+        for (WaterMeterDataRow row : rows) {
             insert(status, row);
         }
     }
@@ -412,7 +417,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
      * @param status statistics about the process execution.
      * @param row the data to import.
      */
-    private void insert(FileProcessingStatus status, MeterDataRow row) {
+    private void insert(FileProcessingStatus status, WaterMeterDataRow row) {
         try {
             WaterMeterMeasurementCollection data = new WaterMeterMeasurementCollection();
 
@@ -421,9 +426,9 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
             waterMeterMeasurementRepository.store(row.serial, data);
         } catch (Exception ex) {
             logger.warn(String.format("Failed to import row %s;%d;%f;%f. Reason:\n", row.serial, row.timestamp, row.volume, row.difference), ex);
-            status.ignoreRow();
+            status.ignore();
         }
-        status.processRow();
+        status.process();
     }
 
     /**
@@ -524,7 +529,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
 
         String[] tokens = StringUtils.split(line, ";");
         if (tokens.length != 3) {
-            status.skipRow();
+            status.skip();
             return;
         }
 
@@ -536,7 +541,7 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         } catch (Exception ex) {
             logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
                                         tokens[1], index, filename), ex);
-            status.skipRow();
+            status.skip();
             return;
         }
 
@@ -545,13 +550,13 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         } catch (Exception ex) {
             logger.error(String.format("Failed to parse difference [%s] in line [%d] from file [%s].",
                                        tokens[2], index, filename), ex);
-            status.skipRow();
+            status.skip();
             return;
         }
 
         importForecastingDataToHBase(serial, timestamp, difference);
 
-        status.processRow();
+        status.process();
     }
 
     /**
@@ -590,14 +595,4 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         return FileSystem.get(conf);
     }
 
-    private static class MeterDataRow {
-
-        public String serial;
-
-        public long timestamp;
-
-        public float volume;
-
-        public Float difference;
-    }
 }

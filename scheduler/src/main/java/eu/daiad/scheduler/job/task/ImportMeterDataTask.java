@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 import eu.daiad.common.domain.admin.UploadEntity;
 import eu.daiad.common.model.loader.EnumUploadFileType;
 import eu.daiad.common.model.loader.FileProcessingStatus;
-import eu.daiad.scheduler.service.IWaterMeterDataLoaderService;
+import eu.daiad.common.service.IWaterMeterDataLoaderService;
 
 /**
  * Task for exporting smart water meter data for a utility.

@@ -13,7 +13,7 @@ import eu.daiad.common.model.error.SchedulerErrorCode;
 import eu.daiad.common.model.loader.EnumUploadFileType;
 import eu.daiad.common.model.utility.UtilityInfo;
 import eu.daiad.common.repository.application.IUtilityRepository;
-import eu.daiad.scheduler.service.IWaterMeterDataLoaderService;
+import eu.daiad.common.service.IWaterMeterDataLoaderService;
 
 /**
  * Task for importing forecasting data to HBase.
