@@ -101,8 +101,8 @@ Additional information on how to configuring Log4j2 can be found at [Log4j2] (ht
 |---|---|---|
 |spring.batch.job.enabled|Disable automatic execution of registered beans|false|
 |spring.batch.initializer.enabled|Initialize Spring Batch database schema|false|
-|spring.batch.schema|Schema creation script location|classpath:db/migration/daiad-manager/V1_0_1__Initialize_Spring_Batch_database.sql|
-|spring.batch.table-prefix|Prefix used by Spring Batch job repository for schema objects|batch.|
+|spring.batch.jdbc.initialize-schema|Schema creation script location|classpath:db/migration/daiad-manager/V1_0_1__Initialize_Spring_Batch_database.sql|
+|spring.batch.jdbc.table-prefix|Prefix used by Spring Batch job repository for schema objects|batch.|
 |job.parameters.incrementer.name|Sequence name for DataSourceJobParametersIncrementer implementation|incrementer|
 |daiad.batch.server-time-zone|Application server time zone. Used as a workaround to Spring Batch saving local time to PostgreSQL field of type `timestamp without time zone`.|Europe/Athens|
 
