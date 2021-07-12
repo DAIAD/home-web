@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -127,11 +128,20 @@ public class ExportGroupMemberToFileTask extends BaseTask implements StoppableTa
                             ),
                             format);
 
-            // Optionally filter utility data
-            Integer utilityId = this.getInteger(parameters, EnumInParameter.UTILITY_ID.getValue(), false);
+			// Optionally filter utility data
+			final List<Integer> utilities = new ArrayList<>();
+			if (parameters.containsKey(EnumInParameter.UTILITY_ID.getValue())) {
+				final String value = parameters.get(EnumInParameter.UTILITY_ID.getValue());
+				if(!StringUtils.isBlank(value)) {
+					Arrays.stream(StringUtils.split(value, ","))
+						.map(Integer::parseInt)
+						.forEach(utilities::add);
+				}
+			}
+            
 
             // Export data
-            exportUtilities(groupPrinter, userPrinter, utilityId);
+            exportUtilities(groupPrinter, userPrinter, utilities);
         } catch (Throwable t) {
             throw wrapApplicationException(t, SchedulerErrorCode.SCHEDULER_JOB_STEP_FAILED).set("step", chunkContext.getStepContext().getStepName());
         } finally {
@@ -146,11 +156,11 @@ public class ExportGroupMemberToFileTask extends BaseTask implements StoppableTa
         return RepeatStatus.FINISHED;
     }
 
-    private void exportUtilities(CSVPrinter groupPrinter, CSVPrinter userPrinter, Integer utilityId) throws IOException {
+    private void exportUtilities(CSVPrinter groupPrinter, CSVPrinter userPrinter, List<Integer> utilities) throws IOException {
         for (UtilityInfo utility : utilityRepository.getUtilities()) {
-            if ((utilityId != null) && (utility.getId() != utilityId)) {
-                continue;
-            }
+			if (!utilities.isEmpty() && !utilities.contains(utility.getId())) {
+				continue;
+			}
 
             List<AreaGroupMemberEntity> areas = spatialRepository.getAreasByUtilityId(utility.getKey());
 
