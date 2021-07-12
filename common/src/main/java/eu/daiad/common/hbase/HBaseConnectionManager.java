@@ -39,12 +39,10 @@ public class HBaseConnectionManager implements InitializingBean, DisposableBean 
 				Configuration config = this.configurationBuilder.build();
 
 				if (ArrayUtils.contains(environment.getActiveProfiles(), "development")) {
-					StringWriter out = new StringWriter();
-					Configuration.dumpConfiguration(config, out);
-
-					logger.info(out.toString());
-
-					out.close();
+					try (final StringWriter out = new StringWriter()) {
+						Configuration.dumpConfiguration(config, out);
+						logger.debug(out.toString());
+					}
 				}
 
 				this.connection = ConnectionFactory.createConnection(config);

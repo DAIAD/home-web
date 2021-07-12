@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -24,6 +26,8 @@ public class CommandLineTask extends BaseTask implements StoppableTasklet {
 
     private static final int DEFAULT_TIMEOUT = 60000;
 
+    private static final Log logger = LogFactory.getLog(CommandLineTask.class);
+    
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
         try {
@@ -64,8 +68,10 @@ public class CommandLineTask extends BaseTask implements StoppableTasklet {
                                                                   environmentVariables);
 
             if (commandExecutor.execute() == ExitStatus.COMPLETED) {
-                String[] lines = commandExecutor.getOutput();
-
+				String[] lines = commandExecutor.getOutput();
+				for (final String line : lines) {
+					logger.info(line);
+				}
                 String key = chunkContext.getStepContext().getStepName() +
                              Constants.PARAMETER_NAME_DELIMITER +
                              EnumOutParameter.OUTPUT.getValue();
