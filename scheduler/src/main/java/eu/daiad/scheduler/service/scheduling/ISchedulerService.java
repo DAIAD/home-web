@@ -1,17 +1,17 @@
 package eu.daiad.scheduler.service.scheduling;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 import org.joda.time.DateTime;
 
-import eu.daiad.scheduler.job.builder.IJobBuilder;
 import eu.daiad.common.model.error.ApplicationException;
 import eu.daiad.common.model.scheduling.ExecutionQuery;
 import eu.daiad.common.model.scheduling.ExecutionQueryResult;
 import eu.daiad.common.model.scheduling.JobExecutionInfo;
 import eu.daiad.common.model.scheduling.JobInfo;
+import eu.daiad.scheduler.job.builder.IJobBuilder;
 
 /**
  * Provides methods for querying, scheduling and launching jobs.
@@ -104,7 +104,7 @@ public interface ISchedulerService {
 	 * @param jobId the job id.
 	 * @param cronExpression the CRON expression.
 	 */
-	Date scheduleCronJob(long jobId, String cronExpression);
+	LocalDateTime scheduleCronJob(long jobId, String cronExpression);
 
 	/**
 	 * Launches a job based on its id

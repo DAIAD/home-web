@@ -35,7 +35,7 @@ public class SchedulerRepository extends BaseRepository implements ISchedulerRep
     @PersistenceContext
     EntityManager entityManager;
 
-    @Value("${spring.batch.table-prefix}")
+    @Value("${spring.batch.jdbc.table-prefix}")
     private String batchSchemaPrefix;
 
     @Autowired

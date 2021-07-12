@@ -1,9 +1,9 @@
 package eu.daiad.scheduler.service.scheduling;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -39,7 +39,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.scheduling.support.CronSequenceGenerator;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.stereotype.Service;
@@ -411,13 +411,13 @@ public class DefaultSchedulerService extends BaseService implements ISchedulerSe
     }
 
     @Override
-    public Date scheduleCronJob(long scheduledJobId, String cronExpression) {
+    public LocalDateTime scheduleCronJob(long scheduledJobId, String expression) {
         try {
-            CronSequenceGenerator cronSequenceGenerator = new CronSequenceGenerator(cronExpression);
+        	final CronExpression cronExpression = CronExpression.parse(expression);
+        			
+            schedulerRepository.scheduleCronJob(scheduledJobId, expression);
 
-            schedulerRepository.scheduleCronJob(scheduledJobId, cronExpression);
-
-            return cronSequenceGenerator.next(new Date());
+            return cronExpression.next(LocalDateTime.now());
         } catch (IllegalArgumentException ex) {
             throw wrapApplicationException(ex, SharedErrorCode.UNKNOWN);
         }
