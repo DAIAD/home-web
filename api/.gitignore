@@ -34,3 +34,6 @@ src/main/resources/log4j.properties
 src/main/resources/log4j2.xml
 src/main/resources/log4j2-test.xml
 src/main/resources/config
+
+/.apt_generated/
+/.apt_generated_tests/

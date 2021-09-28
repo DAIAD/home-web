@@ -46,3 +46,6 @@ apidoc/docs
 jsdoc/
 
 Gruntfile-local.js
+
+/.apt_generated/
+/.apt_generated_tests/
