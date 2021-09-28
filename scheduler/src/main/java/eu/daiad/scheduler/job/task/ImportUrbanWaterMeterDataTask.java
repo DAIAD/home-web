@@ -1,6 +1,7 @@
 package eu.daiad.scheduler.job.task;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,7 @@ import eu.daiad.scheduler.model.ubranwater.UrbanWaterLoginResult;
 import eu.daiad.scheduler.model.ubranwater.UrbanWaterMeasurement;
 import eu.daiad.scheduler.model.ubranwater.UrbanWaterMeter;
 import eu.daiad.scheduler.model.ubranwater.UrbanWaterResponse;
+import feign.FeignException;
 import lombok.Getter;
 
 /**
@@ -94,18 +96,26 @@ public class ImportUrbanWaterMeterDataTask extends BaseTask implements Stoppable
 		return customerResponse.getData();
 	}
 
-	private List<UrbanWaterMeasurement> getDeviceValues(String apiKey, String accessToken, Integer deviceId, long from) throws Exception {       
-		final String responseContent = client.getObject().getDeviceValues(apiKey, accessToken, deviceId, from);
-
-		final UrbanWaterResponse<List<UrbanWaterMeasurement>> deviceResponse = objectMapper.readValue(
-			responseContent, new TypeReference<UrbanWaterResponse<List<UrbanWaterMeasurement>>>() { }
-		);
-
-		if (deviceResponse.getStatus() != HttpStatus.OK.value()) {
-			throw new Exception(String.format("Failed to device values [message=%s]", deviceResponse.getMessage()));
+	private List<UrbanWaterMeasurement> getDeviceValues(String apiKey, String accessToken, Integer deviceId, long from) throws Exception {
+		try {
+			final String responseContent = client.getObject().getDeviceValues(apiKey, accessToken, deviceId, from);
+	
+			final UrbanWaterResponse<List<UrbanWaterMeasurement>> deviceResponse = objectMapper.readValue(
+				responseContent, new TypeReference<UrbanWaterResponse<List<UrbanWaterMeasurement>>>() { }
+			);
+	
+			if (deviceResponse.getStatus() != HttpStatus.OK.value()) {
+				throw new Exception(String.format("Failed to device values [message=%s]", deviceResponse.getMessage()));
+			}
+	
+			return deviceResponse.getData();
+		} catch (FeignException fex) {
+			logger.error(String.format(
+				"Failed to load device values. [deviceId=%d, message=%s]", 
+				deviceId, fex.getMessage()
+			));
+			return Collections.emptyList();
 		}
-
-		return deviceResponse.getData();
 	}
 	
     @Override
@@ -149,14 +159,21 @@ public class ImportUrbanWaterMeterDataTask extends BaseTask implements Stoppable
 			for (final UrbanWaterCustomer customer : customers) {
 				if (!customer.getDevices().isEmpty()) {
 					for (final UrbanWaterMeter meter : customer.getDevices()) {
+						final String serial = StringUtils.isBlank(meter.getEui()) 
+							? null
+							: meter.getEui().substring(meter.getEui().length() - 11);
+						
+						if (StringUtils.isBlank(serial)) {
+							continue;
+						}
 						final List<UrbanWaterMeasurement> data = this.getDeviceValues(
 							apiKey, accessToken, meter.getDeviceId(), from
 						);
-						final List<WaterMeterDataRow> rows = data.stream().map(r-> {
-							final String serial = meter.getEui().substring(meter.getEui().length() - 11);
-
-							return WaterMeterDataRow.of(serial, r.getTimestamp() * 1000, r.getVolume());
-						}).collect(Collectors.toList());
+						final List<WaterMeterDataRow> rows = data.stream()
+							.map(r -> {
+								return WaterMeterDataRow.of(serial, r.getTimestamp() * 1000, r.getVolume());
+							})
+							.collect(Collectors.toList());
 					
 						waterMeterDataLoaderService.importMeterDataToHBase(rows, status, true);
 					}

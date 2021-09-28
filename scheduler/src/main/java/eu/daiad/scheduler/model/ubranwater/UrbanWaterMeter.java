@@ -13,5 +13,7 @@ public class UrbanWaterMeter {
 	private Integer deviceId;
 
 	private String eui;
+	
+	private long totalVolume;
 
 }

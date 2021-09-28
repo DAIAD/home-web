@@ -539,8 +539,8 @@ public class WaterMeterDataLoaderService extends BaseService implements IWaterMe
         try {
             timestamp = formatter.parseDateTime(tokens[1]);
         } catch (Exception ex) {
-            logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s].",
-                                        tokens[1], index, filename), ex);
+            logger.error(String.format("Failed to parse timestamp [%s] in line [%d] from file [%s]. Message: %s",
+                                        tokens[1], index, filename, ex.getMessage()));
             status.skip();
             return;
         }
