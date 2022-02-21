@@ -159,23 +159,30 @@ public class ImportUrbanWaterMeterDataTask extends BaseTask implements Stoppable
 			for (final UrbanWaterCustomer customer : customers) {
 				if (!customer.getDevices().isEmpty()) {
 					for (final UrbanWaterMeter meter : customer.getDevices()) {
-						final String serial = StringUtils.isBlank(meter.getEui()) 
-							? null
-							: meter.getEui().substring(meter.getEui().length() - 11);
+						try {
+							final String serial = StringUtils.isBlank(meter.getEui()) 
+								? null
+								: meter.getEui().substring(meter.getEui().length() - 11);
+							
+							if (StringUtils.isBlank(serial)) {
+								continue;
+							}
+							final List<UrbanWaterMeasurement> data = this.getDeviceValues(
+								apiKey, accessToken, meter.getDeviceId(), from
+							);
+							final List<WaterMeterDataRow> rows = data.stream()
+								.map(r -> {
+									return WaterMeterDataRow.of(serial, r.getTimestamp() * 1000, r.getVolume());
+								})
+								.collect(Collectors.toList());
 						
-						if (StringUtils.isBlank(serial)) {
-							continue;
-						}
-						final List<UrbanWaterMeasurement> data = this.getDeviceValues(
-							apiKey, accessToken, meter.getDeviceId(), from
-						);
-						final List<WaterMeterDataRow> rows = data.stream()
-							.map(r -> {
-								return WaterMeterDataRow.of(serial, r.getTimestamp() * 1000, r.getVolume());
-							})
-							.collect(Collectors.toList());
-					
-						waterMeterDataLoaderService.importMeterDataToHBase(rows, status, true);
+							waterMeterDataLoaderService.importMeterDataToHBase(rows, status, true);
+				        } catch (Exception ex) {
+							logger.warn(String.format(
+								"Skipping meter [customer=%d, meter=%s, message=%s].", 
+								customer.getCustomerId(), meter.getEui(), ex.getMessage()
+							));
+				        }
 					}
 				}
 			}
