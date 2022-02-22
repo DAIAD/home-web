@@ -171,6 +171,7 @@ public class ImportUrbanWaterMeterDataTask extends BaseTask implements Stoppable
 								apiKey, accessToken, meter.getDeviceId(), from
 							);
 							final List<WaterMeterDataRow> rows = data.stream()
+								.filter(r -> r.getType() == 0)
 								.map(r -> {
 									return WaterMeterDataRow.of(serial, r.getTimestamp() * 1000, r.getVolume());
 								})

@@ -19,5 +19,7 @@ public class UrbanWaterMeasurement {
 
 	@JsonProperty("value")
 	private float volume;
+	
+	private Integer type;
 
 }
