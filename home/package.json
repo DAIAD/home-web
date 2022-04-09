@@ -19,7 +19,7 @@
     "jquery": "^3.3.1",
     "keymirror": "~0.1.1",
     "lodash": "~4.0.1",
-    "moment": "^2.16.0",
+    "moment": "^2.29.2",
     "moment-timezone": "^0.5.4",
     "numeral": "^1.5.3",
     "rc-switch": "^1.4.2",
