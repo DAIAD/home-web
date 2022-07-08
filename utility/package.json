@@ -22,7 +22,7 @@
     "leaflet-draw": "0.4.4",
     "leaflet.heat": "0.2.0",
     "lodash": "~4.0.1",
-    "moment": "^2.16.0",
+    "moment": "^2.29.4",
     "moment-timezone": "^0.5.4",
     "numeral": "^1.5.3",
     "rc-switch": "1.4.2",
