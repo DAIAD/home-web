@@ -17,7 +17,7 @@
     "grunt-apidoc": "~0.11.0",
     "grunt-cli": "~0.1.13",
     "grunt-contrib-clean": "~0.7.0",
-    "grunt-contrib-watch": "~0.6.1",
+    "grunt-contrib-watch": "~1.1.0",
     "grunt-sync": "0.8.2"
   }
 }
